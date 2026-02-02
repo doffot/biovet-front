@@ -1,0 +1,428 @@
+@import "tailwindcss";
+
+/* ==========================================
+   CONFIGURACIÓN DARK MODE - TAILWIND 4
+   ========================================== */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ==========================================
+   TEMA PERSONALIZADO BIOVET TRACK
+   ========================================== */
+@theme {
+  /* --- PALETA BIOVET TRACK --- */
+  --color-biovet-50: #f0f9fb;
+  --color-biovet-100: #dcf1f5;
+  --color-biovet-200: #bee4ec;
+  --color-biovet-300: #91cedc;
+  --color-biovet-400: #5db0c6;
+  --color-biovet-500: #08708a;
+  --color-biovet-600: #065a71;
+  --color-biovet-700: #084a5d;
+  --color-biovet-800: #0b3e4e;
+  --color-biovet-900: #0d3542;
+  --color-biovet-950: #05222c;
+
+  /* --- SUCCESS --- */
+  --color-success-50: #f0fdf4;
+  --color-success-100: #dcfce7;
+  --color-success-200: #bbf7d0;
+  --color-success-300: #86efac;
+  --color-success-400: #4ade80;
+  --color-success-500: #22c55e;
+  --color-success-600: #16a34a;
+  --color-success-700: #15803d;
+  --color-success-800: #166534;
+  --color-success-900: #14532d;
+  --color-success-950: #052e16;
+
+  /* --- DANGER --- */
+  --color-danger-50: #fef2f2;
+  --color-danger-100: #fee2e2;
+  --color-danger-200: #fecaca;
+  --color-danger-300: #fca5a5;
+  --color-danger-400: #f87171;
+  --color-danger-500: #ef4444;
+  --color-danger-600: #dc2626;
+  --color-danger-700: #b91c1c;
+  --color-danger-800: #991b1b;
+  --color-danger-900: #7f1d1d;
+  --color-danger-950: #450a0a;
+
+  /* --- WARNING --- */
+  --color-warning-50: #fffbeb;
+  --color-warning-100: #fef3c7;
+  --color-warning-200: #fde68a;
+  --color-warning-300: #fcd34d;
+  --color-warning-400: #fbbf24;
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #d97706;
+  --color-warning-700: #b45309;
+  --color-warning-800: #92400e;
+  --color-warning-900: #78350f;
+  --color-warning-950: #451a03;
+
+  /* --- SURFACE (modo claro) --- */
+  --color-surface-50: #fafbfc;
+  --color-surface-100: #f4f6f8;
+  --color-surface-200: #ebeef2;
+  --color-surface-300: #dfe3e8;
+  --color-surface-400: #c4cdd5;
+  --color-surface-500: #919eab;
+  --color-surface-600: #637381;
+  --color-surface-700: #454f5b;
+  --color-surface-800: #212b36;
+  --color-surface-900: #161c24;
+
+  /* --- DARK (modo oscuro) --- */
+  --color-dark-50: #1e293b;
+  --color-dark-100: #1a2234;
+  --color-dark-200: #151c2c;
+  --color-dark-300: #111827;
+  --color-dark-400: #0d1320;
+  --color-dark-500: #0a0f18;
+}
+
+/* ==========================================
+   ESTILOS BASE
+   ========================================== */
+@layer base {
+  html {
+    @apply antialiased scroll-smooth;
+  }
+  
+  body {
+    @apply bg-surface-100 text-slate-700 transition-colors duration-300;
+  }
+  
+  .dark body {
+    @apply bg-dark-300 text-slate-200;
+  }
+}
+
+/* ==========================================
+   COMPONENTES
+   ========================================== */
+@layer components {
+
+  /* ========================================
+     BOTONES
+     ======================================== */
+  
+  .btn-primary {
+    @apply inline-flex items-center justify-center 
+           font-semibold text-sm px-5 py-2.5 gap-2
+           bg-biovet-500 text-white 
+           border border-biovet-600
+           rounded-lg shadow-sm
+           transition-all duration-200 cursor-pointer
+           hover:bg-biovet-600 
+           active:scale-[0.98]
+           disabled:opacity-50 disabled:pointer-events-none;
+  }
+  
+  .dark .btn-primary {
+    @apply bg-biovet-600 border-biovet-500 hover:bg-biovet-500;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center 
+           font-semibold text-sm px-5 py-2.5 gap-2
+           bg-white text-biovet-600 
+           border border-biovet-200
+           rounded-lg shadow-sm
+           transition-all duration-200 cursor-pointer
+           hover:bg-biovet-50 hover:border-biovet-300
+           active:scale-[0.98]
+           disabled:opacity-50 disabled:pointer-events-none;
+  }
+  
+  .dark .btn-secondary {
+    @apply bg-biovet-950 text-biovet-300 border-biovet-700
+           hover:bg-biovet-900 hover:border-biovet-600;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center 
+           font-semibold text-sm px-5 py-2.5 gap-2
+           text-slate-600 bg-transparent 
+           border border-transparent
+           rounded-lg
+           transition-all duration-200 cursor-pointer
+           hover:text-biovet-600 hover:bg-biovet-50
+           active:scale-[0.98]
+           disabled:opacity-50 disabled:pointer-events-none;
+  }
+  
+  .dark .btn-ghost {
+    @apply text-slate-400 hover:text-biovet-300 hover:bg-biovet-950;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center 
+           font-semibold text-sm px-5 py-2.5 gap-2
+           bg-danger-500 text-white 
+           border border-danger-600
+           rounded-lg shadow-sm
+           transition-all duration-200 cursor-pointer
+           hover:bg-danger-600
+           active:scale-[0.98]
+           disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  /* ========================================
+     ICON BUTTONS
+     ======================================== */
+  
+  .btn-icon-primary {
+    @apply inline-flex items-center justify-center 
+           w-10 h-10 rounded-xl
+           bg-biovet-500 text-white 
+           border border-biovet-600
+           shadow-sm
+           transition-all duration-200 cursor-pointer
+           hover:bg-biovet-600 hover:scale-105
+           active:scale-95
+           disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-icon-neutral {
+    @apply inline-flex items-center justify-center 
+           w-10 h-10 rounded-xl
+           bg-white text-slate-500
+           border border-surface-300
+           shadow-sm
+           transition-all duration-200 cursor-pointer
+           hover:bg-surface-50 hover:text-slate-700 hover:border-surface-400
+           active:scale-95
+           disabled:opacity-50 disabled:pointer-events-none;
+  }
+  
+  .dark .btn-icon-neutral {
+    @apply bg-dark-100 border-slate-700 text-slate-400 shadow-none
+           hover:bg-dark-50 hover:text-slate-200 hover:border-slate-600;
+  }
+
+  .btn-icon-danger {
+    @apply inline-flex items-center justify-center 
+           w-10 h-10 rounded-xl
+           bg-danger-50 text-danger-500 
+           border border-danger-200
+           transition-all duration-200 cursor-pointer
+           hover:bg-danger-100 hover:border-danger-300
+           active:scale-95
+           disabled:opacity-50 disabled:pointer-events-none;
+  }
+  
+  .dark .btn-icon-danger {
+    @apply bg-danger-950 border-danger-800
+           hover:bg-danger-900 hover:border-danger-700;
+  }
+
+  /* ========================================
+     BADGES
+     ======================================== */
+  
+  .badge {
+    @apply inline-flex items-center justify-center
+           px-2.5 py-1 gap-1.5
+           rounded-full text-xs font-semibold 
+           border whitespace-nowrap;
+  }
+
+  .badge-success {
+    @apply bg-success-50 text-success-700 border-success-200;
+  }
+  
+  .dark .badge-success {
+    @apply bg-success-950 text-success-400 border-success-800;
+  }
+
+  .badge-warning {
+    @apply bg-warning-50 text-warning-700 border-warning-200;
+  }
+  
+  .dark .badge-warning {
+    @apply bg-warning-950 text-warning-400 border-warning-800;
+  }
+
+  .badge-danger {
+    @apply bg-danger-50 text-danger-700 border-danger-200;
+  }
+  
+  .dark .badge-danger {
+    @apply bg-danger-950 text-danger-400 border-danger-800;
+  }
+
+  .badge-neutral {
+    @apply bg-surface-100 text-slate-600 border-surface-300;
+  }
+  
+  .dark .badge-neutral {
+    @apply bg-slate-800 text-slate-300 border-slate-700;
+  }
+
+  .badge-biovet {
+    @apply bg-biovet-50 text-biovet-700 border-biovet-200;
+  }
+  
+  .dark .badge-biovet {
+    @apply bg-biovet-950 text-biovet-300 border-biovet-800;
+  }
+
+  /* ========================================
+     INPUTS
+     ======================================== */
+  
+  .input {
+    @apply w-full px-4 py-2.5 text-sm
+           bg-white text-slate-700
+           border border-surface-300
+           rounded-lg shadow-sm
+           placeholder:text-slate-400
+           transition-all duration-200
+           focus:outline-none focus:border-biovet-400 focus:ring-2 focus:ring-biovet-100
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-surface-100;
+  }
+  
+  .dark .input {
+    @apply bg-dark-100 text-slate-200 border-slate-700 
+           placeholder:text-slate-500 shadow-none
+           focus:border-biovet-500 focus:ring-biovet-900;
+  }
+
+  .input-error {
+    @apply border-danger-400 bg-danger-50
+           focus:border-danger-500 focus:ring-danger-100;
+  }
+  
+  .dark .input-error {
+    @apply border-danger-600 bg-danger-950
+           focus:ring-danger-900;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-slate-700 mb-1.5;
+  }
+  
+  .dark .label {
+    @apply text-slate-300;
+  }
+
+  .helper-text {
+    @apply text-xs text-slate-500 mt-1.5;
+  }
+  
+  .dark .helper-text {
+    @apply text-slate-400;
+  }
+
+  .error-text {
+    @apply text-xs text-danger-600 mt-1.5;
+  }
+  
+  .dark .error-text {
+    @apply text-danger-400;
+  }
+
+  /* ========================================
+     PROGRESS
+     ======================================== */
+  
+  .progress-track {
+    @apply w-full h-2 bg-surface-200 rounded-full overflow-hidden;
+  }
+  
+  .dark .progress-track {
+    @apply bg-slate-800;
+  }
+
+  .progress-fill {
+    @apply h-full bg-biovet-500 rounded-full transition-all duration-500 ease-out;
+  }
+
+  .progress-fill-success {
+    @apply h-full bg-success-500 rounded-full transition-all duration-500 ease-out;
+  }
+
+  .progress-fill-warning {
+    @apply h-full bg-warning-500 rounded-full transition-all duration-500 ease-out;
+  }
+
+  .progress-fill-danger {
+    @apply h-full bg-danger-500 rounded-full transition-all duration-500 ease-out;
+  }
+
+  /* ========================================
+     SWITCHES
+     ======================================== */
+  
+  .ui-switch {
+    @apply relative inline-flex h-6 w-11 
+           shrink-0 cursor-pointer rounded-full 
+           border-2 border-transparent 
+           bg-surface-300
+           transition-colors duration-200 ease-in-out 
+           focus:outline-none focus:ring-2 focus:ring-biovet-400 focus:ring-offset-2;
+  }
+  
+  .dark .ui-switch {
+    @apply bg-slate-700;
+  }
+
+  .ui-switch.checked {
+    @apply bg-biovet-500;
+  }
+
+  .ui-switch-thumb {
+    @apply pointer-events-none inline-block 
+           h-5 w-5 transform rounded-full 
+           bg-white shadow-md
+           transition duration-200 ease-in-out
+           translate-x-0;
+  }
+
+  .ui-switch.checked .ui-switch-thumb {
+    @apply translate-x-5;
+  }
+}
+
+/* ==========================================
+   UTILIDADES
+   ========================================== */
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.2s ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db transparent;
+  }
+  
+  .dark .scrollbar-thin {
+    scrollbar-color: #4b5563 transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: #d1d5db;
+    border-radius: 9999px;
+  }
+  
+  .dark .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: #4b5563;
+  }
+}
