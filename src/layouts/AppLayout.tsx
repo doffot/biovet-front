@@ -1,8 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import { useEffect } from 'react';
-import { Sidebar } from '../components/layout/Sidebar';
-import { Header } from '../components/layout/Header';
 import { useLayoutStore } from '../store/useLayoutStore';
+import { Header, Sidebar } from '@/components/layout';
 
 export const AppLayout = () => {
   const sidebarCollapsed = useLayoutStore((s) => s.sidebarCollapsed);

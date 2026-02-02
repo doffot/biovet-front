@@ -9,7 +9,14 @@ export const Header = () => {
   const isDark = theme === 'dark';
 
   return (
-    <header className="header h-16 px-4 lg:px-6 flex items-center justify-between sticky top-0 z-40 transition-colors duration-300">
+    <header className="
+      h-16 px-4 lg:px-8
+      flex items-center justify-between 
+      sticky top-0 z-40 
+      bg-white dark:bg-dark-200
+      border-b border-slate-200 dark:border-slate-800
+      transition-colors duration-300
+    ">
       
       <div className="flex items-center gap-4">
         <button
@@ -18,8 +25,6 @@ export const Header = () => {
         >
           <Menu size={20} />
         </button>
-
-        
       </div>
 
       <div className="flex items-center gap-2">
@@ -61,17 +66,18 @@ export const Header = () => {
         
         {/* Notifications */}
         <button className="btn-icon-neutral relative">
-          <Bell size={20} />
+          <Bell size={20} className="text-biovet-500 fill-biovet-500" />
           <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-danger-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white dark:border-dark-200">
             3
           </span>
         </button>
 
-        {/* User Avatar */}
-        <div className="hidden sm:block w-px h-8 bg-surface-300 dark:bg-slate-700 mx-2" />
+        {/* Divider */}
+        <div className="hidden sm:block w-px h-8 bg-slate-200 dark:bg-slate-700 mx-2" />
         
-        <button className="flex items-center gap-3 p-1.5 pr-4 rounded-xl hover:bg-surface-100 dark:hover:bg-dark-50 transition-colors">
-          <div className="w-9 h-9 rounded-xl bg-linear-to-br from-biovet-400 to-biovet-600 flex items-center justify-center text-white font-bold text-sm shadow-sm">
+        {/* User Avatar */}
+        <button className="flex items-center gap-3 p-1.5 pr-4 rounded-xl hover:bg-slate-50 dark:hover:bg-dark-50 transition-colors">
+          <div className="w-9 h-9 rounded-full bg-biovet-100 flex items-center justify-center text-biovet-600 font-bold text-sm shadow-sm">
             DR
           </div>
           <div className="hidden md:block text-left">

@@ -1,17 +1,24 @@
+/* ==========================================
+   GOOGLE FONTS
+   ========================================== */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
 @import "tailwindcss";
 
 /* ==========================================
-   CONFIGURACIÓN DARK MODE - TAILWIND 4
+   CONFIGURACIÓN DARK MODE 
    ========================================== */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* ==========================================
-   TEMA PERSONALIZADO BIOVET TRACK
-   ========================================== */
+
 @theme {
+  /* --- FUENTES --- */
+  --font-sans: 'Noto Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-heading: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+
   /* --- PALETA BIOVET TRACK --- */
   --color-biovet-50: #f0f9fb;
-  --color-biovet-100: #dcf1f5;
+  --color-biovet-100: #d9eff3;
   --color-biovet-200: #bee4ec;
   --color-biovet-300: #91cedc;
   --color-biovet-400: #5db0c6;
@@ -91,11 +98,18 @@
   }
   
   body {
+    font-family: var(--font-sans);
     @apply bg-surface-100 text-slate-700 transition-colors duration-300;
   }
   
   .dark body {
     @apply bg-dark-300 text-slate-200;
+  }
+
+  /* Headings automáticamente usan Space Grotesk */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    @apply tracking-tight;
   }
 }
 
@@ -187,8 +201,8 @@
 
   .btn-icon-neutral {
     @apply inline-flex items-center justify-center 
-           w-10 h-10 rounded-xl
-           bg-white text-slate-500
+           w-10 h-10 rounded-full
+           bg-slate-100 text-slate-500
            border border-surface-300
            shadow-sm
            transition-all duration-200 cursor-pointer
@@ -390,6 +404,11 @@
    UTILIDADES
    ========================================== */
 @layer utilities {
+  /* Utility para forzar fuente heading */
+  .font-heading {
+    font-family: var(--font-heading);
+  }
+
   .animate-fade-in {
     animation: fadeIn 0.2s ease-out forwards;
   }
