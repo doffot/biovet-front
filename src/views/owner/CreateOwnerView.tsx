@@ -1,61 +1,66 @@
-import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save } from 'lucide-react';
-import type { OwnerFormData } from 'types/owner';
-import type { OwnerFormInputs } from '@/components/owner/OwnerForm';
-import OwnerForm from '@/components/owner/OwnerForm';
+import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Save } from "lucide-react";
+import OwnerForm, { type OwnerFormInputs } from "@/components/owners/OwnerForm";
+import { createOwner } from "@/api/OwnerAPI";
+import { toast } from "@/components/Toast";
+import type { OwnerFormData } from "@/types/owner";
 
 export default function CreateOwnerView() {
   const navigate = useNavigate();
-  
+  const queryClient = useQueryClient();
+
   const initialValues: OwnerFormInputs = {
-    name: '',
-    countryCode: '+58',
-    phone: '',
-    email: '',
-    address: '',
-    nationalId: '',
+    name: "",
+    countryCode: "+58",
+    phone: "",
+    email: "",
+    address: "",
+    nationalId: "",
   };
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<OwnerFormInputs>({
     defaultValues: initialValues,
   });
 
-  const handleForm = async (formData: OwnerFormInputs) => {
-    try {
-      // Transformar datos del formulario al formato de la API
-      const ownerData: OwnerFormData = {
-        name: formData.name,
-        contact: `${formData.countryCode}${formData.phone}`, // Concatenar código + número
-        email: formData.email || null,
-        address: formData.address || null,
-        nationalId: formData.nationalId || null,
-      };
-      
-      console.log('Datos para la API:', ownerData);
-      
-      // TODO: Llamada a la API
-      // await createOwner(ownerData);
-      // toast.success('Propietario creado exitosamente');
-      // navigate('/owners');
-      
-    } catch (error) {
-      console.error('Error al crear propietario:', error);
-    }
+  const { mutate, isPending } = useMutation({
+    mutationFn: createOwner,
+    onSuccess: (data) => {
+      toast.success(
+        "¡Creado!",
+        data.msg || "Propietario registrado correctamente",
+      );
+      queryClient.invalidateQueries({ queryKey: ["owners"] });
+      navigate("/owners");
+    },
+    onError: (error: Error) => {
+      toast.error("Error", error.message);
+    },
+  });
+
+  const handleForm = (formData: OwnerFormInputs) => {
+    // Transformar datos del formulario al formato de la API
+    const ownerData: OwnerFormData = {
+      name: formData.name,
+      contact: `${formData.countryCode}${formData.phone}`,
+      email: formData.email || null,
+      address: formData.address || null,
+      nationalId: formData.nationalId || null,
+    };
+
+    mutate(ownerData);
   };
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <button
-          onClick={() => navigate(-1)}
-          className="btn-icon-neutral"
-        >
+        <button onClick={() => navigate(-1)} className="btn-icon-neutral">
           <ArrowLeft size={20} />
         </button>
         <div>
@@ -75,7 +80,8 @@ export default function CreateOwnerView() {
             Información del Propietario
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Los campos marcados con <span className="text-danger-500">*</span> son obligatorios
+            Los campos marcados con <span className="text-danger-500">*</span>{" "}
+            son obligatorios
           </p>
         </div>
 
@@ -92,13 +98,18 @@ export default function CreateOwnerView() {
             >
               Cancelar
             </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="btn-primary"
-            >
-              <Save size={18} />
-              {isSubmitting ? 'Guardando...' : 'Guardar Propietario'}
+            <button type="submit" disabled={isPending} className="btn-primary">
+              {isPending ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Guardando...
+                </>
+              ) : (
+                <>
+                  <Save size={18} />
+                  Guardar Propietario
+                </>
+              )}
             </button>
           </div>
         </form>

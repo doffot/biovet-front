@@ -38,6 +38,7 @@ export async function getOwners() {
 export async function getOwnersById(id: Owner["_id"]) {
   try {
     const { data } = await api.get(`/owners/${id}`);
+    console.log('entro owner by id',data);
     return data;
   } catch (error) {
     if (error instanceof AxiosError && error.response) {

@@ -87,6 +87,17 @@
   --color-dark-300: #111827;
   --color-dark-400: #0d1320;
   --color-dark-500: #0a0f18;
+
+   --animate-slide-in-left: slide-in-left 0.3s ease-out;
+}
+
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
 /* ==========================================
@@ -409,6 +420,25 @@
     font-family: var(--font-heading);
   }
 
+   input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.1) inset !important;
+    -webkit-text-fill-color: white !important;
+    transition: background-color 9999s ease-in-out 0s;
+    caret-color: white;
+  }
+
+  @keyframes shrink {
+    from {
+      transform: scaleX(1);
+    }
+    to {
+      transform: scaleX(0);
+    }
+  }
+
   .animate-fade-in {
     animation: fadeIn 0.2s ease-out forwards;
   }
@@ -443,5 +473,19 @@
   
   .dark .scrollbar-thin::-webkit-scrollbar-thumb {
     background-color: #4b5563;
+  }
+
+   .animate-slide-in-left {
+    animation: slide-in-left 0.3s ease-out;
+  }
+  
+  /* Breakpoint xs para pantallas muy pequeñas */
+  @media (min-width: 475px) {
+    .xs\:inline {
+      display: inline;
+    }
+    .xs\:hidden {
+      display: none;
+    }
   }
 }
