@@ -1,64 +1,39 @@
 import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  Plus,
-  Search,
-  Download,
-  Filter,
-  X,
-  Loader2,
-  AlertCircle,
-  User,
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { 
+  Plus, Search, Download, Filter, X, Loader2, AlertCircle, User, 
+  ArrowLeft
 } from "lucide-react";
-import { getOwners, deleteOwners } from "@/api/OwnerAPI";
-import { toast } from "@/components/Toast";
+import { getOwners } from "@/api/OwnerAPI";
 import OwnerTable from "@/components/owners/OwnerTable";
 import OwnerCard from "@/components/owners/OwnerCard";
 import OwnerPagination from "@/components/owners/OwnerPagination";
 import OwnerExportModal from "@/components/owners/OwnerExportModal";
-import type {
-  Owner,
-  OwnerWithStats,
-  SortField,
-  SortDirection,
-} from "@/types/owner";
+import type { OwnerWithStats, SortField, SortDirection } from "@/types/owner";
 
 export default function OwnersView() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // Estados
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState<SortField>("name");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [filterDebt, setFilterDebt] = useState<"all" | "withDebt" | "noDebt">(
-    "all",
-  );
+  const [filterDebt, setFilterDebt] = useState<"all" | "withDebt" | "noDebt">("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
-  // Query
-  const {
-    data: rawOwners = [],
-    isLoading,
-    isError,
-    error,
-  } = useQuery({
+  const { data: rawOwners = [], isLoading, isError, error } = useQuery({
     queryKey: ["owners"],
     queryFn: getOwners,
   });
 
-  // ✅ CORRECCIÓN PRINCIPAL AQUÍ:
-  // Transformar y asegurar datos SIN sobrescribir con ceros
   const owners: OwnerWithStats[] = useMemo(() => {
-    // Mapeamos para asegurar valores por defecto si alguno viniera undefined
     return rawOwners.map((owner: any) => ({
       ...owner,
-      // Usamos los datos reales del backend.
-      // El operador '??' usa el valor de la derecha solo si el de la izquierda es null/undefined
       petsCount: owner.petsCount ?? 0,
       lastVisit: owner.lastVisit ?? null,
       totalDebt: owner.totalDebt ?? 0,
@@ -66,358 +41,373 @@ export default function OwnersView() {
     }));
   }, [rawOwners]);
 
-  // Mutation para eliminar
-  const deleteMutation = useMutation({
-    mutationFn: deleteOwners,
-    onSuccess: (data) => {
-      toast.success(
-        "Eliminado",
-        data.msg || "Propietario eliminado correctamente",
-      );
-      queryClient.invalidateQueries({ queryKey: ["owners"] });
-      setSelectedIds(new Set());
-    },
-    onError: (err: Error) => {
-      toast.error("Error", err.message);
-    },
-  });
-
-  // Filtrar y ordenar
   const filteredOwners = useMemo(() => {
     let result = [...owners];
-
-    // Búsqueda
     if (search) {
       const s = search.toLowerCase();
-      result = result.filter(
-        (o) =>
-          o.name.toLowerCase().includes(s) ||
-          o.contact.includes(s) ||
-          o.email?.toLowerCase().includes(s) ||
-          o.nationalId?.includes(s),
+      result = result.filter(o => 
+        o.name.toLowerCase().includes(s) || 
+        o.contact.includes(s) || 
+        o.email?.toLowerCase().includes(s) || 
+        o.nationalId?.includes(s)
       );
     }
+    if (filterDebt === "withDebt") result = result.filter(o => o.totalDebt > 0);
+    else if (filterDebt === "noDebt") result = result.filter(o => o.totalDebt === 0);
 
-    // Filtro de deuda
-    if (filterDebt === "withDebt") {
-      result = result.filter((o) => o.totalDebt > 0);
-    } else if (filterDebt === "noDebt") {
-      result = result.filter((o) => o.totalDebt === 0);
-    }
-
-    // Ordenar
     result.sort((a, b) => {
       let cmp = 0;
       switch (sortField) {
-        case "name":
-          cmp = a.name.localeCompare(b.name);
-          break;
-        case "petsCount":
-          cmp = a.petsCount - b.petsCount;
-          break;
-        case "lastVisit":
-          const dateA = a.lastVisit ? new Date(a.lastVisit).getTime() : 0;
-          const dateB = b.lastVisit ? new Date(b.lastVisit).getTime() : 0;
-          cmp = dateA - dateB;
-          break;
-        case "totalDebt":
-          cmp = a.totalDebt - b.totalDebt;
-          break;
+        case "name": cmp = a.name.localeCompare(b.name); break;
+        case "petsCount": cmp = a.petsCount - b.petsCount; break;
+        case "lastVisit": cmp = (a.lastVisit ? new Date(a.lastVisit).getTime() : 0) - (b.lastVisit ? new Date(b.lastVisit).getTime() : 0); break;
+        case "totalDebt": cmp = a.totalDebt - b.totalDebt; break;
       }
       return sortDirection === "asc" ? cmp : -cmp;
     });
-
     return result;
   }, [owners, search, filterDebt, sortField, sortDirection]);
 
-  // Paginación
   const totalPages = Math.ceil(filteredOwners.length / itemsPerPage);
-  const paginatedOwners = filteredOwners.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
-  );
+  const paginatedOwners = filteredOwners.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  // Handlers
   const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
-      setSortField(field);
-      setSortDirection("asc");
-    }
+    if (sortField === field) setSortDirection(d => d === "asc" ? "desc" : "asc");
+    else { setSortField(field); setSortDirection("asc"); }
   };
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedIds(new Set(paginatedOwners.map((o) => o._id)));
-    } else {
-      setSelectedIds(new Set());
-    }
-  };
+  const handleSelectAll = (checked: boolean) => checked ? setSelectedIds(new Set(paginatedOwners.map(o => o._id))) : setSelectedIds(new Set());
+  const handleSelectOne = (id: string, checked: boolean) => { const newSet = new Set(selectedIds); checked ? newSet.add(id) : newSet.delete(id); setSelectedIds(newSet); };
+  const handleNavigate = (id: string) => navigate(`/owners/${id}`);
+  const handleWhatsApp = (phone: string) => window.open(`https://wa.me/${phone.replace(/\D/g, "")}`, "_blank");
 
-  const handleSelectOne = (id: string, checked: boolean) => {
-    const newSet = new Set(selectedIds);
-    if (checked) {
-      newSet.add(id);
-    } else {
-      newSet.delete(id);
-    }
-    setSelectedIds(newSet);
-  };
-
-  const handleNavigate = (id: string) => {
-    navigate(`/owners/${id}`);
-  };
-
-  const handleWhatsApp = (phone: string) => {
-    const clean = phone.replace(/\D/g, "");
-    window.open(`https://wa.me/${clean}`, "_blank");
-  };
-
-  const handleDelete = (owner: Owner) => {
-    if (
-      window.confirm(
-        `¿Eliminar a "${owner.name}"? Esta acción no se puede deshacer.`,
-      )
-    ) {
-      deleteMutation.mutate(owner._id);
-    }
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    setSelectedIds(new Set());
-  };
-
-  const handleItemsPerPageChange = (items: number) => {
-    setItemsPerPage(items);
-    setCurrentPage(1);
-    setSelectedIds(new Set());
-  };
-
-  const clearFilters = () => {
-    setSearch("");
-    setFilterDebt("all");
-    setCurrentPage(1);
-    setSelectedIds(new Set());
-  };
-
+  const clearFilters = () => { setSearch(""); setFilterDebt("all"); setCurrentPage(1); setSelectedIds(new Set()); setShowFilters(false); };
   const hasFilters = search || filterDebt !== "all";
 
-  // Loading
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-100">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-10 h-10 text-biovet-500 animate-spin" />
-          <p className="text-slate-500 dark:text-slate-400">
-            Cargando propietarios...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Error
-  if (isError) {
-    return (
-      <div className="flex items-center justify-center min-h-100">
-        <div className="flex flex-col items-center gap-4 text-center">
-          <AlertCircle className="w-12 h-12 text-danger-500" />
-          <div>
-            <p className="text-lg font-semibold text-slate-900 dark:text-white">
-              Error al cargar
-            </p>
-            <p className="text-slate-500 dark:text-slate-400">
-              {error instanceof Error ? error.message : "Error desconocido"}
-            </p>
-          </div>
-          <button
-            onClick={() =>
-              queryClient.invalidateQueries({ queryKey: ["owners"] })
-            }
-            className="btn-primary"
-          >
-            Reintentar
-          </button>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="w-10 h-10 text-biovet-500 animate-spin" /></div>;
+  if (isError) return <div className="text-center p-10"><AlertCircle className="w-12 h-12 text-danger-500 mx-auto" /><p className="text-slate-700 dark:text-slate-300 mt-2">Error al cargar: {error instanceof Error ? error.message : "Error desconocido"}</p><button onClick={() => queryClient.invalidateQueries({ queryKey: ["owners"] })} className="btn-primary mt-4">Reintentar</button></div>;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-            Propietarios
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">
-            {owners.length} cliente{owners.length !== 1 ? "s" : ""} registrado
-            {owners.length !== 1 ? "s" : ""}
-          </p>
-        </div>
-        <Link to="/owners/create" className="btn-primary">
-          <Plus size={20} />
-          Nuevo Propietario
-        </Link>
-      </div>
+    <div className="flex flex-col h-full bg-surface-100 dark:bg-dark-300">
+      
+      {/* ========================================
+         DESKTOP: Layout con scroll interno
+         ======================================== */}
+      <div className="hidden lg:flex flex-col h-full">
+        
+        {/* Header Fijo - Desktop */}
+        <div className="sticky top-0 z-30  border-b border-slate-200 dark:border-slate-800 px-6 py-4 ">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <button 
+                onClick={() => navigate(-1)} 
+                className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-dark-100 text-slate-500 dark:text-slate-400 transition-colors"
+                aria-label="Volver atrás"
+              >
+                <ArrowLeft size={22} />
+              </button>
+              
+              <div className="min-w-0">
+                <h1 className="text-2xl font-bold font-heading text-slate-900 dark:text-white truncate">
+                  Propietarios
+                </h1>
+                <p className="text-sm text-biovet-500 dark:text-warning-600 mt-1">
+                  {owners.length} clientes registrados
+                </p>
+              </div>
+            </div>
 
-      {/* Filtros */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        {/* Búsqueda */}
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Buscar por nombre, teléfono, email..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="input pl-10 pr-10"
-          />
-          {search && (
-            <button
-              onClick={() => setSearch("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-            >
-              <X size={18} />
-            </button>
-          )}
-        </div>
-
-        {/* Filtro deuda */}
-        <div className="flex items-center gap-2">
-          <Filter size={18} className="text-slate-400 shrink-0" />
-          <select
-            value={filterDebt}
-            onChange={(e) => {
-              setFilterDebt(e.target.value as typeof filterDebt);
-              setCurrentPage(1);
-            }}
-            className="input py-2 w-auto"
-          >
-            <option value="all">Todos</option>
-            <option value="withDebt">Con deuda</option>
-            <option value="noDebt">Sin deuda</option>
-          </select>
-        </div>
-
-        {/* Exportar */}
-        <button
-          onClick={() => setShowExportModal(true)}
-          className="btn-secondary shrink-0"
-        >
-          <Download size={18} />
-          <span className="hidden sm:inline">Exportar</span>
-          {selectedIds.size > 0 && (
-            <span className="bg-biovet-500 text-white text-xs px-1.5 py-0.5 rounded-full">
-              {selectedIds.size}
-            </span>
-          )}
-        </button>
-
-        {/* Limpiar filtros */}
-        {hasFilters && (
-          <button
-            onClick={clearFilters}
-            className="text-sm text-biovet-500 hover:text-biovet-600 dark:text-biovet-400 dark:hover:text-biovet-300 font-medium flex items-center gap-1 shrink-0"
-          >
-            <X size={14} />
-            Limpiar
-          </button>
-        )}
-      </div>
-
-      {/* Contador de filtrados */}
-      {hasFilters && (
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          Mostrando {filteredOwners.length} de {owners.length} propietarios
-        </p>
-      )}
-
-      {/* Contenido */}
-      {paginatedOwners.length === 0 ? (
-        <div className="bg-white dark:bg-dark-100 border border-slate-200 dark:border-slate-800 rounded-xl p-12 text-center">
-          <User className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-            {hasFilters ? "Sin resultados" : "No hay propietarios"}
-          </h3>
-          <p className="text-slate-500 dark:text-slate-400 mb-6">
-            {hasFilters
-              ? "Intenta con otros filtros de búsqueda"
-              : "Comienza agregando el primer propietario"}
-          </p>
-          {!hasFilters && (
-            <Link to="/owners/create" className="btn-primary inline-flex">
+            <Link to="/owners/create" className="btn-primary items-center gap-2 shadow-sm">
               <Plus size={20} />
-              Agregar Propietario
+              <span>Nuevo</span>
             </Link>
-          )}
-        </div>
-      ) : (
-        <div className="bg-white dark:bg-dark-100 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
-          {/* Tabla Desktop */}
-          <div className="hidden lg:block">
-            <OwnerTable
-              owners={paginatedOwners}
-              sortField={sortField}
-              sortDirection={sortDirection}
-              onSort={handleSort}
-              selectedIds={selectedIds}
-              allSelected={
-                paginatedOwners.length > 0 &&
-                paginatedOwners.every((o) => selectedIds.has(o._id))
-              }
-              onSelectAll={handleSelectAll}
-              onSelectOne={handleSelectOne}
-              onNavigate={handleNavigate}
-              onWhatsApp={handleWhatsApp}
-              onDelete={handleDelete}
-            />
           </div>
+        </div>
 
-          {/* Cards Mobile */}
-          <div className="lg:hidden divide-y divide-slate-100 dark:divide-slate-800">
-            {paginatedOwners.map((owner) => (
-              <OwnerCard
-                key={owner._id}
-                owner={owner}
-                isSelected={selectedIds.has(owner._id)}
-                onSelectChange={(selected) =>
-                  handleSelectOne(owner._id, selected)
-                }
-                onDelete={() => handleDelete(owner)}
-                onWhatsApp={() => handleWhatsApp(owner.contact)}
-                onNavigate={() => handleNavigate(owner._id)}
+        {/* Barra de Búsqueda y Filtros - Desktop */}
+        <div className="px-6 py-4  dark:bg-dark-200 border-b border-slate-200 dark:border-slate-800">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <input 
+                type="text" 
+                placeholder="Buscar por nombre, DNI, correo o teléfono..." 
+                value={search} 
+                onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }} 
+                className="w-full input pl-10 pr-10 py-2.5 rounded-lg" 
               />
-            ))}
-          </div>
+              {search && (
+                <button 
+                  onClick={() => setSearch("")} 
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  <X size={18} />
+                </button>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 bg-white dark:bg-dark-100 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5">
+                <Filter size={18} className="text-slate-400" />
+                <select 
+                  value={filterDebt} 
+                  onChange={(e) => { setFilterDebt(e.target.value as any); setCurrentPage(1); }} 
+                  className="bg-transparent border-none text-sm focus:ring-0 text-slate-700 dark:text-slate-200 p-0 cursor-pointer"
+                >
+                  <option value="all">Todos</option>
+                  <option value="withDebt">Con deuda</option>
+                  <option value="noDebt">Sin deuda</option>
+                </select>
+              </div>
 
-          {/* Paginación */}
-          {totalPages > 0 && (
-            <OwnerPagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={filteredOwners.length}
-              itemsPerPage={itemsPerPage}
-              onPageChange={handlePageChange}
-              onItemsPerPageChange={handleItemsPerPageChange}
-            />
+              <button 
+                onClick={() => setShowExportModal(true)} 
+                className="btn-secondary rounded-xl px-4 py-2.5 flex items-center gap-2"
+              >
+                <Download size={18} />
+                <span className="hidden xl:inline">Exportar</span>
+              </button>
+              
+              {hasFilters && (
+                <button 
+                  onClick={clearFilters} 
+                  className="text-sm text-biovet-500 hover:text-biovet-600 flex items-center gap-1.5 px-3 py-2 font-medium bg-biovet-50 dark:bg-biovet-900/30 rounded-lg"
+                >
+                  <X size={14} /> Limpiar
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Contenido con Scroll Interno - Desktop */}
+        <div className="flex-1 overflow-hidden px-6 py-4">
+          {paginatedOwners.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full py-16 px-4 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50/50 dark:bg-dark-100/50">
+              <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4 text-slate-400">
+                <User size={32} />
+              </div>
+              <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200">No hay clientes</h3>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mt-1 text-center max-w-xs">
+                {search ? "No se encontraron resultados" : "Agrega tu primer cliente para comenzar"}
+              </p>
+              {hasFilters && (
+                <button onClick={clearFilters} className="btn-ghost mt-4 text-biovet-600">
+                  Limpiar filtros
+                </button>
+              )}
+              {!search && (
+                <Link to="/owners/create" className="btn-primary mt-4">
+                  <Plus size={18} /> Agregar cliente
+                </Link>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col h-full">
+              {/* Tabla con scroll interno */}
+              <div className="bg-white dark:bg-dark-100 border border-slate-200 dark:border-slate-800  shadow-sm flex-1 overflow-hidden">
+                <div className="custom-scrollbar">
+                  <OwnerTable
+                    owners={paginatedOwners}
+                    sortField={sortField}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                    selectedIds={selectedIds}
+                    allSelected={paginatedOwners.length > 0 && paginatedOwners.every(o => selectedIds.has(o._id))}
+                    onSelectAll={handleSelectAll}
+                    onSelectOne={handleSelectOne}
+                    onNavigate={handleNavigate}
+                    onWhatsApp={handleWhatsApp}
+                  />
+                </div>
+              </div>
+
+              {/* Paginación - Fija abajo */}
+              {totalPages > 1 && (
+                <div className="mt-4">
+                  <OwnerPagination 
+                    currentPage={currentPage} 
+                    totalPages={totalPages} 
+                    totalItems={filteredOwners.length} 
+                    itemsPerPage={itemsPerPage} 
+                    onPageChange={(p) => {setCurrentPage(p); setSelectedIds(new Set())}} 
+                    onItemsPerPageChange={(n) => {setItemsPerPage(n); setCurrentPage(1)}} 
+                  />
+                </div>
+              )}
+            </div>
           )}
         </div>
-      )}
+      </div>
 
-      {/* Modal de Exportación */}
-      <OwnerExportModal
-        isOpen={showExportModal}
-        onClose={() => setShowExportModal(false)}
-        owners={filteredOwners}
-        selectedIds={selectedIds}
-      />
+      {/* ========================================
+         MOBILE/TABLET: Layout normal con scroll
+         ======================================== */}
+      <div className="lg:hidden flex flex-col min-h-screen">
+        
+        {/* Header Sticky - Mobile */}
+        <div className="sticky top-0 z-30 bg-white dark:bg-dark-200 border-b border-slate-200 dark:border-slate-800 px-4 py-3 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <button 
+                onClick={() => navigate(-1)} 
+                className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-dark-100 text-slate-500 dark:text-slate-400 transition-colors"
+                aria-label="Volver atrás"
+              >
+                <ArrowLeft size={22} />
+              </button>
+              
+              <div className="min-w-0">
+                <h1 className="text-lg font-bold font-heading text-slate-900 dark:text-white truncate">
+                  Propietarios
+                </h1>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  {owners.length} clientes
+                </p>
+              </div>
+            </div>
+
+            <Link to="/owners/create" className="btn-icon-primary fixed bottom-20 right-4 z-40 shadow-lg">
+              <Plus size={24} />
+            </Link>
+          </div>
+        </div>
+
+        {/* Búsqueda - Mobile */}
+        <div className="px-4 py-3 bg-white dark:bg-dark-200 border-b border-slate-200 dark:border-slate-800">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <input 
+              type="text" 
+              placeholder="Buscar cliente..." 
+              value={search} 
+              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }} 
+              className="w-full input pl-10 pr-10 py-2.5 text-sm rounded-lg" 
+            />
+            {search && (
+              <button 
+                onClick={() => setSearch("")} 
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                <X size={18} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Botón Filtros - Mobile */}
+        <div className="px-4 py-2">
+          <button 
+            onClick={() => setShowFilters(!showFilters)}
+            className="w-full flex items-center justify-between px-4 py-2.5 bg-white dark:bg-dark-100 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-200"
+          >
+            <div className="flex items-center gap-2">
+              <Filter size={18} className="text-slate-400" />
+              <span>Filtros</span>
+            </div>
+            <div className="flex items-center gap-2">
+              {hasFilters && (
+                <span className="px-2 py-0.5 bg-biovet-100 dark:bg-biovet-900 text-biovet-700 dark:text-biovet-300 text-xs rounded-full">
+                  {filterDebt === "withDebt" ? "Con deuda" : filterDebt === "noDebt" ? "Sin deuda" : "Todos"}
+                </span>
+              )}
+              <span className={`transform transition-transform ${showFilters ? "rotate-180" : ""}`}>
+                <X size={18} className="rotate-45" />
+              </span>
+            </div>
+          </button>
+        </div>
+
+        {/* Drawer Filtros - Mobile */}
+        {showFilters && (
+          <div className="fixed inset-0 z-50 bg-white dark:bg-dark-200 pt-16">
+            <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Filtros</h2>
+              <button onClick={() => setShowFilters(false)} className="p-2 text-slate-500 dark:text-slate-400">
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Estado de deuda</label>
+                <select 
+                  value={filterDebt} 
+                  onChange={(e) => { setFilterDebt(e.target.value as any); setCurrentPage(1); }} 
+                  className="w-full input text-sm"
+                >
+                  <option value="all">Todos los clientes</option>
+                  <option value="withDebt">Con deuda pendiente</option>
+                  <option value="noDebt">Sin deuda</option>
+                </select>
+              </div>
+
+              {hasFilters && (
+                <button 
+                  onClick={clearFilters} 
+                  className="w-full btn-danger text-sm py-2.5"
+                >
+                  Limpiar todos los filtros
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Contenido - Mobile */}
+        <div className="flex-1 px-4 pb-24 overflow-y-auto"> {/* pb-24 para bottom navbar */}
+          {paginatedOwners.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 px-4 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50/50 dark:bg-dark-100/50">
+              <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4 text-slate-400">
+                <User size={32} />
+              </div>
+              <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200">No hay clientes</h3>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mt-1 text-center max-w-xs">
+                {search ? "No se encontraron resultados" : "Agrega tu primer cliente para comenzar"}
+              </p>
+              {hasFilters && (
+                <button onClick={clearFilters} className="btn-ghost mt-4 text-biovet-600">
+                  Limpiar filtros
+                </button>
+              )}
+              {!search && (
+                <Link to="/owners/create" className="btn-primary mt-4">
+                  <Plus size={18} /> Agregar cliente
+                </Link>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {paginatedOwners.map(owner => (
+                <OwnerCard 
+                  key={owner._id} 
+                  owner={owner} 
+                  isSelected={selectedIds.has(owner._id)}
+                  onSelectChange={(sel) => handleSelectOne(owner._id, sel)}
+                  onWhatsApp={() => handleWhatsApp(owner.contact)}
+                  onNavigate={() => handleNavigate(owner._id)}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Paginación - Mobile */}
+          {totalPages > 1 && (
+            <div className="mt-4">
+              <OwnerPagination 
+                currentPage={currentPage} 
+                totalPages={totalPages} 
+                totalItems={filteredOwners.length} 
+                itemsPerPage={itemsPerPage} 
+                onPageChange={(p) => {setCurrentPage(p); setSelectedIds(new Set())}} 
+                onItemsPerPageChange={(n) => {setItemsPerPage(n); setCurrentPage(1)}} 
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      <OwnerExportModal isOpen={showExportModal} onClose={() => setShowExportModal(false)} owners={filteredOwners} selectedIds={selectedIds} />
     </div>
   );
 }

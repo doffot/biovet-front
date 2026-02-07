@@ -243,6 +243,14 @@
            hover:bg-danger-900 hover:border-danger-700;
   }
 
+   /* ========================================
+     ICON BUTTONS MOBILE
+     ======================================== */
+     .btn-icon-mobile{
+     @apply inline-flex items-center justify-center 
+           w-10 h-10 rounded-full bg-dark-400 border border-slate-500 text-white
+     }
+
   /* ========================================
      BADGES
      ======================================== */
@@ -420,15 +428,69 @@
     font-family: var(--font-heading);
   }
 
-   input:-webkit-autofill,
-  input:-webkit-autofill:hover,
-  input:-webkit-autofill:focus,
-  input:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.1) inset !important;
-    -webkit-text-fill-color: white !important;
-    transition: background-color 9999s ease-in-out 0s;
-    caret-color: white;
+ /* Autocomplete para modo CLARO */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px white inset !important;
+  -webkit-text-fill-color: #374151 !important;
+  transition: background-color 9999s ease-in-out 0s;
+  caret-color: #374151;
+}
+
+/* Autocomplete para modo OSCURO */
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover,
+.dark input:-webkit-autofill:focus,
+.dark input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #1a2234 inset !important;
+  -webkit-text-fill-color: white !important;
+  transition: background-color 9999s ease-in-out 0s;
+  caret-color: white;
+}
+
+.custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent; /* Oculto por defecto */
+    transition: scrollbar-color 0.3s ease;
   }
+
+  /* Mostrar al hover */
+  .custom-scrollbar:hover {
+    scrollbar-color: #cbd5e1 transparent; /* surface-300 */
+  }
+
+  .dark .custom-scrollbar:hover {
+    scrollbar-color: #334155 transparent; /* slate-700 */
+  }
+
+  /* Webkit (Chrome, Safari, Edge) */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: transparent; /* Oculto por defecto */
+    border-radius: 20px;
+    border: 2px solid transparent; /* Espacio para que parezca flotante */
+    background-clip: content-box;
+  }
+
+  .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1; /* surface-300 */
+  }
+
+  .dark .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+    background-color: #334155; /* slate-700 */
+  }
+
 
   @keyframes shrink {
     from {

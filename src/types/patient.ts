@@ -33,6 +33,8 @@ export const patientSchema = z.object({
   photo: z.string().optional().nullable(),
   mainVet: z.string().min(1, "El nombre del veterinario principal es obligatorio"),
   referringVet: z.string().optional().nullable(),
+  // NUEVO CAMPO AGREGADO
+  observations: z.string().optional().nullable(),
 });
 
 export const patientsListSchema = z.array(
@@ -50,6 +52,7 @@ export const patientsListSchema = z.array(
     photo: z.string().optional().nullable(),
     mainVet: z.string(),
     referringVet: z.string().optional().nullable(),
+   observations: z.string().optional().nullable().default(""),
   })
 );
 
@@ -69,4 +72,5 @@ export type PatientFormData = Pick<
   | "photo"
   | "mainVet"
   | "referringVet"
+  | "observations" 
 >;

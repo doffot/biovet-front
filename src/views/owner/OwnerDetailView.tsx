@@ -1,11 +1,13 @@
 // src/views/owners/OwnerDetailView.tsx
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Trash2 } from 'lucide-react';
 
-import { getOwnersById } from '@/api/OwnerAPI';
+import { getOwnersById, deleteOwners } from '@/api/OwnerAPI';
 import { getPatientsByOwner } from '@/api/patientAPI';
 import { getInvoices } from '@/api/invoiceAPI';
+import { toast } from '@/components/Toast';
 
 import type { Owner } from '@/types/owner';
 import type { Patient } from '@/types/patient';
@@ -17,15 +19,19 @@ import { OwnerHeader } from '@/components/owners/detail/OwnerHeader';
 import { GeneralTab } from '@/components/owners/detail/tabs/GeneralTab';
 import { PatientsTab } from '@/components/owners/detail/tabs/PatientsTab';
 import { TransactionsTab } from '@/components/owners/detail/tabs/TransactionsTab';
-import { DocumentsTab } from '@/components/owners/detail/tabs/DocumentsTab';
 import { EmptyTab } from '@/components/owners/detail/tabs/EmptyTab';
 
 import type { TabType, TimelineItem, DebtInfo } from '@/utils/ownerHelpers';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 export default function OwnerDetailView() {
   const { ownerId } = useParams<{ ownerId: string }>();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
   const [activeTab, setActiveTab] = useState<TabType>('mascotas');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // ==================== QUERIES ====================
   const { data: owner, isLoading: isLoadingOwner } = useQuery<Owner>({
@@ -47,6 +53,19 @@ export default function OwnerDetailView() {
   });
 
   const invoices = invoicesResponse?.invoices || [];
+
+  // ==================== DELETE MUTATION ====================
+  const deleteMutation = useMutation({
+    mutationFn: deleteOwners,
+    onSuccess: (data) => {
+      toast.success("Eliminado", data.msg || "Propietario eliminado correctamente");
+      queryClient.invalidateQueries({ queryKey: ["owners"] });
+      navigate('/owners');
+    },
+    onError: (err: Error) => {
+      toast.error("Error", err.message);
+    },
+  });
 
   // ==================== COMPUTED ====================
   const debtInfo = useMemo<DebtInfo>(() => {
@@ -108,6 +127,22 @@ export default function OwnerDetailView() {
     setIsMobileSidebarOpen(false);
   };
 
+  const handleDeleteClick = () => {
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (ownerId) {
+      deleteMutation.mutate(ownerId);
+    }
+  };
+
+  const handleCloseDeleteModal = () => {
+    if (!deleteMutation.isPending) {
+      setShowDeleteModal(false);
+    }
+  };
+
   // ==================== RENDER TAB CONTENT ====================
   const renderTabContent = () => {
     switch (activeTab) {
@@ -132,8 +167,6 @@ export default function OwnerDetailView() {
             totalDebt={debtInfo.totalDebt}
           />
         );
-      case 'documentos':
-        return <DocumentsTab />;
       default:
         return <EmptyTab tabName={activeTab} />;
     }
@@ -146,38 +179,74 @@ export default function OwnerDetailView() {
 
   // ==================== RENDER ====================
   return (
-    <div className="flex flex-col md:flex-row h-screen w-full bg-surface-100 dark:bg-dark-300 transition-colors duration-300 overflow-hidden">
-      {/* Sidebar */}
-      <OwnerSidebar
-        owner={owner}
-        creditBalance={owner?.creditBalance || 0}
-        debtInfo={debtInfo}
-        timelineItems={timelineItems}
-        isLoadingTimeline={isLoadingInvoices}
-        onViewAllTransactions={handleViewAllTransactions}
-        isMobileOpen={isMobileSidebarOpen}
-        onMobileClose={handleCloseMobileSidebar}
-      />
-
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <OwnerHeader
-          ownerName={owner?.name || ''}
-          ownerId={ownerId!}
-          patients={patientsData}
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
+    <>
+      <div className="flex flex-col md:flex-row h-screen w-full bg-surface-100 dark:bg-dark-300 transition-colors duration-300 overflow-hidden">
+        {/* Sidebar */}
+        <OwnerSidebar
+          owner={owner}
+          creditBalance={owner?.creditBalance || 0}
           debtInfo={debtInfo}
-          onMenuClick={handleMenuClick}
+          timelineItems={timelineItems}
+          isLoadingTimeline={isLoadingInvoices}
+          onViewAllTransactions={handleViewAllTransactions}
+          onDelete={handleDeleteClick}
+          isMobileOpen={isMobileSidebarOpen}
+          onMobileClose={handleCloseMobileSidebar}
         />
 
-        {/* Tab Content */}
-        <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 lg:space-y-8 overflow-y-auto scrollbar-thin bg-surface-50/50 dark:bg-dark-300 flex-1">
-          {renderTabContent()}
-        </div>
-      </main>
-    </div>
+        {/* Main Content */}
+        <main className="flex-1 flex flex-col overflow-hidden">
+          {/* Header */}
+          <OwnerHeader
+            ownerName={owner?.name || ''}
+            ownerId={ownerId!}
+            patients={patientsData}
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            debtInfo={debtInfo}
+            onMenuClick={handleMenuClick}
+          />
+
+          {/* Tab Content */}
+          <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 lg:space-y-8 overflow-y-auto scrollbar-thin bg-surface-50/50 dark:bg-dark-300 flex-1">
+            {renderTabContent()}
+          </div>
+        </main>
+      </div>
+
+      {/* Modal de Confirmación de Eliminación */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={handleCloseDeleteModal}
+        onConfirm={handleConfirmDelete}
+        variant="danger"
+        title="Eliminar Propietario"
+        message={
+          <div className="space-y-2">
+            <p>
+              ¿Estás seguro de que deseas eliminar a{" "}
+              <span className="font-semibold text-slate-900 dark:text-white">
+                {owner?.name}
+              </span>
+              ?
+            </p>
+            {patientsData.length > 0 && (
+              <p className="text-sm text-warning-600 dark:text-warning-400">
+                ⚠️ Este propietario tiene {patientsData.length} mascota{patientsData.length !== 1 ? 's' : ''} registrada{patientsData.length !== 1 ? 's' : ''}.
+              </p>
+            )}
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Esta acción no se puede deshacer.
+            </p>
+          </div>
+        }
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        confirmIcon={Trash2}
+        isLoading={deleteMutation.isPending}
+        loadingText="Eliminando..."
+      />
+    </>
   );
 }
 
@@ -187,34 +256,31 @@ function OwnerDetailSkeleton() {
     <div className="flex h-screen w-full bg-surface-100 dark:bg-dark-300">
       {/* Sidebar Skeleton */}
       <aside className="hidden md:flex w-80 lg:w-96 bg-white dark:bg-dark-200 border-r border-surface-200 dark:border-slate-800 flex-col">
-        {/* Avatar Section */}
         <div className="p-6 flex flex-col items-center border-b border-surface-100 dark:border-slate-800/50 animate-pulse">
           <div className="w-16 h-16 bg-surface-200 dark:bg-slate-700 rounded-full mb-3" />
           <div className="h-5 w-32 bg-surface-200 dark:bg-slate-700 rounded mb-2" />
           <div className="h-3 w-20 bg-surface-100 dark:bg-slate-800 rounded" />
           <div className="flex gap-3 mt-4">
-            <div className="w-10 h-10 bg-surface-200 dark:bg-slate-700 rounded-xl" />
-            <div className="w-10 h-10 bg-surface-200 dark:bg-slate-700 rounded-xl" />
-            <div className="w-10 h-10 bg-surface-200 dark:bg-slate-700 rounded-xl" />
+            <div className="w-9 h-9 bg-surface-200 dark:bg-slate-700 rounded-full" />
+            <div className="w-9 h-9 bg-surface-200 dark:bg-slate-700 rounded-full" />
+            <div className="w-9 h-9 bg-surface-200 dark:bg-slate-700 rounded-full" />
+            <div className="w-9 h-9 bg-surface-200 dark:bg-slate-700 rounded-full" />
           </div>
         </div>
 
-        {/* Balance Cards Skeleton */}
         <div className="p-4 border-b border-surface-100 dark:border-slate-800 space-y-3 animate-pulse">
           <div className="h-16 bg-surface-100 dark:bg-slate-800 rounded-xl" />
           <div className="h-16 bg-surface-100 dark:bg-slate-800 rounded-xl" />
         </div>
 
-        {/* Timeline Header Skeleton */}
         <div className="px-5 py-4 border-b border-surface-100 dark:border-slate-800 animate-pulse">
           <div className="h-4 w-24 bg-surface-200 dark:bg-slate-700 rounded" />
         </div>
 
-        {/* Timeline Skeleton */}
         <div className="flex-1 p-4 space-y-4 animate-pulse">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="flex gap-3">
-              <div className="w-6 h-6 bg-surface-200 dark:bg-slate-700 rounded-full flex-shrink-0" />
+              <div className="w-6 h-6 bg-surface-200 dark:bg-slate-700 rounded-full shrink-0" />
               <div className="flex-1 space-y-2">
                 <div className="h-3 w-16 bg-surface-200 dark:bg-slate-700 rounded" />
                 <div className="h-4 w-full bg-surface-100 dark:bg-slate-800 rounded" />
@@ -227,7 +293,6 @@ function OwnerDetailSkeleton() {
 
       {/* Main Content Skeleton */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Header Skeleton */}
         <header className="p-4 sm:p-6 lg:p-8 bg-white dark:bg-dark-200 border-b border-surface-200 dark:border-slate-800 animate-pulse">
           <div className="h-3 w-32 bg-surface-200 dark:bg-slate-700 rounded mb-4" />
           <div className="flex justify-between items-start">
@@ -245,7 +310,6 @@ function OwnerDetailSkeleton() {
             <div className="h-10 w-36 bg-surface-200 dark:bg-slate-700 rounded-lg" />
           </div>
           
-          {/* Tabs Skeleton */}
           <div className="flex gap-6 mt-8">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div key={i} className="h-4 w-20 bg-surface-100 dark:bg-slate-800 rounded" />
@@ -253,7 +317,6 @@ function OwnerDetailSkeleton() {
           </div>
         </header>
 
-        {/* Content Skeleton */}
         <div className="p-4 sm:p-6 lg:p-8 flex-1 animate-pulse">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
             {[1, 2, 3, 4, 5, 6].map((i) => (

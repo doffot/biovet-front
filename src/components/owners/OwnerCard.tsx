@@ -1,12 +1,11 @@
-import { Link } from 'react-router-dom';
-import { Edit, Trash2, Phone, Mail, Calendar, Check, PawPrint } from 'lucide-react';
+// src/components/owners/OwnerCard.tsx
+import { Phone, Mail, Calendar, Check, PawPrint, Eye } from 'lucide-react';
 import type { OwnerWithStats } from '@/types/owner';
 
 type OwnerCardProps = {
   owner: OwnerWithStats;
   isSelected: boolean;
   onSelectChange: (selected: boolean) => void;
-  onDelete: () => void;
   onWhatsApp: () => void;
   onNavigate: () => void;
 };
@@ -15,7 +14,6 @@ export default function OwnerCard({
   owner,
   isSelected,
   onSelectChange,
-  onDelete,
   onWhatsApp,
   onNavigate,
 }: OwnerCardProps) {
@@ -104,21 +102,17 @@ export default function OwnerCard({
               </button>
             </div>
 
-            {/* Acciones */}
-            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-              <Link
-                to={`/owners/${owner._id}/edit`}
-                className="p-2 rounded-lg text-slate-400 hover:text-biovet-500 hover:bg-biovet-50 dark:hover:bg-biovet-950"
-              >
-                <Edit size={16} />
-              </Link>
-              <button
-                onClick={onDelete}
-                className="p-2 rounded-lg text-slate-400 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-950"
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
+            {/* Acciones Simples */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onNavigate();
+              }}
+              className="p-2 rounded-lg text-slate-400 hover:text-biovet-500 hover:bg-biovet-50 dark:hover:bg-biovet-950"
+              title="Ver detalle"
+            >
+              <Eye size={18} />
+            </button>
           </div>
 
           {/* Detalles */}

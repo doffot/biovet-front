@@ -1,10 +1,9 @@
-import { Moon, Sun, Bell, Calendar, Menu } from 'lucide-react';
+import { Moon, Sun, Bell, Calendar} from 'lucide-react';
 import { useLayoutStore } from '../../store/useLayoutStore';
 
 export const Header = () => {
   const theme = useLayoutStore((s) => s.theme);
   const toggleTheme = useLayoutStore((s) => s.toggleTheme);
-  const toggleMobileSidebar = useLayoutStore((s) => s.toggleMobileSidebar);
   
   const isDark = theme === 'dark';
 
@@ -18,20 +17,25 @@ export const Header = () => {
       transition-colors duration-300
     ">
       
+      {/* Logo + Botón Hamburguesa */}
       <div className="flex items-center gap-4">
-        <button
-          onClick={toggleMobileSidebar}
-          className="lg:hidden btn-icon-neutral"
-        >
-          <Menu size={20} />
-        </button>
+        {/* Logo - Visible en mobile */}
+        <div className="lg:hidden flex items-center">
+          <img 
+            src="/logo_main.webp" 
+            alt="BioVet Track" 
+            className="h-8 object-contain"
+          />
+        </div>
+
+        
       </div>
 
       <div className="flex items-center gap-2">
-        {/* Theme Toggle */}
+        {/* Theme Toggle - Oculto en mobile, visible en desktop */}
         <button 
           onClick={toggleTheme}
-          className="btn-icon-neutral group"
+          className="hidden lg:flex btn-icon-neutral group"
           title={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
         >
           <div className="relative w-5 h-5">
@@ -60,31 +64,31 @@ export const Header = () => {
           </div>
         </button>
 
-        <button className="btn-icon-neutral hidden sm:flex">
+        <button className="hidden sm:flex lg:flex btn-icon-neutral">
           <Calendar size={20} />
         </button>
         
         {/* Notifications */}
         <button className="btn-icon-neutral relative">
-          <Bell size={20} className="text-biovet-500 fill-biovet-500" />
-          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-danger-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white dark:border-dark-200">
+          <Bell size={20} className="text-biovet-500 fill-biovet-850" />
+          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-danger-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-dark-200">
             3
           </span>
         </button>
 
         {/* Divider */}
-        <div className="hidden sm:block w-px h-8 bg-slate-200 dark:bg-slate-700 mx-2" />
+        <div className="hidden sm:block w-px h-8 bg-white/20 lg:bg-slate-200 lg:dark:bg-slate-700 mx-2" />
         
         {/* User Avatar */}
-        <button className="flex items-center gap-3 p-1.5 pr-4 rounded-xl hover:bg-slate-50 dark:hover:bg-dark-50 transition-colors">
-          <div className="w-9 h-9 rounded-full bg-biovet-100 flex items-center justify-center text-biovet-600 font-bold text-sm shadow-sm">
+        <button className="flex items-center gap-3 p-1.5 pr-4 rounded-xl hover:bg-dark-300 lg:hover:bg-slate-50 lg:dark:hover:bg-dark-50 transition-colors">
+          <div className="w-9 h-9 rounded-full bg-biovet-500 flex items-center justify-center text-white font-bold text-sm shadow-sm">
             DR
           </div>
           <div className="hidden md:block text-left">
-            <p className="text-sm font-semibold text-slate-700 dark:text-white leading-tight">
+            <p className="text-sm font-semibold text-white lg:text-slate-700 lg:dark:text-white leading-tight">
               Dr. Rodríguez
             </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-white/80 lg:text-slate-500 lg:dark:text-slate-400">
               Veterinario
             </p>
           </div>

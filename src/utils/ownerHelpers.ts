@@ -171,13 +171,11 @@ export interface PaymentData {
   creditAmountUsed?: number;
 }
 
-export type TabType = 'general' | 'mascotas' | 'transacciones' | 'documentos' | 'notas' | 'citas';
+export type TabType = 'general' | 'mascotas' | 'transacciones' |  'citas';
 
 export const TABS: { id: TabType; label: string }[] = [
   { id: 'general', label: 'General' },
   { id: 'mascotas', label: 'Mascotas' },
   { id: 'transacciones', label: 'Transacciones' },
-  { id: 'documentos', label: 'Documentos' },
-  { id: 'notas', label: 'Notas' },
   { id: 'citas', label: 'Citas' },
 ];
