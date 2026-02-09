@@ -10,9 +10,13 @@ import OwnersView from "@/views/owner/OwnersView";
 import OwnerDetailView from "@/views/owner/OwnerDetailView";
 import CreateOwnerView from "@/views/owner/CreateOwnerView";
 import CreatePatientView from "@/views/patients/CreatePatientView";
-import DetailPatientView from "@/views/patients/DetailPatientView"; // Esta es el "Resumen"
+import DetailPatientView from "@/views/patients/DetailPatientView"; 
+import PatientsListView from "@/views/patients/PatientsListView"; // <-- NUEVA VISTA DE LISTA
 import VaccinationView from "./views/vaccinations/VaccinationView";
 import DewormingView from "./views/dewormings/DewormingView";
+import ConsultationView from "./views/consultations/ConsultationView";
+import CreateConsultationView from "./views/consultations/CreateConsultationView";
+import ConsultationDetailView from "./views/consultations/ConsultationDetailView";
 
 export default function Router() {
   return (
@@ -32,37 +36,33 @@ export default function Router() {
              <Route index element={<OwnersView />} />
              <Route path="create" element={<CreateOwnerView />} />
              <Route path=":ownerId" element={<OwnerDetailView />} />
-             {/* Crear paciente desde el dueño */}
              <Route path=":ownerId/patients/new" element={<CreatePatientView />} />
           </Route>
 
-          {/* Pacientes (Lista General) */}
-          <Route path="/patients" element={<div>Lista general de pacientes (Pendiente)</div>} />
+          {/* ✅ PACIENTES (Lista General) */}
+          <Route path="/patients">
+             <Route index element={<PatientsListView />} /> {/* <-- Aquí pegas la PatientTable */}
+          </Route>
           
-          {/* Crear Paciente (Ruta alternativa si no vienes del dueño) */}
-          {/* Nota: createPatient necesita un ownerId, revisa si esta ruta es necesaria sola */}
-          
-          {/* =============================================
-              PATIENT LAYOUT (Perfil de Mascota)
-              Ruta: /patients/:patientId/...
-              ============================================= */}
+              {/* PATIENT LAYOUT (Perfil de Mascota) */}
           <Route path="/patients/:patientId" element={<PatientLayout />}>
-              {/* index: Lo que se ve al entrar (Resumen) */}
+              {/* index: Lo que se ve al entrar (Resumen/Ficha) */}
               <Route index element={<DetailPatientView />} /> 
-               {/* ✅ NUEVA RUTA DE VACUNAS */}
+              
               <Route path="vaccines" element={<VaccinationView />} />
               <Route path="deworming" element={<DewormingView/>} />
+              <Route path="consultations" element={<ConsultationView/>} />
+              <Route path="consultations/new" element={<CreateConsultationView />} />
+              <Route path="consultations/:consultationId" element={<ConsultationDetailView />} />
               
-              {/* Aquí irán las otras pestañas del PatientLayout */}
-              <Route path="consultations" element={<div>Vista Consultas</div>} />
-              <Route path="treatments" element={<div>Vista Tratamientos</div>} />
-              <Route path="vaccines" element={<div>Vista Vacunas</div>} />
-              <Route path="appointments" element={<div>Vista Citas</div>} />
-              {/* etc... */}
+              {/* Pestañas adicionales */}
+              
+              <Route path="treatments" element={<div>Vista Tratamientos (Próximamente)</div>} />
+              <Route path="appointments" element={<div>Vista Citas (Próximamente)</div>} />
           </Route>
 
 
-          {/* Placeholders para las otras rutas del menú (para que no den error 404) */}
+          {/* Placeholders */}
           <Route path="/appointments" element={<div>Calendario de Citas</div>} />
           <Route path="/sales/*" element={<div>Módulo de Ventas</div>} />
           <Route path="/inventory/*" element={<div>Módulo de Inventario</div>} />
@@ -79,7 +79,6 @@ export default function Router() {
           <Route path="/auth/login" element={<LoginView />} />
         </Route>
 
-        {/* Catch all - 404 */}
         <Route path="*" element={<Navigate to="/" replace />} />
 
       </Routes>

@@ -96,10 +96,7 @@ export const consultationsListSchema = z.array(consultationSchema);
 
 export type Consultation = z.infer<typeof consultationSchema>;
 
-/**
- * Tipo para el Formulario de Consulta
- * Eliminamos los campos automáticos para que el Form use solo lo necesario
- */
+
 export type ConsultationFormData = Omit<
   Consultation, 
   "_id" | "patientId" | "veterinarianId" | "createdAt" | "updatedAt"

@@ -1,13 +1,9 @@
-/* ==========================================
-   GOOGLE FONTS
-   ========================================== */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+/* GOOGLE FONTS */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 @import "tailwindcss";
 
-/* ==========================================
-   CONFIGURACIÓN DARK MODE 
-   ========================================== */
+   /* CONFIGURACIÓN DARK MODE  */
 @custom-variant dark (&:where(.dark, .dark *));
 
 
@@ -15,6 +11,7 @@
   /* --- FUENTES --- */
   --font-sans: 'Noto Sans', ui-sans-serif, system-ui, sans-serif;
   --font-heading: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-ui: 'Inter', ui-sans-serif, system-ui, sans-serif;
 
   /* --- PALETA BIOVET TRACK --- */
   --color-biovet-50: #f0f9fb;
@@ -28,6 +25,7 @@
   --color-biovet-800: #0b3e4e;
   --color-biovet-900: #0d3542;
   --color-biovet-950: #05222c;
+  --color-biovet-add: #0077B6;
 
   /* --- SUCCESS --- */
   --color-success-50: #f0fdf4;
@@ -134,11 +132,11 @@
      ======================================== */
   
   .btn-primary {
-    @apply inline-flex items-center justify-center 
-           font-semibold text-sm px-5 py-2.5 gap-2
+    @apply inline-flex items-center justify-center font-ui
+           font-semibold text-sm px-5 py-3 gap-2
            bg-biovet-500 text-white 
            border border-biovet-600
-           rounded-lg shadow-sm
+           rounded-md 
            transition-all duration-200 cursor-pointer
            hover:bg-biovet-600 
            active:scale-[0.98]
@@ -154,7 +152,7 @@
            font-semibold text-sm px-5 py-2.5 gap-2
            bg-white text-biovet-600 
            border border-biovet-200
-           rounded-lg shadow-sm
+           rounded-md shadow-sm
            transition-all duration-200 cursor-pointer
            hover:bg-biovet-50 hover:border-biovet-300
            active:scale-[0.98]
@@ -193,6 +191,8 @@
            active:scale-[0.98]
            disabled:opacity-50 disabled:pointer-events-none;
   }
+
+
 
   /* ========================================
      ICON BUTTONS

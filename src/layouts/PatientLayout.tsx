@@ -35,10 +35,11 @@ export default function PatientLayout() {
 
   // Helper para Desktop tabs
   const getTabClass = ({ isActive }: { isActive: boolean }) => `
-    flex items-center gap-1 px-2 py-3 text-[10px] font-medium border-b-2 transition-colors
+    flex items-center gap-1 px-2 py-3 text-[12px] font-medium text-biovet-add
+    transition-colors
     ${isActive 
-      ? 'border-biovet-500 text-biovet-700 dark:text-biovet-400' 
-      : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
+      ? 'bg-biovet-add/10  dark:text-biovet-400' 
+      : 'border-transparent text-biovet-add hover:bg-biovet-add/20  dark:text-slate-400'
     }
   `;
 
@@ -87,7 +88,7 @@ export default function PatientLayout() {
       <div className="hidden lg:flex flex-col h-full">
         
         {/* Header Fijo - Desktop */}
-        <div className="sticky top-0 z-30 bg-surface-100/95 dark:bg-dark-300/95 backdrop-blur-md border-b border-surface-200 dark:border-dark-100 shadow-sm px-6 pt-6 -mx-6 -mt-6">
+        <div className="sticky top-0 z-30 bg-surface-100/95 dark:bg-dark-300/95 backdrop-blur-md border-b pb-2 border-surface-300 dark:border-dark-100  px-6 pt-6 -mx-6 -mt-6">
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-4">
               <button 
@@ -123,7 +124,7 @@ export default function PatientLayout() {
           </div>
           
           {/* Tabs - Desktop */}
-          <nav className="flex justify-around gap-1  pb-1">
+          <nav className="flex  justify-center ">
             {navItems.map(item => (
               <NavLink key={item.to} to={item.to} end={item.end} className={getTabClass}>
                 <item.icon size={18} /> {item.label}

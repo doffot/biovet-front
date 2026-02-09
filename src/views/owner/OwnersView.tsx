@@ -3,7 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { 
   Plus, Search, Download, Filter, X, Loader2, AlertCircle, User, 
-  ArrowLeft
+  ArrowLeft,
+  PlusCircle
 } from "lucide-react";
 import { getOwners } from "@/api/OwnerAPI";
 import OwnerTable from "@/components/owners/OwnerTable";
@@ -118,7 +119,7 @@ export default function OwnersView() {
             </div>
 
             <Link to="/owners/create" className="btn-primary items-center gap-2 shadow-sm">
-              <Plus size={20} />
+              <PlusCircle size={20} />
               <span>Nuevo</span>
             </Link>
           </div>
@@ -134,7 +135,7 @@ export default function OwnersView() {
                 placeholder="Buscar por nombre, DNI, correo o teléfono..." 
                 value={search} 
                 onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }} 
-                className="w-full input pl-10 pr-10 py-2.5 rounded-lg" 
+                className="w-full input pl-10 pr-10 py-2.5 rounded-md" 
               />
               {search && (
                 <button 
@@ -147,7 +148,7 @@ export default function OwnersView() {
             </div>
             
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 bg-white dark:bg-dark-100 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5">
+              <div className="flex items-center gap-2 bg-white dark:bg-dark-100 border border-slate-200 dark:border-slate-700 rounded-md px-4 py-2.5">
                 <Filter size={18} className="text-slate-400" />
                 <select 
                   value={filterDebt} 
@@ -162,7 +163,7 @@ export default function OwnersView() {
 
               <button 
                 onClick={() => setShowExportModal(true)} 
-                className="btn-secondary rounded-xl px-4 py-2.5 flex items-center gap-2"
+                className="btn-secondary "
               >
                 <Download size={18} />
                 <span className="hidden xl:inline">Exportar</span>

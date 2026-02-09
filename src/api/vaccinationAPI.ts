@@ -42,6 +42,7 @@ export async function createVaccination(
   patientId: string,
   data: VaccinationFormData
 ): Promise<Vaccination> {
+  console.log(data);
   try {
     const { data: response } = await api.post<CreateVaccinationResponse>(
       `/vaccinations/${patientId}`,
@@ -52,8 +53,8 @@ export async function createVaccination(
       ...response.vaccination,
       productId: normalizeProductId(response.vaccination.productId),
     };
-
     const parsed = vaccinationSchema.safeParse(normalized);
+    console.log(parsed);
     if (!parsed.success) {
       console.error("❌ Zod error:", parsed.error.issues);
       throw new Error("Datos de vacuna inválidos");

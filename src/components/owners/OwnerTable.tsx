@@ -6,6 +6,8 @@ import {
   Eye,
   Phone,
   PawPrint,
+  AlertCircle,
+  CheckCircle,
  
 } from "lucide-react";
 import type { OwnerWithStats, SortField, SortDirection } from "@/types/owner";
@@ -59,7 +61,7 @@ export default function OwnerTable({
   return (
     <div className="flex flex-col  overflow-hidden bg-white dark:bg-dark-200 ">
       
-      {/* 1. HEADER FIJO: pr-4 para compensar el scrollbar que vendrá abajo */}
+      
       <div className={`${gridLayout} bg-biovet-50 dark:bg-dark-300 border-b border-[#cee3e8] dark:border-dark-100 pr-4`}>
         <div className="px-6 py-4 flex items-center justify-center">
           <input
@@ -115,11 +117,11 @@ export default function OwnerTable({
               <div className="px-6 py-4 text-center">
                 {owner.totalDebt > 0 ? (
                   <span className="inline-flex items-center px-2 py-1 rounded text-[10px] font-bold bg-red-100 text-red-600 border border-red-200 uppercase">
-                    Debe {formatCurrency(owner.totalDebt)}
+                    Debe {formatCurrency(owner.totalDebt)} <AlertCircle size={12} className="ml-1" />
                   </span>
                 ) : (
                   <span className="inline-flex items-center px-2 py-1 rounded text-[10px] font-bold bg-green-100 text-green-600 border border-green-200 uppercase">
-                    Al día
+                    Al día <CheckCircle size={12} className="ml-1" />
                   </span>
                 )}
               </div>
