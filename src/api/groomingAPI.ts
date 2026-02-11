@@ -1,12 +1,8 @@
 // src/api/groomingAPI.ts
 import { AxiosError } from "axios";
-import {
-  groomingServiceSchema,
-  groomingServicesListResponseSchema,
-  type GroomingService,
-  type GroomingServiceFormData,
-} from "../types";
+
 import api from "../lib/axios";
+import { groomingServiceSchema, groomingServicesListResponseSchema, type GroomingService, type GroomingServiceFormData } from "@/types/grooming";
 
 //  TIPOS DE RESPUESTA DEL BACKEND
 

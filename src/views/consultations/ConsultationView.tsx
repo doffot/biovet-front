@@ -58,9 +58,9 @@ export default function ConsultationView() {
     navigate(`/patients/${patient._id}/consultations/new`);
   };
 
-  const handleEdit = (id: string) => {
-    navigate(`/patients/${patient._id}/consultations/edit/${id}`);
-  };
+  // const handleEdit = (id: string) => {
+  //   navigate(`/patients/${patient._id}/consultations/edit/${id}`);
+  // };
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "";
@@ -102,7 +102,7 @@ export default function ConsultationView() {
             >
               <PlusCircleIcon size={20} />
               <span className="hidden lg:inline font-semibold">
-                Nueva Consulta
+               Agregar
               </span>
             </button>
           </div>
@@ -139,16 +139,18 @@ export default function ConsultationView() {
                         {/* Botones de acción */}
                         <div className="absolute top-4 right-4 flex gap-2">
                           <button
-                            onClick={() => handleEdit(consultation._id)}
-                            className="p-2 text-slate-400 hover:text-biovet-600 hover:bg-biovet-50 rounded-lg transition-colors"
-                            title="Editar consulta"
+                            onClick={() =>
+                              navigate(
+                                `/patients/${patient._id}/consultations/${consultation._id}/edit`,
+                              )
+                            }
+                            className="btn-icon-edit"
                           >
                             <Pencil size={16} />
                           </button>
                           <button
                             onClick={() => setDeleteId(consultation._id)}
-                            className="p-2 text-slate-400 hover:text-danger-500 hover:bg-danger-50 rounded-lg transition-colors"
-                            title="Eliminar consulta"
+                            className="btn-icon-delete"
                           >
                             <Trash2 size={16} />
                           </button>
@@ -162,7 +164,7 @@ export default function ConsultationView() {
                               {formatDate(consultation.consultationDate)}
                             </span>
                           </div>
-                          <h3 className="text-lg font-bold text-slate-800 dark:text-white leading-tight">
+                          <h3 className="text-lg font-bold text-biovet-400 dark:text-white leading-tight">
                             {consultation.reasonForVisit || "Consulta General"}
                           </h3>
                         </div>

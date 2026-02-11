@@ -1,14 +1,44 @@
-// api/patientAPI.ts
 import { AxiosError } from "axios";
 import api from "../lib/axios";
 import { patientSchema, patientsListSchema, type Patient } from "@/types/patient";
 
-//  Crear paciente
+// Definir el tipo para el historial
+export type HistoryType = 
+  | 'appointment' 
+  | 'consultation' 
+  | 'deworming' 
+  | 'grooming' 
+  | 'labExam' 
+  | 'study' 
+  | 'recipe' 
+  | 'treatment' 
+  | 'vaccination' 
+  | 'service';
+
+export interface HistoryItem {
+  _id: string;
+  type: HistoryType;
+  date: string;
+  title: string;
+  description: string;
+  veterinarian: string;
+  rawData?: any;
+}
+
+// Tipos auxiliares
 type CreateResponse = {
   msg: string;
   patient: Patient;
 };
-//  Crear paciente
+
+type UpdatePatientAPI = {
+  formData: FormData;
+  patientId: string;
+};
+
+// ==========================================
+// CREAR PACIENTE
+// ==========================================
 export async function createPatient(
   formData: FormData,
   ownerId: string
@@ -25,7 +55,6 @@ export async function createPatient(
       throw new Error("Datos de paciente inválidos");
     }
 
-    // Retornamos solo los datos del paciente validados
     return response.data;
   } catch (error) {
     console.log(error);
@@ -36,7 +65,9 @@ export async function createPatient(
   }
 }
 
-//  Obtener todas las mascotas
+// ==========================================
+// OBTENER TODOS LOS PACIENTES
+// ==========================================
 export async function getPatients() {
   try {
     const { data } = await api.get("/patients");
@@ -54,7 +85,9 @@ export async function getPatients() {
   }
 }
 
-//  Obtener paciente por ID
+// ==========================================
+// OBTENER PACIENTE POR ID
+// ==========================================
 export async function getPatientById(id: Patient["_id"]) {
   try {
     const { data } = await api.get<Patient>(`/patients/${id}`);
@@ -72,12 +105,9 @@ export async function getPatientById(id: Patient["_id"]) {
   }
 }
 
-// Tipos
-type UpdatePatientAPI = {
-  formData: FormData;
-  patientId: string;
-};
-
+// ==========================================
+// ACTUALIZAR PACIENTE
+// ==========================================
 export async function updatePatient({
   formData,
   patientId,
@@ -99,7 +129,9 @@ export async function updatePatient({
   }
 }
 
-//  Eliminar paciente
+// ==========================================
+// ELIMINAR PACIENTE
+// ==========================================
 export async function deletePatient(id: Patient["_id"]) {
   try {
     const { data } = await api.delete(`/patients/${id}`);
@@ -112,8 +144,9 @@ export async function deletePatient(id: Patient["_id"]) {
   }
 }
 
-// patient by owner
-
+// ==========================================
+// OBTENER PACIENTES POR DUEÑO
+// ==========================================
 export async function getPatientsByOwner(ownerId: string): Promise<Patient[]> {
   try {
     const { data } = await api.get(`/patients/owner/${ownerId}`);
@@ -123,5 +156,20 @@ export async function getPatientsByOwner(ownerId: string): Promise<Patient[]> {
       throw new Error(error.response.data.msg || "Error al cargar mascotas");
     }
     throw new Error("Error de red");
+  }
+}
+
+// ==========================================
+// OBTENER HISTORIAL COMPLETO (NUEVO)
+// ==========================================
+export async function getPatientHistory(patientId: string): Promise<HistoryItem[]> {
+  try {
+    const { data } = await api.get<HistoryItem[]>(`/patients/${patientId}/history`);
+    return data;
+  } catch (error) {
+    if (error instanceof AxiosError && error.response) {
+      throw new Error(error.response.data.msg || "Error al obtener el historial médico");
+    }
+    throw new Error("Error de red o desconocido al cargar el historial");
   }
 }

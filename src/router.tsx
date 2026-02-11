@@ -17,6 +17,16 @@ import DewormingView from "./views/dewormings/DewormingView";
 import ConsultationView from "./views/consultations/ConsultationView";
 import CreateConsultationView from "./views/consultations/CreateConsultationView";
 import ConsultationDetailView from "./views/consultations/ConsultationDetailView";
+import EditConsultationView from "./views/consultations/EditConsultationView";
+import CreateAppointmentView from "./views/appointment/CreateAppointmentView";
+import AppointmentView from "./views/appointment/AppointmentView";
+import AppointmentDetailView from "./views/appointment/AppointmentDetailView";
+import EditAppointmentView from "./views/appointment/EditAppointmentView";
+import PatientLabExamListView from "./views/labExams/PatientLabExamListView";
+import CreateLabExamView from "./views/labExams/CreateLabExamView";
+import GroomingServiceListView from "./views/grooming/GroomingServiceListView";
+import CreateGroomingServiceView from "./views/grooming/CreateGroomingServiceView";
+import GroomingServiceDetailView from "./views/grooming/GroomingServiceDetailView";
 
 export default function Router() {
   return (
@@ -24,7 +34,7 @@ export default function Router() {
       <Routes>
         
         {/* =============================================
-            APP LAYOUT (Sidebar + Header + Content)
+            APP LAYOUT 
             ============================================= */}
         <Route element={<AppLayout />}>
           
@@ -39,26 +49,39 @@ export default function Router() {
              <Route path=":ownerId/patients/new" element={<CreatePatientView />} />
           </Route>
 
-          {/* ✅ PACIENTES (Lista General) */}
+          {/*  PACIENTES */}
           <Route path="/patients">
-             <Route index element={<PatientsListView />} /> {/* <-- Aquí pegas la PatientTable */}
+             <Route index element={<PatientsListView />} /> 
           </Route>
           
               {/* PATIENT LAYOUT (Perfil de Mascota) */}
           <Route path="/patients/:patientId" element={<PatientLayout />}>
+          <Route path="appointments/new" element={<CreateAppointmentView />} />
+          <Route path="appointments/:appointmentId/edit" element={<EditAppointmentView />} />
+          <Route path="appointments/:appointmentId" element={<AppointmentDetailView />} />
               {/* index: Lo que se ve al entrar (Resumen/Ficha) */}
               <Route index element={<DetailPatientView />} /> 
               
               <Route path="vaccines" element={<VaccinationView />} />
               <Route path="deworming" element={<DewormingView/>} />
+              <Route path="exams" element={<PatientLabExamListView />} />
+              <Route path="exams/create" element={<CreateLabExamView />} />
               <Route path="consultations" element={<ConsultationView/>} />
               <Route path="consultations/new" element={<CreateConsultationView />} />
               <Route path="consultations/:consultationId" element={<ConsultationDetailView />} />
+              <Route path="consultations/:consultationId/edit" element={<EditConsultationView />} />
+
+              {/* ✅ CITAS DENTRO DE PACIENTE (sin select-patient) */}
+              <Route path="appointments" element={<AppointmentView />} />
+              {/* <Route path="appointments/:appointmentId" element={<AppointmentDetailsView />} />
+              <Route path="appointments/:appointmentId/edit" element={<EditAppointmentView />} /> */}
               
               {/* Pestañas adicionales */}
-              
+              <Route path="grooming" element={<GroomingServiceListView />} />
+              <Route path="grooming/create" element={<CreateGroomingServiceView />} />
+              <Route path="grooming/:serviceId" element={<GroomingServiceDetailView />} />
               <Route path="treatments" element={<div>Vista Tratamientos (Próximamente)</div>} />
-              <Route path="appointments" element={<div>Vista Citas (Próximamente)</div>} />
+              {/* <Route path="appointments" element={<div>Vista Citas (Próximamente)</div>} /> */}
           </Route>
 
 

@@ -227,6 +227,41 @@
            hover:bg-dark-50 hover:text-slate-200 hover:border-slate-600;
   }
 
+  .btn-icon-edit {
+    @apply inline-flex items-center justify-center 
+           w-10 h-10 rounded-md
+            text-slate-500
+           border border-surface-300
+           shadow-sm
+           transition-all duration-200 cursor-pointer
+           hover:bg-surface-100 hover:text-slate-700 hover:border-surface-400
+           active:scale-95
+           disabled:opacity-50 disabled:pointer-events-none;
+  }
+  
+  .dark .btn-icon-edit {
+    @apply bg-dark-100 border-slate-700 text-slate-400 shadow-none
+           hover:bg-dark-50 hover:text-slate-200 hover:border-slate-600;
+  }
+
+
+  .btn-icon-delete {
+    @apply inline-flex items-center justify-center 
+           w-10 h-10 rounded-md
+            text-danger-500
+           border border-danger-300
+           shadow-sm
+           transition-all duration-200 cursor-pointer
+           hover:bg-danger-100 hover:text-danger-700 hover:border-danger-400
+           active:scale-95
+           disabled:opacity-50 disabled:pointer-events-none;
+  }
+  
+  .dark .btn-icon-delete {
+    @apply bg-dark-100 border-danger-400 text-danger-400 shadow-none
+           hover:bg-dark-50 hover:text-danger-700 hover:border-danger-700;
+  }
+
   .btn-icon-danger {
     @apply inline-flex items-center justify-center 
            w-10 h-10 rounded-xl
