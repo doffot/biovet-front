@@ -33,6 +33,9 @@ import TreatmentDetailView from "./views/treatments/TreatmentDetailView";
 import CreateVeterinaryServiceView from "./views/veterinary-services/CreateVeterinaryServiceView";
 import VeterinaryServiceDetailView from "./views/veterinary-services/VeterinaryServiceDetailView";
 import VeterinaryServiceListView from "./views/veterinary-services/VeterinaryServiceListView";
+import RecipeListView from "./views/recipes/RecipeListView";
+import CreateRecipeView from "./views/recipes/CreateRecipeView";
+import RecipeDetailView from "./views/recipes/RecipeDetailView";
 
 export default function Router() {
   return (
@@ -79,8 +82,21 @@ export default function Router() {
             <Route index element={<DetailPatientView />} />
 
             <Route path="services" element={<VeterinaryServiceListView />} />
-<Route path="services/create" element={<CreateVeterinaryServiceView />} />
-<Route path="services/:serviceId" element={<VeterinaryServiceDetailView />} />
+            <Route
+              path="services/create"
+              element={<CreateVeterinaryServiceView />}
+            />
+            <Route
+              path="services/:serviceId"
+              element={<VeterinaryServiceDetailView />}
+            />
+
+            <Route path="prescriptions" element={<RecipeListView />} />
+            <Route path="prescriptions/create" element={<CreateRecipeView />} />
+            <Route
+              path="prescriptions/:recipeId"
+              element={<RecipeDetailView />}
+            />
 
             <Route path="vaccines" element={<VaccinationView />} />
             <Route path="deworming" element={<DewormingView />} />
