@@ -27,6 +27,9 @@ import CreateLabExamView from "./views/labExams/CreateLabExamView";
 import GroomingServiceListView from "./views/grooming/GroomingServiceListView";
 import CreateGroomingServiceView from "./views/grooming/CreateGroomingServiceView";
 import GroomingServiceDetailView from "./views/grooming/GroomingServiceDetailView";
+import TreatmentListView from "./views/treatments/TreatmentListView";
+import CreateTreatmentView from "./views/treatments/CreateTreatmentView";
+import TreatmentDetailView from "./views/treatments/TreatmentDetailView";
 
 export default function Router() {
   return (
@@ -80,7 +83,9 @@ export default function Router() {
               <Route path="grooming" element={<GroomingServiceListView />} />
               <Route path="grooming/create" element={<CreateGroomingServiceView />} />
               <Route path="grooming/:serviceId" element={<GroomingServiceDetailView />} />
-              <Route path="treatments" element={<div>Vista Tratamientos (Próximamente)</div>} />
+   <Route path="treatments" element={<TreatmentListView />} />
+<Route path="treatments/create" element={<CreateTreatmentView />} />
+<Route path="treatments/:treatmentId" element={<TreatmentDetailView />} />
               {/* <Route path="appointments" element={<div>Vista Citas (Próximamente)</div>} /> */}
           </Route>
 
