@@ -36,6 +36,9 @@ import VeterinaryServiceListView from "./views/veterinary-services/VeterinarySer
 import RecipeListView from "./views/recipes/RecipeListView";
 import CreateRecipeView from "./views/recipes/CreateRecipeView";
 import RecipeDetailView from "./views/recipes/RecipeDetailView";
+import MedicalStudyListView from "./views/medical-studies/MedicalStudyListView";
+import CreateMedicalStudyView from "./views/medical-studies/CreateMedicalStudyView";
+import MedicalStudyDetailView from "./views/medical-studies/medical-studies/MedicalStudyDetailView";
 
 export default function Router() {
   return (
@@ -90,6 +93,11 @@ export default function Router() {
               path="services/:serviceId"
               element={<VeterinaryServiceDetailView />}
             />
+
+            <Route path="studies" element={<MedicalStudyListView />} />
+<Route path="studies/create" element={<CreateMedicalStudyView />} />
+<Route path="studies/:studyId" element={<MedicalStudyDetailView />} />
+
 
             <Route path="prescriptions" element={<RecipeListView />} />
             <Route path="prescriptions/create" element={<CreateRecipeView />} />
