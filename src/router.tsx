@@ -39,6 +39,8 @@ import RecipeDetailView from "./views/recipes/RecipeDetailView";
 import MedicalStudyListView from "./views/medical-studies/MedicalStudyListView";
 import CreateMedicalStudyView from "./views/medical-studies/CreateMedicalStudyView";
 import MedicalStudyDetailView from "./views/medical-studies/medical-studies/MedicalStudyDetailView";
+import PaymentMethodsListView from "./views/payment-methods/PaymentMethodsListView";
+import CreatePaymentMethodView from "./views/payment-methods/CreatePaymentMethodView";
 
 export default function Router() {
   return (
@@ -61,6 +63,9 @@ export default function Router() {
               element={<CreatePatientView />}
             />
           </Route>
+
+          <Route path="/settings/payment-methods" element={<PaymentMethodsListView />} />
+<Route path="/settings/payment-methods/create" element={<CreatePaymentMethodView />} />
 
           {/*  PACIENTES */}
           <Route path="/patients">
