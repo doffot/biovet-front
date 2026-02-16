@@ -43,6 +43,7 @@ import PaymentMethodsListView from "./views/payment-methods/PaymentMethodsListVi
 import CreatePaymentMethodView from "./views/payment-methods/CreatePaymentMethodView";
 import AppointmentsAgendaView from "./views/appointment/AppointmentsAgendaView";
 import SelectPatientForAppointment from "./components/appointments/SelectPatientForAppointment";
+import GroomingServicesView from "./views/grooming/GroomingServicesView";
 
 export default function Router() {
   return (
@@ -163,6 +164,7 @@ export default function Router() {
             <Route path="create/:patientId" element={<CreateAppointmentView />} />
           </Route>
          {/* <Route path="/appointments" element={<AppointmentsAgendaView />} /> */}
+         <Route path="/grooming" element={<GroomingServicesView />} />
           <Route path="/sales/*" element={<div>Módulo de Ventas</div>} />
           <Route
             path="/inventory/*"
