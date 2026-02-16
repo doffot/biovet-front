@@ -19,7 +19,7 @@ import CreateConsultationView from "./views/consultations/CreateConsultationView
 import ConsultationDetailView from "./views/consultations/ConsultationDetailView";
 import EditConsultationView from "./views/consultations/EditConsultationView";
 import CreateAppointmentView from "./views/appointment/CreateAppointmentView";
-import AppointmentView from "./views/appointment/AppointmentView";
+import AppointmentView from "./views/appointment/PatientAppointmentsView";
 import AppointmentDetailView from "./views/appointment/AppointmentDetailView";
 import EditAppointmentView from "./views/appointment/EditAppointmentView";
 import PatientLabExamListView from "./views/labExams/PatientLabExamListView";
@@ -41,6 +41,8 @@ import CreateMedicalStudyView from "./views/medical-studies/CreateMedicalStudyVi
 import MedicalStudyDetailView from "./views/medical-studies/medical-studies/MedicalStudyDetailView";
 import PaymentMethodsListView from "./views/payment-methods/PaymentMethodsListView";
 import CreatePaymentMethodView from "./views/payment-methods/CreatePaymentMethodView";
+import AppointmentsAgendaView from "./views/appointment/AppointmentsAgendaView";
+import SelectPatientForAppointment from "./components/appointments/SelectPatientForAppointment";
 
 export default function Router() {
   return (
@@ -154,10 +156,13 @@ export default function Router() {
           </Route>
 
           {/* Placeholders */}
-          <Route
-            path="/appointments"
-            element={<div>Calendario de Citas</div>}
-          />
+          <Route path="/appointments">
+            <Route index element={<AppointmentsAgendaView />} />
+            <Route path="select-patient" element={<SelectPatientForAppointment />} />
+            
+            <Route path="create/:patientId" element={<CreateAppointmentView />} />
+          </Route>
+         {/* <Route path="/appointments" element={<AppointmentsAgendaView />} /> */}
           <Route path="/sales/*" element={<div>Módulo de Ventas</div>} />
           <Route
             path="/inventory/*"
