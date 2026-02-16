@@ -1,8 +1,11 @@
+// src/api/patientAPI.ts
 import { AxiosError } from "axios";
 import api from "../lib/axios";
 import { patientSchema, patientsListSchema, type Patient } from "@/types/patient";
 
-// Definir el tipo para el historial
+// ==========================================
+// DEFINICIÓN DE TIPOS PARA EL HISTORIAL
+// ==========================================
 export type HistoryType = 
   | 'appointment' 
   | 'consultation' 
@@ -21,6 +24,7 @@ export interface HistoryItem {
   date: string;
   title: string;
   description: string;
+  observations: string; // <--- AGREGADO: Ahora TypeScript no se quejará
   veterinarian: string;
   rawData?: any;
 }
@@ -57,7 +61,6 @@ export async function createPatient(
 
     return response.data;
   } catch (error) {
-    console.log(error);
     if (error instanceof AxiosError && error.response) {
       throw new Error(error.response.data.msg || "Error al crear el paciente");
     }
@@ -113,17 +116,11 @@ export async function updatePatient({
   patientId,
 }: UpdatePatientAPI): Promise<Patient> {
   try {
-    const { data } = await api.put(`/patients/${patientId}`, formData, {
-      headers: {},
-    });
-
+    const { data } = await api.put(`/patients/${patientId}`, formData);
     return data.patient;
   } catch (error: any) {
-    if (error instanceof Error && "response" in error) {
-      const axiosError = error as { response?: { data: { msg?: string } } };
-      throw new Error(
-        axiosError.response?.data?.msg || "Error al actualizar paciente"
-      );
+    if (error instanceof AxiosError && error.response) {
+      throw new Error(error.response.data.msg || "Error al actualizar paciente");
     }
     throw new Error("Error de red o desconocido");
   }
@@ -160,7 +157,7 @@ export async function getPatientsByOwner(ownerId: string): Promise<Patient[]> {
 }
 
 // ==========================================
-// OBTENER HISTORIAL COMPLETO (NUEVO)
+// OBTENER HISTORIAL COMPLETO
 // ==========================================
 export async function getPatientHistory(patientId: string): Promise<HistoryItem[]> {
   try {

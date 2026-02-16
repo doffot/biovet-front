@@ -1,5 +1,6 @@
-import  { useState, useEffect } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { 
   ChevronRight, 
   ChevronLeft, 
@@ -8,8 +9,7 @@ import {
   X 
 } from "lucide-react";
 import { useLayoutStore } from "@/store/useLayoutStore";
-import { menuItems, type MenuItem } from "@/data/menuItems"; // Importamos tu data
-
+import { menuItems, type MenuItem } from "@/data/menuItems";
 
 const SidebarItem = ({ 
   item, 
@@ -45,7 +45,6 @@ const SidebarItem = ({
         <span className="flex-1 truncate">{item.label}</span>
       )}
 
-      {/* Tooltip en modo colapsado */}
       {collapsed && (
         <div className="
           absolute left-full ml-3 px-2.5 py-1.5 
@@ -62,7 +61,6 @@ const SidebarItem = ({
   );
 };
 
-
 const SidebarGroup = ({ 
   item, 
   collapsed, 
@@ -77,7 +75,6 @@ const SidebarGroup = ({
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   
-  // Auto-abrir si hijo activo
   const hasActiveChild = item.submenu?.some(sub => location.pathname.startsWith(sub.to));
 
   useEffect(() => {
@@ -119,7 +116,6 @@ const SidebarGroup = ({
           />
         )}
 
-        {/* Tooltip colapsado */}
         {collapsed && (
           <div className="absolute left-full ml-3 px-2.5 py-1.5 bg-slate-800 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible z-50 pointer-events-none">
             {item.label}
@@ -128,7 +124,6 @@ const SidebarGroup = ({
         )}
       </button>
 
-      {/* Lista Desplegable */}
       <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen && !collapsed ? "max-h-96 opacity-100 mt-1" : "max-h-0 opacity-0"}`}>
         <div className="ml-4 pl-4 border-l border-white/10 space-y-1">
           {item.submenu?.map((subItem) => (
@@ -153,8 +148,9 @@ const SidebarGroup = ({
   );
 };
 
-//  SIDEBAR PRINCIPAL 
 export const Sidebar = () => {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { 
     sidebarCollapsed, 
     toggleSidebar,
@@ -162,9 +158,16 @@ export const Sidebar = () => {
     closeMobileSidebar 
   } = useLayoutStore();
 
+  // 🔥 Función de logout
+  const logout = () => {
+    localStorage.removeItem("AUTH_TOKEN_LABVET");
+    queryClient.invalidateQueries({ queryKey: ["user"] });
+    navigate("/auth/login");
+  };
+
   const SidebarContent = ({ collapsed, isMobile = false }: { collapsed: boolean; isMobile?: boolean }) => (
     <div className="flex flex-col h-full">
-      {/* 3.1 Header con Logo */}
+      {/* Header con Logo */}
       <div className={`
         flex items-center justify-center h-16
         ${isMobile ? 'justify-between px-4' : ''}
@@ -184,7 +187,7 @@ export const Sidebar = () => {
         )}
       </div>
 
-      {/* 3.2 Divisor y Botón Colapsar */}
+      {/* Divisor y Botón Colapsar */}
       {!isMobile && (
         <div className="relative flex items-center justify-center h-6 shrink-0">
           <div className="w-full h-px bg-white/10" />
@@ -199,6 +202,7 @@ export const Sidebar = () => {
 
       {isMobile && <div className="h-px bg-white/10 shrink-0" />}
 
+      {/* Navegación */}
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-4 scrollbar-thin">
         {menuItems.map((section, idx) => (
           <div key={idx}>
@@ -233,10 +237,10 @@ export const Sidebar = () => {
         ))}
       </nav>
 
-      {/* 3.4 FOOTER / LOGOUT */}
+      {/* 🔥 FOOTER - Botón de Logout */}
       <div className="border-t border-white/10 p-3 shrink-0">
         <button
-          onClick={() => console.log('Logout')}
+          onClick={logout}
           className={`
             w-full group relative flex items-center gap-3 px-3 py-2.5 rounded-lg 
             transition-all duration-200 text-sm font-medium 

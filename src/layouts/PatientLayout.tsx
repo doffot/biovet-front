@@ -197,7 +197,7 @@ export default function PatientLayout() {
           </div>
           
           {/* Tabs - Desktop */}
-          <nav className="flex justify-start gap-1 overflow-x-auto pb-0">
+          <nav className="flex justify-start gap-1  pb-0">
             {navItems.map(item => (
               <NavLink key={item.to} to={item.to} end={item.end} className={getTabClass}>
                 <item.icon size={16} /> {item.label}
