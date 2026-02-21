@@ -6,7 +6,6 @@ import {
   FileText,
   BarChart3,
   Settings,
-  ClipboardList,
   FlaskConical,
   Scissors,
 } from "lucide-react";
