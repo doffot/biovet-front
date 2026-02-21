@@ -1,4 +1,4 @@
-import { getItemTypeLabel } from "../../utils/reportUtils";
+import { getItemTypeLabel } from "@/utils/reportUtils";
 
 interface ReportBreakdownProps {
   byService: Record<string, { count: number; total: number }>;

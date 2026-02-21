@@ -2,7 +2,6 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getLabExamById } from "../../api/labExamAPI";
 import { useState } from "react";
-import ShareResultsModal from "../../components/ShareResultsModal";
 import {
   ArrowLeft,
   Printer,
@@ -13,6 +12,7 @@ import {
   User,
   BadgeDollarSign,
 } from "lucide-react";
+import ShareResultsModal from "@/components/labexam/ShareResultsModal";
 
 export default function LabExamDetailView() {
   const { id, labExamId, patientId } = useParams<{ 
@@ -303,7 +303,7 @@ export default function LabExamDetailView() {
           </p>
         </section>
 
-        {/* Observaciones */}
+        {/* Observaciones generalesgit */}
         {(exam.hemotropico || exam.observacion) && (
           <section>
             <h2 className="text-xs font-medium text-vet-muted uppercase tracking-wide mb-3">

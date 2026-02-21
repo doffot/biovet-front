@@ -4,8 +4,8 @@ import { Download, ChevronLeft, ChevronRight, ChevronDown, Eye, Filter } from "l
 import type { Invoice, InvoiceStatus } from "../../types/invoice";
 import type { FilterState, StatusFilter, PaymentCurrencyFilter } from "../../types/reportTypes";
 import { formatCurrency, formatDate, getItemTypeLabel } from "../../utils/reportUtils";
-import { exportToCSV } from "../../utils/exportUtils";
 import { DateRangeSelector } from "./DateRangeSelector";
+import { exportToCSV } from "@/utils/exportUtils";
 
 interface ReportInvoicesTableProps {
   invoices: Invoice[];
@@ -427,7 +427,7 @@ export function ReportInvoicesTable({
                       </td>
                       <td className="px-4 py-3">
                         <div>
-                          <p className="text-sm font-medium text-vet-text truncate max-w-[180px]">
+                          <p className="text-sm font-medium text-vet-text truncate max-w-45]">
                             {name}
                           </p>
                           {phone && (

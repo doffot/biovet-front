@@ -18,7 +18,6 @@ import {
   DateTimeSelector,
   AppointmentDetails,
 } from "../../components/appointments/create";
-import { getStaffList } from "@/api/staffAPI";
 
 type FormErrors = {
   type?: string;
