@@ -14,8 +14,6 @@ import {
   UserCog,
   PlusCircle,
   History,
-  AlertTriangle,
-  ArrowRightLeft,
   List,
   // CORRECCIÓN AQUÍ: Agregamos la palabra 'type'
   type LucideIcon 
@@ -82,8 +80,7 @@ export const menuItems: MenuSection[] = [
         submenu: [
           { to: "/inventory/products", label: "Productos", icon: List },
           { to: "/inventory/stock", label: "Stock actual", icon: Package },
-          { to: "/inventory/movements", label: "Movimientos", icon: ArrowRightLeft },
-          { to: "/inventory/low-stock", label: "Stock bajo", icon: AlertTriangle },
+        
         ]
       },
       { 
@@ -108,9 +105,8 @@ export const menuItems: MenuSection[] = [
         to: "/reports",
         submenu: [
           { to: "/reports/grooming", label: "Peluquería", icon: Scissors },
-          { to: "/reports/billing", label: "Facturación", icon: CreditCard },
-          { to: "/reports/inventory", label: "Inventario", icon: Package },
-          { to: "/reports/purchases", label: "Compras", icon: ShoppingBag },
+          { to: "/reports/invoices", label: "Facturación", icon: CreditCard },
+          
         ]
       },
       { 

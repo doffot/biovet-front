@@ -54,3 +54,76 @@ export type InitializeInventoryResponse = {
   msg: string;
   inventory: Inventory;
 };
+
+// =============== MOVEMENT TYPES ===============
+export type MovementType = "entrada" | "salida" | "ajuste";
+
+export type MovementReason =
+  | "compra"
+  | "venta"
+  | "uso_clinico"
+  | "devolucion"
+  | "vencimiento"
+  | "perdida"
+  | "ajuste_manual"
+  | "stock_inicial";
+
+export type MovementReferenceType =
+  | "Deworming"
+  | "Vaccination"
+  | "Consultation"
+  | "Sale"
+  | "Treatment"
+  | "VeterinaryService";
+
+// =============== MOVEMENT ===============
+export type MovementProduct = {
+  _id: string;
+  name: string;
+  unit: string;
+  doseUnit: string;
+};
+
+export type MovementCreatedBy = {
+  _id: string;
+  name: string;
+  lastName: string;
+};
+
+export type Movement = {
+  _id: string;
+  product: MovementProduct;
+  type: MovementType;
+  reason: MovementReason;
+  quantityUnits: number;
+  quantityDoses: number;
+  stockAfterUnits: number;
+  stockAfterDoses: number;
+  referenceType?: MovementReferenceType;
+  referenceId?: string;
+  notes?: string;
+  createdBy?: MovementCreatedBy;
+  createdAt: string;
+};
+
+// =============== MOVEMENT FILTERS ===============
+export type MovementFilters = {
+  productId?: string;
+  type?: MovementType;
+  reason?: MovementReason;
+  dateFrom?: string;
+  dateTo?: string;
+  page?: number;
+  limit?: number;
+};
+
+// =============== MOVEMENTS RESPONSE ===============
+export type MovementsResponse = {
+  movements: Movement[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+};

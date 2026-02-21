@@ -16,10 +16,9 @@ export const AppLayout = () => {
   }, [initializeTheme]);
 
   return (
-    // Quitamos 'flex' aquí para que el margen funcione correctamente con el sidebar fijo
+    
     <div className="h-screen bg-surface-100 dark:bg-dark-300 transition-colors duration-300 overflow-hidden font-sans">
-      
-      {/* Sidebar - Solo visible en desktop (controlado internamente por CSS del componente) */}
+      {/* Sidebar - Solo visible en desktop (*/}
       <Sidebar />
 
       {/* Contenedor Principal */}
@@ -31,7 +30,11 @@ export const AppLayout = () => {
           ml-0 
           
           /* DESKTOP: Margen izquierdo según el estado del sidebar */
-          ${sidebarCollapsed ? "lg:ml-20" : "lg:ml-64"}
+          ${sidebarCollapsed ? "lg:ml-16" : "lg:ml-56"}
+
+          /* --- CAMBIO CLAVE AQUÍ --- */
+          /* Hacemos que este contenedor sea el que tenga el scroll */
+          overflow-y-auto
         `}
       >
         {/* Header - Desktop (Solo se ve en pantallas grandes) */}
@@ -45,9 +48,9 @@ export const AppLayout = () => {
         </div>
 
         {/* Área de Contenido */}
-        <main className="flex-1 overflow-hidden relative">
+        <main className="flex-1 relative">
           {/* Ajustado max-w para que no se corte en desktop */}
-          <div className="h-full w-full max-w-7xl mx-auto p-0 lg:p-6 overflow-y-auto no-scrollbar">
+          <div className="h-full w-full max-w-7xl mx-auto p-0 lg:p-6">
             <Outlet />
           </div>
         </main>

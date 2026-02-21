@@ -107,6 +107,11 @@ export const getServiceConfig = (type: string): ServiceConfig => {
 
 // ==================== STATUS CONFIG ====================
 export interface StatusConfig {
+  label: ReactNode;
+  label: ReactNode;
+  bg: any;
+  border: any;
+  text: any;
   icon: ElementType;
   color: string;
   bgColor: string;
