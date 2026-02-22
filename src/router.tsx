@@ -58,6 +58,9 @@ import CreatePurchaseView from "./views/purchases/CreatePurchaseView";
 import GroomingReportView from "./views/grooming/GroomingReportView";
 import { InvoiceReportView } from "./views/reports/InvoiceReportView";
 import { StaffListView } from "./views/staff/StaffListView";
+import MedicalOrderListView from "./views/medical-order/MedicalOrderListView";
+import CreateMedicalOrderView from "./views/medical-order/CreateMedicalOrderView";
+import MedicalOrderDetailView from "./views/medical-order/MedicalOrderDetailView";
 
 export default function Router() {
   return (
@@ -83,46 +86,50 @@ export default function Router() {
             <Route index element={<PatientsListView />} />
           </Route>
 
-          {/* PATIENT LAYOUT (Perfil de Mascota) */}
-          <Route path="/patients/:patientId" element={<PatientLayout />}>
-            <Route index element={<DetailPatientView />} />
-            
-            <Route path="appointments" element={<AppointmentView />} />
-            <Route path="appointments/new" element={<CreateAppointmentView />} />
-            <Route path="appointments/:appointmentId" element={<AppointmentDetailView />} />
-            <Route path="appointments/:appointmentId/edit" element={<EditAppointmentView />} />
+        {/* PATIENT LAYOUT (Perfil de Mascota) */}
+<Route path="/patients/:patientId" element={<PatientLayout />}>
+  <Route index element={<DetailPatientView />} />
+  
+  <Route path="appointments" element={<AppointmentView />} />
+  <Route path="appointments/new" element={<CreateAppointmentView />} />
+  <Route path="appointments/:appointmentId" element={<AppointmentDetailView />} />
+  <Route path="appointments/:appointmentId/edit" element={<EditAppointmentView />} />
 
-            <Route path="services" element={<VeterinaryServiceListView />} />
-            <Route path="services/create" element={<CreateVeterinaryServiceView />} />
-            <Route path="services/:serviceId" element={<VeterinaryServiceDetailView />} />
+  <Route path="services" element={<VeterinaryServiceListView />} />
+  <Route path="services/create" element={<CreateVeterinaryServiceView />} />
+  <Route path="services/:serviceId" element={<VeterinaryServiceDetailView />} />
 
-            <Route path="studies" element={<MedicalStudyListView />} />
-            <Route path="studies/create" element={<CreateMedicalStudyView />} />
-            <Route path="studies/:studyId" element={<MedicalStudyDetailView />} />
+  <Route path="studies" element={<MedicalStudyListView />} />
+  <Route path="studies/create" element={<CreateMedicalStudyView />} />
+  <Route path="studies/:studyId" element={<MedicalStudyDetailView />} />
 
-            <Route path="prescriptions" element={<RecipeListView />} />
-            <Route path="prescriptions/create" element={<CreateRecipeView />} />
-            <Route path="prescriptions/:recipeId" element={<RecipeDetailView />} />
+  <Route path="prescriptions" element={<RecipeListView />} />
+  <Route path="prescriptions/create" element={<CreateRecipeView />} />
+  <Route path="prescriptions/:recipeId" element={<RecipeDetailView />} />
 
-            <Route path="vaccines" element={<VaccinationView />} />
-            <Route path="deworming" element={<DewormingView />} />
-            
-            <Route path="exams" element={<PatientLabExamListView />} />
-            <Route path="exams/create" element={<CreateLabExamView />} />
-            
-            <Route path="consultations" element={<ConsultationView />} />
-            <Route path="consultations/new" element={<CreateConsultationView />} />
-            <Route path="consultations/:consultationId" element={<ConsultationDetailView />} />
-            <Route path="consultations/:consultationId/edit" element={<EditConsultationView />} />
+  <Route path="medical-orders" element={<MedicalOrderListView />} />
+  <Route path="medical-orders/create" element={<CreateMedicalOrderView />} />
+  <Route path="medical-orders/:orderId" element={<MedicalOrderDetailView />} />
 
-            <Route path="grooming" element={<GroomingServiceListView />} />
-            <Route path="grooming/create" element={<CreateGroomingServiceView />} />
-            <Route path="grooming/:serviceId" element={<GroomingServiceDetailView />} />
-            
-            <Route path="treatments" element={<TreatmentListView />} />
-            <Route path="treatments/create" element={<CreateTreatmentView />} />
-            <Route path="treatments/:treatmentId" element={<TreatmentDetailView />} />
-          </Route>
+  <Route path="vaccines" element={<VaccinationView />} />
+  <Route path="deworming" element={<DewormingView />} />
+  
+  <Route path="exams" element={<PatientLabExamListView />} />
+  <Route path="exams/create" element={<CreateLabExamView />} />
+  
+  <Route path="consultations" element={<ConsultationView />} />
+  <Route path="consultations/new" element={<CreateConsultationView />} />
+  <Route path="consultations/:consultationId" element={<ConsultationDetailView />} />
+  <Route path="consultations/:consultationId/edit" element={<EditConsultationView />} />
+
+  <Route path="grooming" element={<GroomingServiceListView />} />
+  <Route path="grooming/create" element={<CreateGroomingServiceView />} />
+  <Route path="grooming/:serviceId" element={<GroomingServiceDetailView />} />
+  
+  <Route path="treatments" element={<TreatmentListView />} />
+  <Route path="treatments/create" element={<CreateTreatmentView />} />
+  <Route path="treatments/:treatmentId" element={<TreatmentDetailView />} />
+</Route>
 
           {/* VENTAS */}
           <Route path="/sales">

@@ -20,6 +20,7 @@ import {
   Fingerprint,
   Palette,
   CalendarDays,
+  ClipboardList,
 } from "lucide-react";
 import { useState } from "react";
 import { PatientBottomTabs } from "./PatientBottomTabs";
@@ -60,7 +61,7 @@ export default function PatientLayout() {
       'exams': 'Exámenes',
       'studies': 'Estudios',
       'grooming': 'Estética',
-      'appointments': 'Citas',
+      'order': 'Órdenes Médicas',
     };
     return titles[path || ''] || 'Paciente';
   };
@@ -100,18 +101,19 @@ export default function PatientLayout() {
   const ownerName = typeof patient.owner === 'object' ? patient.owner.name : "Sin dueño";
 
   const navItems = [
-    { to: ".", label: "Resumen", icon: Info, end: true },
-    { to: "consultations", label: "Consultas", icon: Stethoscope },
-    { to: "treatments", label: "Tratamientos", icon: Bandage },
-    { to: "services", label: "Servicios", icon: BriefcaseMedical },
-    { to: "prescriptions", label: "Recetas", icon: FileText },
-    { to: "vaccines", label: "Vacunas", icon: Syringe },
-    { to: "deworming", label: "Antiparasit.", icon: ShieldCheck },
-    { to: "exams", label: "Exámenes", icon: Microscope },
-    { to: "studies", label: "Estudios", icon: ScanLine },
-    { to: "grooming", label: "Estética", icon: Scissors },
-    { to: "appointments", label: "Citas", icon: CalendarClock },
-  ];
+  { to: ".", label: "Resumen", icon: Info, end: true },
+  { to: "consultations", label: "Consultas", icon: Stethoscope },
+  { to: "treatments", label: "Tratamientos", icon: Bandage },
+  { to: "services", label: "Servicios", icon: BriefcaseMedical },
+  { to: "prescriptions", label: "Recetas", icon: FileText },
+  { to: "medical-orders", label: "Órdenes", icon: ClipboardList },
+  { to: "vaccines", label: "Vacunas", icon: Syringe },
+  { to: "deworming", label: "Antiparasit.", icon: ShieldCheck },
+  { to: "exams", label: "Exámenes", icon: Microscope },
+  { to: "studies", label: "Estudios", icon: ScanLine },
+  { to: "grooming", label: "Estética", icon: Scissors },
+  { to: "appointments", label: "Citas", icon: CalendarClock },
+];
 
   return (
     <div className="flex flex-col h-full bg-surface-100 dark:bg-dark-300">
