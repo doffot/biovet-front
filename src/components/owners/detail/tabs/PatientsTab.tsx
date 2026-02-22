@@ -1,12 +1,18 @@
 // src/components/owners/detail/tabs/PatientsTab.tsx
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   PawPrint,
   Calendar,
   Weight as WeightIcon,
   ChevronRight,
   Eye,
+  Trash2,
 } from "lucide-react";
+import { deletePatient } from "@/api/patientAPI";
+import { toast } from "@/components/Toast";
+import ConfirmationModal from "@/components/ConfirmationModal";
 import type { Patient } from "@/types/patient";
 import { calculateAge } from "@/utils/ownerHelpers";
 
@@ -16,11 +22,47 @@ interface PatientsTabProps {
   ownerId: string;
 }
 
-export function PatientsTab({
-  patients,
-  isLoading,
-}: PatientsTabProps) {
+export function PatientsTab({ patients, isLoading, ownerId }: PatientsTabProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  // Estado para el modal de eliminar
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+
+  // Mutation para eliminar
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deletePatient(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["patients", { ownerId }] });
+      toast.success("Eliminado", "Mascota eliminada correctamente");
+      setIsDeleteModalOpen(false);
+      setSelectedPatient(null);
+    },
+    onError: (error: Error) => {
+      toast.error("Error", error.message);
+    },
+  });
+
+  // Handlers
+  const handleDeleteClick = (e: React.MouseEvent, patient: Patient) => {
+    e.stopPropagation(); // Evita que navegue al detalle
+    setSelectedPatient(patient);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (selectedPatient?._id) {
+      deleteMutation.mutate(selectedPatient._id);
+    }
+  };
+
+  const handleCloseModal = () => {
+    if (!deleteMutation.isPending) {
+      setIsDeleteModalOpen(false);
+      setSelectedPatient(null);
+    }
+  };
 
   if (isLoading) return <PatientsSkeleton />;
 
@@ -41,55 +83,85 @@ export function PatientsTab({
   }
 
   return (
-    <div className="bg-white dark:bg-dark-200 rounded-xl border border-surface-200 dark:border-slate-800 shadow-sm overflow-hidden">
-      {/* ---- TABLA DESKTOP ---- */}
-      <div className="hidden sm:block overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-surface-200 dark:border-slate-800 bg-surface-50/50 dark:bg-dark-100/50">
-              <th className="text-left text-[11px] font-bold text-slate-400 uppercase tracking-wide px-5 py-3">
-                Mascota
-              </th>
-              <th className="text-left text-[11px] font-bold text-slate-400 uppercase tracking-wide px-4 py-3">
-                Especie / Raza
-              </th>
-              <th className="text-left text-[11px] font-bold text-slate-400 uppercase tracking-wide px-4 py-3">
-                Sexo
-              </th>
-              <th className="text-left text-[11px] font-bold text-slate-400 uppercase tracking-wide px-4 py-3">
-                Edad
-              </th>
-              <th className="text-left text-[11px] font-bold text-slate-400 uppercase tracking-wide px-4 py-3">
-                Peso
-              </th>
-              <th className="text-right text-[11px] font-bold text-slate-400 uppercase tracking-wide px-5 py-3">
-                Acción
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-surface-100 dark:divide-slate-800">
-            {patients.map((patient) => (
-              <PatientRow
-                key={patient._id}
-                patient={patient}
-                onClick={() => navigate(`/patients/${patient._id}`)}
-              />
-            ))}
-          </tbody>
-        </table>
+    <>
+      <div className="bg-white dark:bg-dark-200 rounded-xl border border-surface-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        {/* ---- TABLA DESKTOP ---- */}
+        <div className="hidden sm:block overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-surface-200 dark:border-slate-800 bg-surface-50/50 dark:bg-dark-100/50">
+                <th className="text-left text-[11px] font-bold text-slate-400 uppercase tracking-wide px-5 py-3">
+                  Mascota
+                </th>
+                <th className="text-left text-[11px] font-bold text-slate-400 uppercase tracking-wide px-4 py-3">
+                  Especie / Raza
+                </th>
+                <th className="text-left text-[11px] font-bold text-slate-400 uppercase tracking-wide px-4 py-3">
+                  Sexo
+                </th>
+                <th className="text-left text-[11px] font-bold text-slate-400 uppercase tracking-wide px-4 py-3">
+                  Edad
+                </th>
+                <th className="text-left text-[11px] font-bold text-slate-400 uppercase tracking-wide px-4 py-3">
+                  Peso
+                </th>
+                <th className="text-right text-[11px] font-bold text-slate-400 uppercase tracking-wide px-5 py-3">
+                  Acciones
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-surface-100 dark:divide-slate-800">
+              {patients.map((patient) => (
+                <PatientRow
+                  key={patient._id}
+                  patient={patient}
+                  onClick={() => navigate(`/patients/${patient._id}`)}
+                  onDelete={(e) => handleDeleteClick(e, patient)}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* ---- LISTA MOBILE ---- */}
+        <div className="sm:hidden divide-y divide-surface-100 dark:divide-slate-800">
+          {patients.map((patient) => (
+            <PatientMobileRow
+              key={patient._id}
+              patient={patient}
+              onClick={() => navigate(`/patients/${patient._id}`)}
+              onDelete={(e) => handleDeleteClick(e, patient)}
+            />
+          ))}
+        </div>
       </div>
 
-      {/* ---- LISTA MOBILE ---- */}
-      <div className="sm:hidden divide-y divide-surface-100 dark:divide-slate-800">
-        {patients.map((patient) => (
-          <PatientMobileRow
-            key={patient._id}
-            patient={patient}
-            onClick={() => navigate(`/patients/${patient._id}`)}
-          />
-        ))}
-      </div>
-    </div>
+      {/* Modal de confirmación */}
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={handleCloseModal}
+        onConfirm={handleConfirmDelete}
+        variant="danger"
+        title="Eliminar Mascota"
+        message={
+          selectedPatient ? (
+            <>
+              ¿Estás seguro que deseas eliminar a{" "}
+              <span className="font-semibold text-slate-800 dark:text-slate-100">
+                {selectedPatient.name}
+              </span>
+              ? Se eliminarán todos sus registros médicos, citas y servicios asociados.
+            </>
+          ) : (
+            ""
+          )
+        }
+        confirmText="Eliminar"
+        confirmIcon={Trash2}
+        isLoading={deleteMutation.isPending}
+        loadingText="Eliminando..."
+      />
+    </>
   );
 }
 
@@ -112,7 +184,13 @@ const sexConfig = {
 
 // ==================== TABLE ROW (DESKTOP) ====================
 
-function PatientRow({ patient, onClick }: { patient: Patient; onClick: () => void }) {
+interface PatientRowProps {
+  patient: Patient;
+  onClick: () => void;
+  onDelete: (e: React.MouseEvent) => void;
+}
+
+function PatientRow({ patient, onClick, onDelete }: PatientRowProps) {
   const age = calculateAge(patient.birthDate);
   const species = speciesConfig[patient.species] || defaultSpecies;
   const sex = sexConfig[patient.sex as keyof typeof sexConfig] || sexConfig.Macho;
@@ -149,17 +227,23 @@ function PatientRow({ patient, onClick }: { patient: Patient; onClick: () => voi
 
       {/* Especie / Raza */}
       <td className="px-4 py-3.5">
-        <span className={`inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${species.bg} ${species.color}`}>
+        <span
+          className={`inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${species.bg} ${species.color}`}
+        >
           {patient.species}
         </span>
         {patient.breed && (
-          <p className="text-[11px] text-slate-400 mt-0.5 truncate max-w-32">{patient.breed}</p>
+          <p className="text-[11px] text-slate-400 mt-0.5 truncate max-w-32">
+            {patient.breed}
+          </p>
         )}
       </td>
 
       {/* Sexo */}
       <td className="px-4 py-3.5">
-        <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg text-sm font-bold ${sex.bg} ${sex.color}`}>
+        <span
+          className={`inline-flex items-center justify-center w-7 h-7 rounded-lg text-sm font-bold ${sex.bg} ${sex.color}`}
+        >
           {sex.icon}
         </span>
       </td>
@@ -184,13 +268,27 @@ function PatientRow({ patient, onClick }: { patient: Patient; onClick: () => voi
         )}
       </td>
 
-      {/* Acción */}
-      <td className="px-5 py-3.5 text-right">
-        <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-biovet-600 dark:text-biovet-400 bg-biovet-50 dark:bg-biovet-950/30 rounded-lg hover:bg-biovet-100 dark:hover:bg-biovet-900/40 transition-colors opacity-0 group-hover:opacity-100">
-          <Eye size={13} />
-          Ver
-        </button>
-        <ChevronRight size={16} className="inline-block text-slate-300 dark:text-slate-600 group-hover:text-biovet-500 transition-colors ml-2" />
+      {/* Acciones */}
+      <td className="px-5 py-3.5">
+        <div className="flex items-center justify-end gap-1">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onClick();
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-biovet-600 dark:text-biovet-400 bg-biovet-50 dark:bg-biovet-950/30 rounded-lg hover:bg-biovet-100 dark:hover:bg-biovet-900/40 transition-colors opacity-0 group-hover:opacity-100"
+          >
+            <Eye size={13} />
+            Ver
+          </button>
+          <button
+            onClick={onDelete}
+            className="inline-flex items-center justify-center w-8 h-8 text-slate-400 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-950/30 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+            title="Eliminar"
+          >
+            <Trash2 size={15} />
+          </button>
+        </div>
       </td>
     </tr>
   );
@@ -198,7 +296,13 @@ function PatientRow({ patient, onClick }: { patient: Patient; onClick: () => voi
 
 // ==================== MOBILE ROW ====================
 
-function PatientMobileRow({ patient, onClick }: { patient: Patient; onClick: () => void }) {
+interface PatientMobileRowProps {
+  patient: Patient;
+  onClick: () => void;
+  onDelete: (e: React.MouseEvent) => void;
+}
+
+function PatientMobileRow({ patient, onClick, onDelete }: PatientMobileRowProps) {
   const age = calculateAge(patient.birthDate);
   const species = speciesConfig[patient.species] || defaultSpecies;
   const sex = sexConfig[patient.sex as keyof typeof sexConfig] || sexConfig.Macho;
@@ -227,12 +331,16 @@ function PatientMobileRow({ patient, onClick }: { patient: Patient; onClick: () 
           <p className="text-sm font-bold text-slate-800 dark:text-white truncate">
             {patient.name}
           </p>
-          <span className={`inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-bold ${sex.bg} ${sex.color}`}>
+          <span
+            className={`inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-bold ${sex.bg} ${sex.color}`}
+          >
             {sex.icon}
           </span>
         </div>
         <div className="flex items-center gap-2 mt-0.5">
-          <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${species.bg} ${species.color}`}>
+          <span
+            className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${species.bg} ${species.color}`}
+          >
             {patient.species}
           </span>
           {patient.breed && (
@@ -251,8 +359,17 @@ function PatientMobileRow({ patient, onClick }: { patient: Patient; onClick: () 
         </div>
       </div>
 
-      {/* Arrow */}
-      <ChevronRight size={18} className="text-slate-300 dark:text-slate-600 shrink-0" />
+      {/* Acciones mobile */}
+      <div className="flex items-center gap-1 shrink-0">
+        <button
+          onClick={onDelete}
+          className="p-2 text-slate-400 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-950/30 rounded-lg transition-colors"
+          title="Eliminar"
+        >
+          <Trash2 size={16} />
+        </button>
+        <ChevronRight size={18} className="text-slate-300 dark:text-slate-600" />
+      </div>
     </div>
   );
 }
