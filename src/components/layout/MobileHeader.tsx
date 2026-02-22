@@ -1,8 +1,18 @@
+// src/components/layout/MobileHeader.tsx
 import { Bell, Calendar } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
+import { getMyClinic } from "@/api/veterinaryClinicAPI";
+import { Link } from "react-router-dom";
 
 export const MobileHeader = () => {
   const { data: user } = useAuth();
+  
+  // Obtenemos los datos de la clínica para el logo dinámico
+  const { data: clinic } = useQuery({
+    queryKey: ["my-clinic"],
+    queryFn: getMyClinic,
+  });
 
   const getInitials = () => {
     if (!user) return "??";
@@ -17,24 +27,22 @@ export const MobileHeader = () => {
   };
 
   return (
-    <header
-      className="
-        h-16 px-4
-        flex items-center justify-between 
-        sticky top-0 z-40 
-        bg-dark-200
-        border-b border-dark-300
-        transition-colors duration-300
-      "
-    >
-      {/* Logo */}
-      <div className="flex items-center">
+    <header className="h-16 px-4 flex items-center justify-between sticky top-0 z-40 bg-dark-200 border-b border-dark-300 transition-colors duration-300">
+      
+      {/* Logo Dinámico */}
+      <Link to="/" className="flex items-center gap-2">
         <img
-          src="/logo_main.webp"
-          alt="BioVet Track"
-          className="h-8 object-contain"
+          src={clinic?.logo || "/logo_main.webp"}
+          alt={clinic?.name || "BioVet Track"}
+          className="h-8 object-contain rounded-sm"
         />
-      </div>
+        {/* Mostrar nombre solo si existe */}
+        {clinic?.name && (
+          <span className="text-white font-heading font-bold text-xs truncate max-w-30">
+            {clinic.name}
+          </span>
+        )}
+      </Link>
 
       <div className="flex items-center gap-2">
         <button className="hidden sm:flex btn-icon-mobile">
@@ -43,12 +51,7 @@ export const MobileHeader = () => {
 
         <button className="btn-icon-mobile relative">
           <Bell size={20} className="text-biovet-500 fill-biovet-500" />
-          <span
-            className="absolute -top-0.5 -right-0.5 
-                          w-4 h-4 bg-danger-500 text-white text-[10px] 
-                          font-bold rounded-full flex items-center justify-center 
-                          border-2 border-dark-200"
-          >
+          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-danger-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-dark-200">
             3
           </span>
         </button>
@@ -56,12 +59,7 @@ export const MobileHeader = () => {
         <div className="hidden sm:block w-px h-8 bg-white/20 mx-2" />
 
         <button className="flex items-center gap-3 p-1.5 pr-4 rounded-xl hover:bg-dark-300 transition-colors">
-          <div
-            className="w-9 h-9 rounded-full 
-                          bg-biovet-500 
-                          flex items-center justify-center 
-                          text-white font-bold text-sm shadow-sm"
-          >
+          <div className="w-9 h-9 rounded-full bg-biovet-500 flex items-center justify-center text-white font-bold text-sm shadow-sm">
             {getInitials()}
           </div>
           <div className="hidden md:block text-left">
