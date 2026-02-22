@@ -1,7 +1,7 @@
-// src/views/patients/MedicalOrderDetailView.tsx
+// src/views/medical-order/MedicalOrderDetailView.tsx
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   X,
   Calendar,
@@ -15,26 +15,26 @@ import {
   Stethoscope,
 } from "lucide-react";
 import { getMedicalOrderById } from "@/api/medicalOrderAPI";
-import { getProfile } from "@/api/AuthAPI";
 import { usePatientData } from "@/hooks/usePatientData";
-import { toast } from "@/components/Toast";
+import { usePDFGenerator } from "@/hooks/usePDFGenerator";
 import { STUDY_TYPE_LABELS } from "@/types/medicalOrder";
-import jsPDF from "jspdf";
 
 export default function MedicalOrderDetailView() {
   const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
   const [isGenerating, setIsGenerating] = useState(false);
-  const [signatureBase64, setSignatureBase64] = useState<string>("");
 
-  // 1. Obtener Orden Médica
+  // Hook de PDF
+  const { generatePDF, isReady: isPDFReady } = usePDFGenerator();
+
+  // Obtener Orden Médica
   const { data: order, isLoading: isLoadingOrder } = useQuery({
     queryKey: ["medicalOrder", orderId],
     queryFn: () => getMedicalOrderById(orderId!),
     enabled: !!orderId,
   });
 
-  // 2. Extraer ID seguro y usar Hook de Paciente
+  // Extraer ID seguro y usar Hook de Paciente
   const patientIdString = order?.patientId
     ? typeof order.patientId === "object"
       ? order.patientId._id
@@ -48,243 +48,137 @@ export default function MedicalOrderDetailView() {
     isLoading: isLoadingPatient,
   } = usePatientData(patientIdString);
 
-  // 3. Obtener Perfil Veterinario
-  const { data: vetProfile } = useQuery({
-    queryKey: ["profile"],
-    queryFn: getProfile,
-  });
-
-  // 4. Cargar firma
-  useEffect(() => {
-    const loadSignature = async () => {
-      if (!vetProfile?.signature) return;
-      try {
-        const response = await fetch(vetProfile.signature);
-        const blob = await response.blob();
-        const reader = new FileReader();
-        reader.onloadend = () => setSignatureBase64(reader.result as string);
-        reader.readAsDataURL(blob);
-      } catch (error) {
-        console.error("Error firma:", error);
-      }
-    };
-    if (vetProfile?.signature) loadSignature();
-  }, [vetProfile?.signature]);
-
   const handleClose = () => navigate(-1);
-
-  // ==========================================
-  // GENERAR PDF - ORDEN MÉDICA
-  // ==========================================
-  const handlePrintPDF = () => {
-    if (!order || !patient) return;
-    setIsGenerating(true);
-
-    try {
-      const doc: any = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a5",
-      });
-
-      const width = doc.internal.pageSize.getWidth();
-      const margin = 10;
-      let y = 15;
-
-      // Colores
-      const primaryColor = { r: 8, g: 145, b: 178 }; // Cyan
-      const black = { r: 0, g: 0, b: 0 };
-      const gray = { r: 100, g: 100, b: 100 };
-      const urgentColor = { r: 220, g: 38, b: 38 }; // Rojo
-
-      // --- HEADER ---
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(14);
-      doc.setTextColor(primaryColor.r, primaryColor.g, primaryColor.b);
-      doc.text("ORDEN DE ESTUDIOS MÉDICOS", width / 2, y, { align: "center" });
-      y += 6;
-
-      doc.setFontSize(10);
-      doc.setTextColor(black.r, black.g, black.b);
-      const vetName = vetProfile
-        ? `Dr(a). ${vetProfile.name} ${vetProfile.lastName}`
-        : "Médico Veterinario";
-      doc.text(vetName, width / 2, y, { align: "center" });
-      y += 5;
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8);
-      doc.setTextColor(gray.r, gray.g, gray.b);
-      const vetInfo = `COLVET: ${vetProfile?.cmv || "N/A"} | MSDS: ${vetProfile?.msds || "N/A"}`;
-      doc.text(vetInfo, width / 2, y, { align: "center" });
-      y += 8;
-
-      // Línea separadora
-      doc.setDrawColor(200, 200, 200);
-      doc.line(margin, y, width - margin, y);
-      y += 5;
-
-      // --- INFO PACIENTE ---
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(9);
-      doc.setTextColor(black.r, black.g, black.b);
-
-      const dateStr = new Date(order.issueDate).toLocaleDateString("es-ES");
-
-      doc.text(`Paciente: ${patient.name}`, margin, y);
-      doc.text(`Fecha: ${dateStr}`, width - margin, y, { align: "right" });
-      y += 5;
-
-      doc.setFont("helvetica", "normal");
-      doc.text(`Especie: ${fullSpecies}`, margin, y);
-      y += 5;
-      doc.text(`Propietario: ${ownerName}`, margin, y);
-      y += 8;
-
-      // --- HISTORIA CLÍNICA (si existe) ---
-      if (order.clinicalHistory) {
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(9);
-        doc.text("Historia Clínica:", margin, y);
-        y += 4;
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(8);
-        const history = doc.splitTextToSize(
-          order.clinicalHistory,
-          width - margin * 2
-        );
-        doc.text(history, margin, y);
-        y += history.length * 3.5 + 5;
-      }
-
-      // Línea separadora
-      doc.setDrawColor(200, 200, 200);
-      doc.line(margin, y, width - margin, y);
-      y += 6;
-
-      // --- ESTUDIOS SOLICITADOS ---
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.setTextColor(primaryColor.r, primaryColor.g, primaryColor.b);
-      doc.text("ESTUDIOS SOLICITADOS", margin, y);
-      y += 8;
-
-      doc.setTextColor(black.r, black.g, black.b);
-
-      order.studies.forEach((study, index) => {
-        // Verificar salto de página
-        if (y > 180) {
-          doc.addPage();
-          y = 20;
-        }
-
-        // Número y tipo
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(10);
-
-        const typeLabel = STUDY_TYPE_LABELS[study.type] || study.type;
-        
-        // Badge de prioridad
-        if (study.priority === "urgente") {
-          doc.setTextColor(urgentColor.r, urgentColor.g, urgentColor.b);
-          doc.text(`${index + 1}. [URGENTE] ${typeLabel}`, margin, y);
-        } else {
-          doc.setTextColor(black.r, black.g, black.b);
-          doc.text(`${index + 1}. ${typeLabel}`, margin, y);
-        }
-        y += 5;
-
-        doc.setTextColor(black.r, black.g, black.b);
-
-        // Nombre del estudio
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(9);
-        doc.text(`Estudio: ${study.name}`, margin + 5, y);
-        y += 4;
-
-        // Región (si existe)
-        if (study.region) {
-          doc.text(`Región: ${study.region}`, margin + 5, y);
-          y += 4;
-        }
-
-        // Motivo
-        doc.setFont("helvetica", "italic");
-        const reason = doc.splitTextToSize(
-          `Motivo: ${study.reason}`,
-          width - margin * 2 - 10
-        );
-        doc.text(reason, margin + 5, y);
-        y += reason.length * 3.5;
-
-        // Instrucciones (si existen)
-        if (study.instructions) {
-          doc.setFont("helvetica", "normal");
-          doc.setFontSize(8);
-          doc.setTextColor(gray.r, gray.g, gray.b);
-          const instructions = doc.splitTextToSize(
-            `Instrucciones: ${study.instructions}`,
-            width - margin * 2 - 10
-          );
-          doc.text(instructions, margin + 5, y);
-          y += instructions.length * 3 + 2;
-          doc.setTextColor(black.r, black.g, black.b);
-        }
-
-        y += 5; // Espacio entre estudios
-      });
-
-      // --- FIRMA (Footer) ---
-      if (y > 170) {
-        doc.addPage();
-        y = 40;
-      } else {
-        y = Math.max(y, 160);
-      }
-
-      // Firma digital
-      if (signatureBase64 && signatureBase64.startsWith("data:image")) {
-        try {
-          doc.addImage(signatureBase64, "PNG", width / 2 - 20, y, 40, 15);
-          y += 15;
-        } catch (e) {
-          console.warn("No se pudo agregar la firma al PDF", e);
-        }
-      } else {
-        y += 10;
-      }
-
-      doc.line(width / 2 - 30, y, width / 2 + 30, y);
-      y += 5;
-
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(10);
-      doc.text(vetName, width / 2, y, { align: "center" });
-      y += 4;
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8);
-      doc.setTextColor(gray.r, gray.g, gray.b);
-      doc.text("Médico Veterinario", width / 2, y, { align: "center" });
-
-      // Guardar
-      const filename = `Orden_Medica_${patient.name}.pdf`;
-      doc.save(filename);
-      toast.success("PDF Generado", "Orden médica descargada exitosamente.");
-    } catch (error) {
-      console.error("Error JS-PDF:", error);
-      toast.error("Error", "No se pudo generar el PDF. Revisa la consola.");
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const isLoading = isLoadingOrder || isLoadingPatient;
 
   // Verificar si hay estudios urgentes
   const hasUrgentStudy = order?.studies.some(
     (study) => study.priority === "urgente"
   );
+
+  // ══════════════════════════════════════════
+  // GENERAR PDF DE ORDEN MÉDICA
+  // ══════════════════════════════════════════
+  const handlePrintPDF = () => {
+    if (!order || !patient || !isPDFReady) return;
+    setIsGenerating(true);
+
+    const dateStr = new Date(order.issueDate).toLocaleDateString("es-ES");
+
+    generatePDF(
+      {
+        title: "ORDEN DE ESTUDIOS MÉDICOS",
+        primaryColor: { r: 8, g: 145, b: 178 }, // Cyan
+        filename: `Orden_Medica_${patient.name}_${dateStr.replace(/\//g, "-")}.pdf`,
+      },
+      {
+        name: patient.name,
+        ownerName,
+        fullSpecies,
+      },
+      dateStr,
+      (doc, y, width, margin, colors, addPage) => {
+        const urgentColor = { r: 220, g: 38, b: 38 };
+
+        // --- HISTORIA CLÍNICA (si existe) ---
+        if (order.clinicalHistory) {
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(9);
+          doc.setTextColor(colors.black.r, colors.black.g, colors.black.b);
+          doc.text("Historia Clínica:", margin, y);
+          y += 4;
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(8);
+          doc.setTextColor(colors.gray.r, colors.gray.g, colors.gray.b);
+          const history = doc.splitTextToSize(
+            order.clinicalHistory,
+            width - margin * 2
+          );
+          doc.text(history, margin, y);
+          y += history.length * 3.5 + 5;
+        }
+
+        // Línea separadora
+        doc.setDrawColor(200, 200, 200);
+        doc.line(margin, y, width - margin, y);
+        y += 6;
+
+        // --- ESTUDIOS SOLICITADOS ---
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.setTextColor(colors.primary.r, colors.primary.g, colors.primary.b);
+        doc.text("ESTUDIOS SOLICITADOS", margin, y);
+        y += 8;
+
+        doc.setTextColor(colors.black.r, colors.black.g, colors.black.b);
+
+        order.studies.forEach((study, index) => {
+          if (y > 170) {
+            y = addPage();
+          }
+
+          // Número y tipo
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(10);
+
+          const typeLabel = STUDY_TYPE_LABELS[study.type] || study.type;
+
+          if (study.priority === "urgente") {
+            doc.setTextColor(urgentColor.r, urgentColor.g, urgentColor.b);
+            doc.text(`${index + 1}. [URGENTE] ${typeLabel}`, margin, y);
+          } else {
+            doc.setTextColor(colors.black.r, colors.black.g, colors.black.b);
+            doc.text(`${index + 1}. ${typeLabel}`, margin, y);
+          }
+          y += 5;
+
+          doc.setTextColor(colors.black.r, colors.black.g, colors.black.b);
+
+          // Nombre del estudio
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(9);
+          doc.text(`Estudio: ${study.name}`, margin + 5, y);
+          y += 4;
+
+          // Región (si existe)
+          if (study.region) {
+            doc.text(`Región: ${study.region}`, margin + 5, y);
+            y += 4;
+          }
+
+          // Motivo
+          doc.setFont("helvetica", "italic");
+          const reason = doc.splitTextToSize(
+            `Motivo: ${study.reason}`,
+            width - margin * 2 - 10
+          );
+          doc.text(reason, margin + 5, y);
+          y += reason.length * 3.5;
+
+          // Instrucciones (si existen)
+          if (study.instructions) {
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(8);
+            doc.setTextColor(colors.gray.r, colors.gray.g, colors.gray.b);
+            const instructions = doc.splitTextToSize(
+              `Instrucciones: ${study.instructions}`,
+              width - margin * 2 - 10
+            );
+            doc.text(instructions, margin + 5, y);
+            y += instructions.length * 3 + 2;
+            doc.setTextColor(colors.black.r, colors.black.g, colors.black.b);
+          }
+
+          y += 5;
+        });
+
+        return y;
+      }
+    );
+
+    setIsGenerating(false);
+  };
+
+  const isLoading = isLoadingOrder || isLoadingPatient;
 
   if (isLoading) {
     return (
@@ -445,7 +339,7 @@ export default function MedicalOrderDetailView() {
         <div className="p-4 bg-surface-50/50 dark:bg-dark-300/50 border-t border-surface-200 dark:border-dark-100 flex gap-3">
           <button
             onClick={handlePrintPDF}
-            disabled={isGenerating}
+            disabled={isGenerating || !isPDFReady}
             className="flex-1 py-2.5 rounded-xl bg-white dark:bg-dark-100 border border-surface-200 dark:border-dark-50 text-slate-600 dark:text-slate-300 font-bold hover:bg-surface-50 dark:hover:bg-dark-50 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {isGenerating ? (

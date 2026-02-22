@@ -1,3 +1,4 @@
+// src/views/recipes/RecipeListView.tsx
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -10,12 +11,15 @@ import {
   Loader2,
   ChevronRight,
   Pill,
+  Download,
 } from "lucide-react";
 import { getRecipesByPatient, deleteRecipe } from "@/api/recipeAPI";
+import { getPatientById } from "@/api/patientAPI";
 import { toast } from "@/components/Toast";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import type { Recipe } from "@/types/recipe";
 import EditRecipeModal from "@/components/recipes/EditRecipeModal";
+import { usePDFGenerator } from "@/hooks/usePDFGenerator";
 
 export default function RecipeListView() {
   const { patientId } = useParams<{ patientId: string }>();
@@ -23,13 +27,26 @@ export default function RecipeListView() {
 
   const [recipeToDelete, setRecipeToDelete] = useState<{ id: string } | null>(null);
   const [recipeToEdit, setRecipeToEdit] = useState<Recipe | null>(null);
+  const [generatingPdfId, setGeneratingPdfId] = useState<string | null>(null);
 
+  // Hook de PDF
+  const { generatePDF, isReady: isPDFReady } = usePDFGenerator();
+
+  // Query: Recetas
   const { data: recipes = [], isLoading } = useQuery({
     queryKey: ["recipes", patientId],
     queryFn: () => getRecipesByPatient(patientId!),
     enabled: !!patientId,
   });
 
+  // Query: Paciente
+  const { data: patient } = useQuery({
+    queryKey: ["patient", patientId],
+    queryFn: () => getPatientById(patientId!),
+    enabled: !!patientId,
+  });
+
+  // Mutation: Eliminar
   const { mutate: removeRecipe, isPending: isDeleting } = useMutation({
     mutationFn: deleteRecipe,
     onSuccess: () => {
@@ -47,7 +64,109 @@ export default function RecipeListView() {
     (a, b) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime()
   );
 
-  if (isLoading) return <div className="h-64 flex items-center justify-center"><Loader2 className="animate-spin text-biovet-500 w-8 h-8" /></div>;
+  // ══════════════════════════════════════════
+  // GENERAR PDF
+  // ══════════════════════════════════════════
+  const handleDownloadPDF = (recipe: Recipe) => {
+    if (!patient || !isPDFReady) {
+      toast.error("Error", "No se encontraron los datos necesarios.");
+      return;
+    }
+
+    setGeneratingPdfId(recipe._id);
+
+    const dateStr = new Date(recipe.issueDate).toLocaleDateString("es-ES");
+    const fullSpecies = patient.breed
+      ? `${patient.species} - ${patient.breed}`
+      : patient.species;
+    const ownerName =
+      typeof patient.owner === "object" && patient.owner !== null
+        ? `${patient.owner.name} ""}`
+        : "Propietario";
+
+    generatePDF(
+      {
+        title: "RECETA MÉDICA VETERINARIA",
+        primaryColor: { r: 10, g: 126, b: 164 }, // Azul biovet
+        filename: `Receta_${patient.name}_${dateStr.replace(/\//g, "-")}.pdf`,
+      },
+      {
+        name: patient.name,
+        ownerName,
+        fullSpecies,
+      },
+      dateStr,
+      (doc, y, width, margin, colors, addPage) => {
+        // --- CUERPO (Rx) ---
+        doc.setFont("times", "bold");
+        doc.setFontSize(16);
+        doc.setTextColor(colors.black.r, colors.black.g, colors.black.b);
+        doc.text("Rx.", margin, y);
+        y += 8;
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+
+        recipe.medications.forEach((med, index) => {
+          if (y > 175) {
+            y = addPage();
+          }
+
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(colors.black.r, colors.black.g, colors.black.b);
+          const title = `${index + 1}. ${med.name} (${med.presentation})`;
+          doc.text(title, margin + 5, y);
+          y += 5;
+
+          if (med.quantity) {
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(9);
+            doc.text(`Cantidad: ${med.quantity}`, margin + 5, y);
+            y += 5;
+          }
+
+          doc.setFont("helvetica", "italic");
+          doc.setFontSize(10);
+          const instructions = doc.splitTextToSize(
+            `Indicaciones: ${med.instructions}`,
+            width - margin * 2 - 10
+          );
+          doc.text(instructions, margin + 5, y);
+          y += instructions.length * 4 + 4;
+        });
+
+        // --- NOTAS ---
+        if (recipe.notes) {
+          if (y > 170) {
+            y = addPage();
+          }
+
+          y += 5;
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(9);
+          doc.setTextColor(colors.black.r, colors.black.g, colors.black.b);
+          doc.text("Observaciones:", margin, y);
+          y += 4;
+          doc.setFont("helvetica", "normal");
+          const notes = doc.splitTextToSize(recipe.notes, width - margin * 2);
+          doc.text(notes, margin, y);
+          y += notes.length * 4 + 10;
+        }
+
+        return y;
+      }
+    );
+
+    setGeneratingPdfId(null);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="h-64 flex items-center justify-center">
+        <Loader2 className="animate-spin text-biovet-500 w-8 h-8" />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -89,16 +208,40 @@ export default function RecipeListView() {
                     <div className="flex-1 min-w-0">
                       <div className="bg-white dark:bg-dark-200 p-5 rounded-2xl rounded-tl-sm shadow-sm border border-surface-200 dark:border-dark-100 hover:shadow-md transition-all duration-200 relative">
                         
+                        {/* Acciones */}
                         <div className="absolute top-4 right-4 flex gap-1.5">
-                          <button onClick={() => setRecipeToEdit(recipe)} className="p-1.5 rounded-lg text-slate-400 hover:text-biovet-500 hover:bg-biovet-50 dark:hover:bg-biovet-900/30 transition-colors" title="Editar">
+                          {/* Descargar PDF */}
+                          <button
+                            onClick={() => handleDownloadPDF(recipe)}
+                            disabled={generatingPdfId === recipe._id || !isPDFReady}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors disabled:opacity-50"
+                            title="Descargar PDF"
+                          >
+                            {generatingPdfId === recipe._id ? (
+                              <Loader2 size={15} className="animate-spin" />
+                            ) : (
+                              <Download size={15} />
+                            )}
+                          </button>
+                          {/* Editar */}
+                          <button
+                            onClick={() => setRecipeToEdit(recipe)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-biovet-500 hover:bg-biovet-50 dark:hover:bg-biovet-900/30 transition-colors"
+                            title="Editar"
+                          >
                             <Pencil size={15} />
                           </button>
-                          <button onClick={() => setRecipeToDelete({ id: recipe._id })} className="p-1.5 rounded-lg text-slate-400 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/30 transition-colors" title="Eliminar">
+                          {/* Eliminar */}
+                          <button
+                            onClick={() => setRecipeToDelete({ id: recipe._id })}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/30 transition-colors"
+                            title="Eliminar"
+                          >
                             <Trash2 size={15} />
                           </button>
                         </div>
 
-                        <div className="mb-3 pr-20">
+                        <div className="mb-3 pr-24">
                           <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 mb-1">
                             <Calendar size={14} />
                             <span className="text-sm font-bold uppercase tracking-wider">{formatDate(recipe.issueDate)}</span>
@@ -135,14 +278,14 @@ export default function RecipeListView() {
         </div>
       </div>
 
-     {/* Modal Editar */}
-{recipeToEdit && (
-  <EditRecipeModal
-    isOpen={true} // Simplificado
-    onClose={() => setRecipeToEdit(null)}
-    recipe={recipeToEdit}
-  />
-)}
+      {/* Modal Editar */}
+      {recipeToEdit && (
+        <EditRecipeModal
+          isOpen={true}
+          onClose={() => setRecipeToEdit(null)}
+          recipe={recipeToEdit}
+        />
+      )}
 
       <ConfirmationModal
         isOpen={!!recipeToDelete}

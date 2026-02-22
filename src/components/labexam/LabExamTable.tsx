@@ -1,6 +1,6 @@
-// src/views/labExams/components/LabExamTable.tsx
-
+// src/components/labexam/LabExamTable.tsx
 import { LabExamRow } from "./LabExamRow";
+import type { LabExam } from "@/types/labExam";
 
 const HEADERS = [
   { label: "Paciente", align: "text-left" },
@@ -12,19 +12,20 @@ const HEADERS = [
 ];
 
 interface LabExamTableProps {
-  exams: {
-    _id?: string;
-    patientName: string;
-    breed?: string;
-    species: string;
-    date: string;
-    hematocrit: number;
-    whiteBloodCells: number;
-  }[];
+  exams: LabExam[];
   onDelete: (exam: { _id: string; patientName: string }) => void;
+  onDownload: (exam: LabExam) => void;
+  generatingPdfId: string | null;
+  isPDFReady: boolean;
 }
 
-export function LabExamTable({ exams, onDelete }: LabExamTableProps) {
+export function LabExamTable({
+  exams,
+  onDelete,
+  onDownload,
+  generatingPdfId,
+  isPDFReady,
+}: LabExamTableProps) {
   return (
     <div className="hidden lg:block flex-1 overflow-auto custom-scrollbar relative">
       <table className="w-full text-sm">
@@ -50,6 +51,9 @@ export function LabExamTable({ exams, onDelete }: LabExamTableProps) {
                   onDelete({ _id: exam._id, patientName: exam.patientName });
                 }
               }}
+              onDownload={() => onDownload(exam)}
+              isGeneratingPdf={generatingPdfId === exam._id}
+              isPDFReady={isPDFReady}
             />
           ))}
         </tbody>

@@ -15,7 +15,7 @@ import {
   PlusCircle,
   History,
   List,
-  // CORRECCIÓN AQUÍ: Agregamos la palabra 'type'
+  Building2,
   type LucideIcon 
 } from "lucide-react";
 
@@ -80,7 +80,6 @@ export const menuItems: MenuSection[] = [
         submenu: [
           { to: "/inventory/products", label: "Productos", icon: List },
           { to: "/inventory/stock", label: "Stock actual", icon: Package },
-        
         ]
       },
       { 
@@ -106,7 +105,6 @@ export const menuItems: MenuSection[] = [
         submenu: [
           { to: "/reports/grooming", label: "Peluquería", icon: Scissors },
           { to: "/reports/invoices", label: "Facturación", icon: CreditCard },
-          
         ]
       },
       { 
@@ -114,6 +112,7 @@ export const menuItems: MenuSection[] = [
         icon: Settings,
         to: "/settings",
         submenu: [
+          { to: "/settings/clinic", label: "Mi Clínica", icon: Building2 },
           { to: "/settings/staff", label: "Staff", icon: UserCog },
           { to: "/settings/payment-methods", label: "Métodos de Pago", icon: CreditCard },
         ]

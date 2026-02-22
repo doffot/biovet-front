@@ -1,10 +1,10 @@
+// src/components/labExams/ShareResultsModal.tsx
 import { Printer } from "lucide-react";
-import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import jsPDF from "jspdf";
-import { getProfile } from "@/api/AuthAPI";
 import { toast } from "../Toast";
 import ConfirmationModal from "../ConfirmationModal";
+import { usePDFGenerator } from "@/hooks/usePDFGenerator";
 import type { LabExam } from "@/types/labExam";
 
 interface ShareResultsModalProps {
@@ -28,30 +28,18 @@ export default function ShareResultsModal({
   patientData,
 }: ShareResultsModalProps) {
   const [isGenerating, setIsGenerating] = useState(false);
-  const [signatureBase64, setSignatureBase64] = useState<string>("");
 
-  const { data: profile } = useQuery({
-    queryKey: ["profile"],
-    queryFn: getProfile,
-  });
-
-  useEffect(() => {
-    const loadSignature = async () => {
-      if (!profile?.signature) return;
-      try {
-        const response = await fetch(profile.signature);
-        const blob = await response.blob();
-        const reader = new FileReader();
-        reader.onloadend = () => setSignatureBase64(reader.result as string);
-        reader.readAsDataURL(blob);
-      } catch (error) {
-        console.error("Error cargando firma:", error);
-      }
-    };
-    if (isOpen && profile?.signature) {
-      loadSignature();
-    }
-  }, [isOpen, profile?.signature]);
+  // Hook de PDF
+  const {
+    vetProfile,
+    clinic,
+    signatureBase64,
+    clinicLogoBase64,
+    getVetCredentials,
+    getVetName,
+    extractSocialUsername,
+    isReady,
+  } = usePDFGenerator();
 
   const cells = examData.differentialCount;
 
@@ -65,32 +53,131 @@ export default function ShareResultsModal({
 
   const formatNumber = (num: number) => num.toLocaleString("es-ES");
 
+  // ══════════════════════════════════════════
+  // DIBUJAR MARCA DE AGUA
+  // ══════════════════════════════════════════
+  const drawWatermark = (doc: any, width: number, height: number) => {
+    if (clinicLogoBase64 && clinicLogoBase64.startsWith("data:image")) {
+      try {
+        const gState = doc.GState({ opacity: 0.06 });
+        doc.setGState(gState);
+
+        const watermarkSize = 120;
+        const watermarkX = (width - watermarkSize) / 2;
+        const watermarkY = (height - watermarkSize) / 2;
+
+        doc.addImage(
+          clinicLogoBase64,
+          "PNG",
+          watermarkX,
+          watermarkY,
+          watermarkSize,
+          watermarkSize
+        );
+
+        doc.setGState(doc.GState({ opacity: 1 }));
+      } catch (e) {
+        console.warn("No se pudo agregar marca de agua", e);
+      }
+    }
+  };
+
   const handlePrintPDF = () => {
+    if (!isReady) {
+      toast.error("Error", "Cargando datos necesarios...");
+      return;
+    }
+
     setIsGenerating(true);
 
     try {
-      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const doc: any = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
       const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
       const marginLeft = 15;
       const marginRight = 15;
       const contentWidth = pageWidth - marginLeft - marginRight;
-      let y = 15;
+      let y = 12;
 
       // === COLORES ===
-      const primary = { r: 10, g: 126, b: 164 }; // #0A7EA4
-      const dark = { r: 30, g: 41, b: 59 }; // #1e293b
-      const gray = { r: 100, g: 116, b: 139 }; // #64748b
-      const lightBg = { r: 224, g: 244, b: 248 }; // #E0F4F8
+      const primary = { r: 10, g: 126, b: 164 };
+      const dark = { r: 30, g: 41, b: 59 };
+      const gray = { r: 100, g: 116, b: 139 };
+      const lightBg = { r: 224, g: 244, b: 248 };
       const white = { r: 255, g: 255, b: 255 };
-      const tableBorder = { r: 226, g: 232, b: 240 }; // #E2E8F0
-      const labelBg = { r: 248, g: 250, b: 252 }; // #f8fafc
+      const tableBorder = { r: 226, g: 232, b: 240 };
+      const labelBg = { r: 248, g: 250, b: 252 };
+
+      // === MARCA DE AGUA ===
+      drawWatermark(doc, pageWidth, pageHeight);
+
+      // === HEADER CON LOGO DE CLÍNICA ===
+      if (clinicLogoBase64 && clinicLogoBase64.startsWith("data:image")) {
+        try {
+          doc.addImage(clinicLogoBase64, "PNG", marginLeft, y, 25, 25);
+
+          const headerStartX = marginLeft + 30;
+
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(14);
+          doc.setTextColor(primary.r, primary.g, primary.b);
+          doc.text(clinic?.name || "Clínica Veterinaria", headerStartX, y + 7);
+
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(8);
+          doc.setTextColor(gray.r, gray.g, gray.b);
+
+          let infoY = y + 13;
+
+          if (clinic?.phone || clinic?.whatsapp) {
+            doc.text(
+              `Tel: ${clinic?.phone || ""} ${clinic?.whatsapp ? `| WhatsApp: ${clinic.whatsapp}` : ""}`,
+              headerStartX,
+              infoY
+            );
+            infoY += 4;
+          }
+
+          if (clinic?.email) {
+            doc.text(clinic.email, headerStartX, infoY);
+            infoY += 4;
+          }
+
+          if (clinic?.address) {
+            const addressLines = doc.splitTextToSize(
+              clinic.address,
+              pageWidth - headerStartX - marginRight
+            );
+            doc.text(addressLines[0], headerStartX, infoY);
+          }
+
+          y += 30;
+        } catch (e) {
+          console.warn("No se pudo agregar logo", e);
+          // Header sin logo
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(14);
+          doc.setTextColor(primary.r, primary.g, primary.b);
+          doc.text(clinic?.name || "LABORATORIO VETERINARIO", pageWidth / 2, y + 5, { align: "center" });
+          y += 15;
+        }
+      } else {
+        // Header sin logo
+        if (clinic?.name) {
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(14);
+          doc.setTextColor(primary.r, primary.g, primary.b);
+          doc.text(clinic.name, pageWidth / 2, y + 5, { align: "center" });
+          y += 10;
+        }
+      }
 
       // === TÍTULO ===
-      doc.setFontSize(20);
+      doc.setFontSize(18);
       doc.setTextColor(primary.r, primary.g, primary.b);
       doc.setFont("helvetica", "bold");
       doc.text("RESULTADOS DE HEMATOLOGÍA", pageWidth / 2, y, { align: "center" });
-      y += 7;
+      y += 6;
 
       doc.setFontSize(10);
       doc.setTextColor(gray.r, gray.g, gray.b);
@@ -142,7 +229,7 @@ export default function ShareResultsModal({
       doc.setFont("helvetica", "bold");
       doc.text("Médico: ", col3, row2);
       doc.setFont("helvetica", "normal");
-      doc.text(patientData.mainVet || "—", col3 + 16, row2);
+      doc.text(getVetName(), col3 + 16, row2);
 
       y += infoHeight + 10;
 
@@ -172,14 +259,12 @@ export default function ShareResultsModal({
           doc.setFillColor(white.r, white.g, white.b);
         }
 
-        // Dibujar celdas
         let xPos = marginLeft;
         cols.forEach((col) => {
           doc.rect(xPos, rowY, col.width, rowHeight, "FD");
           xPos += col.width;
         });
 
-        // Bordes
         doc.setDrawColor(tableBorder.r, tableBorder.g, tableBorder.b);
         xPos = marginLeft;
         cols.forEach((col) => {
@@ -187,7 +272,6 @@ export default function ShareResultsModal({
           xPos += col.width;
         });
 
-        // Texto
         doc.setFontSize(isHeader ? 8 : 9);
         if (isHeader) {
           doc.setTextColor(white.r, white.g, white.b);
@@ -224,7 +308,6 @@ export default function ShareResultsModal({
       ];
       const rowH = 8;
 
-      // Header
       const headerCols1 = [
         { text: "PARÁMETRO", x: marginLeft, width: colWidths1[0], align: "center" as const },
         { text: "RESULTADO", x: marginLeft + colWidths1[0], width: colWidths1[1], align: "center" as const },
@@ -235,7 +318,6 @@ export default function ShareResultsModal({
       drawRow(headerCols1, y, rowH, true);
       y += rowH;
 
-      // Filas hemograma
       const hemogramaRows = [
         { param: "Hematocrito", value: String(examData.hematocrit), unit: "%", refC: "37 - 55", refF: "30 - 45" },
         { param: "Glóbulos Blancos", value: formatNumber(examData.whiteBloodCells), unit: "células/µL", refC: "6.000 - 17.000", refF: "5.000 - 19.500" },
@@ -299,7 +381,7 @@ export default function ShareResultsModal({
       y += 20;
 
       // Firma
-      if (signatureBase64) {
+      if (signatureBase64 && signatureBase64.startsWith("data:image")) {
         try {
           doc.addImage(signatureBase64, "PNG", pageWidth / 2 - 25, y, 50, 20);
           y += 22;
@@ -307,6 +389,8 @@ export default function ShareResultsModal({
           console.warn("No se pudo agregar firma:", e);
           y += 5;
         }
+      } else {
+        y += 10;
       }
 
       // Línea separadora
@@ -318,44 +402,71 @@ export default function ShareResultsModal({
       doc.setFontSize(12);
       doc.setTextColor(primary.r, primary.g, primary.b);
       doc.setFont("helvetica", "bold");
-      doc.text(
-        `Dr(a). ${profile?.name || ""} ${profile?.lastName || ""}`,
-        pageWidth / 2,
-        y,
-        { align: "center" }
-      );
-      y += 6;
+      doc.text(getVetName(), pageWidth / 2, y, { align: "center" });
+      y += 5;
 
-      // CI
+      // CI y CMVZ
       doc.setFontSize(9);
       doc.setTextColor(gray.r, gray.g, gray.b);
       doc.setFont("helvetica", "normal");
-      doc.text(`C.I: ${profile?.ci || "—"}`, pageWidth / 2, y, { align: "center" });
-      y += 6;
-
-      // Credenciales
-      doc.setFontSize(8);
       doc.text(
-        `COLVET-${profile?.estado || "—"}: ${profile?.cmv || "—"} | INSAI: ${profile?.runsai || "—"} | MSDS: ${profile?.msds || "—"}`,
+        `C.I: V-${vetProfile?.ci || "—"} | CMVZ: ${vetProfile?.cmv || "—"}`,
         pageWidth / 2,
         y,
         { align: "center" }
       );
       y += 5;
 
+      // Credenciales adicionales
+      const credenciales = getVetCredentials();
+      if (credenciales.length > 0) {
+        doc.setFontSize(8);
+        doc.text(credenciales.join(" | "), pageWidth / 2, y, { align: "center" });
+        y += 5;
+      }
+
       // Estado
-      doc.text(`${profile?.estado || "—"}, Venezuela`, pageWidth / 2, y, {
+      doc.setFontSize(8);
+      doc.text(`${vetProfile?.estado || "—"}, Venezuela`, pageWidth / 2, y, {
         align: "center",
       });
+      y += 4;
+
+      doc.text("Médico Veterinario", pageWidth / 2, y, { align: "center" });
+
+      // === FOOTER CON REDES SOCIALES ===
+      if (clinic?.whatsapp || clinic?.socialMedia?.length) {
+        y += 8;
+        doc.setFontSize(7);
+        doc.setTextColor(gray.r, gray.g, gray.b);
+
+        const socialText: string[] = [];
+
+        if (clinic?.whatsapp) {
+          socialText.push(`WhatsApp: ${clinic.whatsapp}`);
+        }
+
+        if (clinic?.socialMedia?.length) {
+          clinic.socialMedia.slice(0, 2).forEach((s) => {
+            const username = extractSocialUsername(s.url, s.platform);
+            socialText.push(`${s.platform}: ${username}`);
+          });
+        }
+
+        if (socialText.length > 0) {
+          doc.text(socialText.join(" | "), pageWidth / 2, y, { align: "center" });
+        }
+      }
 
       // === GUARDAR ===
-      doc.save(`Hematologia_${patientData.name}.pdf`);
+      const dateStr = new Date(examData.date).toLocaleDateString("es-ES").replace(/\//g, "-");
+      doc.save(`Hematologia_${patientData.name}_${dateStr}.pdf`);
 
-      toast.success("PDF Generado correctamente");
+      toast.success("PDF Generado", "Resultados descargados exitosamente.");
       onClose();
     } catch (error) {
       console.error("Error generando PDF:", error);
-      toast.error("Error al generar PDF");
+      toast.error("Error", "No se pudo generar el PDF.");
     } finally {
       setIsGenerating(false);
     }
@@ -389,7 +500,7 @@ export default function ShareResultsModal({
       }
       confirmText="Descargar PDF"
       confirmIcon={Printer}
-      isLoading={isGenerating}
+      isLoading={isGenerating || !isReady}
     />
   );
 }

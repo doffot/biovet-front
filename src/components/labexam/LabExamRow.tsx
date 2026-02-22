@@ -1,24 +1,24 @@
-// src/views/labExams/components/LabExamRow.tsx
-
+// src/components/labexam/LabExamRow.tsx
 import { Link } from "react-router-dom";
-import { PawPrint, Calendar, Eye, Trash2 } from "lucide-react";
+import { PawPrint, Calendar, Eye, Trash2, Download, Loader2 } from "lucide-react";
 import { formatExamDate, getHematocritLabel, getHematocritStatus } from "@/utils/labExamHelpers";
-
+import type { LabExam } from "@/types/labExam";
 
 interface LabExamRowProps {
-  exam: {
-    _id?: string;
-    patientName: string;
-    breed?: string;
-    species: string;
-    date: string;
-    hematocrit: number;
-    whiteBloodCells: number;
-  };
+  exam: LabExam;
   onDelete: () => void;
+  onDownload: () => void;
+  isGeneratingPdf: boolean;
+  isPDFReady: boolean;
 }
 
-export function LabExamRow({ exam, onDelete }: LabExamRowProps) {
+export function LabExamRow({
+  exam,
+  onDelete,
+  onDownload,
+  isGeneratingPdf,
+  isPDFReady,
+}: LabExamRowProps) {
   const hematocritStatus = getHematocritStatus(exam.hematocrit, exam.species);
   const isAltered = hematocritStatus !== "normal";
 
@@ -91,6 +91,7 @@ export function LabExamRow({ exam, onDelete }: LabExamRowProps) {
       {/* Acciones */}
       <td className="px-4 py-3">
         <div className="flex items-center justify-center gap-1">
+          {/* Ver */}
           <Link
             to={`/lab/${exam._id}/edit`}
             className="p-1.5 rounded-lg text-surface-400 dark:text-slate-500 hover:bg-surface-100 dark:hover:bg-dark-50 hover:text-slate-600 dark:hover:text-slate-300 transition-all cursor-pointer"
@@ -98,6 +99,22 @@ export function LabExamRow({ exam, onDelete }: LabExamRowProps) {
           >
             <Eye className="w-4 h-4" />
           </Link>
+
+          {/* Descargar PDF */}
+          <button
+            onClick={onDownload}
+            disabled={isGeneratingPdf || !isPDFReady}
+            className="p-1.5 rounded-lg text-emerald-400 dark:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Descargar PDF"
+          >
+            {isGeneratingPdf ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4" />
+            )}
+          </button>
+
+          {/* Eliminar */}
           <button
             onClick={onDelete}
             className="p-1.5 rounded-lg text-danger-400 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-950 transition-all cursor-pointer"

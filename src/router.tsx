@@ -61,6 +61,7 @@ import { StaffListView } from "./views/staff/StaffListView";
 import MedicalOrderListView from "./views/medical-order/MedicalOrderListView";
 import CreateMedicalOrderView from "./views/medical-order/CreateMedicalOrderView";
 import MedicalOrderDetailView from "./views/medical-order/MedicalOrderDetailView";
+import ClinicSettingsView from "./views/settings/ClinicSettingsView";
 
 export default function Router() {
   return (
@@ -180,12 +181,13 @@ export default function Router() {
           </Route>
 
           {/* CONFIGURACIONES */}
-          <Route path="/settings">
-            <Route index element={<Navigate to="/settings/staff" replace />} />
-            <Route path="staff" element={<StaffListView />} />
-            <Route path="payment-methods" element={<PaymentMethodsListView />} />
-            <Route path="payment-methods/create" element={<CreatePaymentMethodView />} />
-          </Route>
+         <Route path="/settings">
+  <Route index element={<Navigate to="/settings/clinic" replace />} />
+  <Route path="clinic" element={<ClinicSettingsView />} />
+  <Route path="staff" element={<StaffListView />} />
+  <Route path="payment-methods" element={<PaymentMethodsListView />} />
+  <Route path="payment-methods/create" element={<CreatePaymentMethodView />} />
+</Route>
         </Route>
 
         {/* =============================================

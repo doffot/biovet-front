@@ -29,7 +29,6 @@ const SPECIES_OPTIONS = [
   { value: "Otro", label: "Otro" },
 ];
 
-// Mapeo especie → archivo en /public/defaults/
 const SPECIES_DEFAULT_PHOTO: Record<string, string> = {
   Canino: "canino.png",
   Felino: "felino.png",
@@ -40,7 +39,6 @@ const SPECIES_DEFAULT_PHOTO: Record<string, string> = {
   Otro: "otro.png",
 };
 
-// Función para cargar imagen de public y convertirla a File
 async function loadDefaultPhoto(species: string): Promise<File | null> {
   const filename = SPECIES_DEFAULT_PHOTO[species];
   if (!filename) return null;
@@ -65,7 +63,11 @@ export default function CreatePatientView() {
   const { ownerId } = useParams<{ ownerId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  
+  // DOS referencias: una para galería y otra para cámara
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  
   const { data: vetData } = useAuth();
 
   const [isClosing, setIsClosing] = useState(false);
@@ -104,13 +106,11 @@ export default function CreatePatientView() {
 
   const selectedSpecies = watch("species");
 
-  // Cargar foto por defecto cuando cambia la especie
   useEffect(() => {
     if (selectedSpecies && !isCustomPhoto) {
       const filename = SPECIES_DEFAULT_PHOTO[selectedSpecies];
       if (filename) {
         setPhotoPreview(`/defaults/${filename}`);
-        // Cargar el archivo para enviarlo
         loadDefaultPhoto(selectedSpecies).then((file) => {
           if (file) {
             setPhotoFile(file);
@@ -143,7 +143,6 @@ export default function CreatePatientView() {
         }
       });
 
-      // Siempre enviar foto (custom o por defecto)
       if (photoFile) {
         form.append("photo", photoFile);
       }
@@ -191,7 +190,10 @@ export default function CreatePatientView() {
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
-    // Si hay especie seleccionada, volver a la foto por defecto
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = "";
+    }
+    
     if (selectedSpecies) {
       const filename = SPECIES_DEFAULT_PHOTO[selectedSpecies];
       if (filename) {
@@ -289,6 +291,7 @@ export default function CreatePatientView() {
                       )}
                     </div>
 
+                    {/* Input oculto para GALERÍA */}
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -297,14 +300,38 @@ export default function CreatePatientView() {
                       onChange={handleImageChange}
                     />
 
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="w-full py-3 px-4 bg-white dark:bg-dark-300 text-biovet-600 dark:text-biovet-400 border border-biovet-100 dark:border-biovet-900 rounded-xl font-bold text-xs flex items-center justify-center gap-2 hover:bg-biovet-50 dark:hover:bg-biovet-950/30 transition-all shadow-sm"
-                    >
-                      <Upload size={16} />
-                      {isCustomPhoto ? "CAMBIAR FOTO" : "SUBIR FOTO PERSONALIZADA"}
-                    </button>
+                    {/* Input oculto para CÁMARA */}
+                    <input
+                      ref={cameraInputRef}
+                      type="file"
+                      accept="image/*"
+                      capture="environment" // "user" para frontal, "environment" para trasera
+                      className="hidden"
+                      onChange={handleImageChange}
+                    />
+
+                    {/* Botones */}
+                    <div className="w-full flex flex-col gap-2">
+                      {/* Botón TOMAR FOTO (visible solo en móvil) */}
+                      <button
+                        type="button"
+                        onClick={() => cameraInputRef.current?.click()}
+                        className="md:hidden w-full py-3 px-4 bg-biovet-600 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 hover:bg-biovet-700 transition-all shadow-md"
+                      >
+                        <Camera size={16} />
+                        TOMAR FOTO
+                      </button>
+
+                      {/* Botón SUBIR DESDE GALERÍA */}
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full py-3 px-4 bg-white dark:bg-dark-300 text-biovet-600 dark:text-biovet-400 border border-biovet-100 dark:border-biovet-900 rounded-xl font-bold text-xs flex items-center justify-center gap-2 hover:bg-biovet-50 dark:hover:bg-biovet-950/30 transition-all shadow-sm"
+                      >
+                        <Upload size={16} />
+                        {isCustomPhoto ? "CAMBIAR FOTO" : "SUBIR DESDE GALERÍA"}
+                      </button>
+                    </div>
 
                     {isCustomPhoto && (
                       <button
