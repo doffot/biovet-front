@@ -1,11 +1,12 @@
 // src/views/dashboard/DashboardView.tsx
 import { useMemo, useState } from "react";
-import { Stethoscope, PawPrint, Building2, MapPin, Phone, Hash, Settings2 } from "lucide-react";
-import { Link } from "react-router-dom"; // Importar Link
+import { Stethoscope, PawPrint, Calendar as CalendarIcon } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useQuery } from "@tanstack/react-query";
 import { getMyClinic } from "@/api/veterinaryClinicAPI";
+import { formatLongDate } from "@/utils/dashboardUtils";
+
 import { 
   AgendaSection, 
   AlertsSection, 
@@ -23,112 +24,76 @@ export default function DashboardView() {
   const dashboard = useDashboardData();
   const [showPendingInvoices, setShowPendingInvoices] = useState(false);
 
+  // Obtener datos de la clínica
   const { data: clinic } = useQuery({
     queryKey: ["my-clinic"],
     queryFn: getMyClinic,
   });
 
-  const displayName = useMemo(() => {
-    return authData?.name || "Doctor";
-  }, [authData]);
+  const displayName = useMemo(() => authData?.name || "Doctor", [authData]);
 
   return (
-    <div className="p-4 lg:p-6 max-w-7xl mx-auto space-y-6">
+    <div className="relative p-4 lg:p-8 max-w-7xl mx-auto space-y-10 animate-fade-in">
       
-      {/* ═══ SECCIÓN DE IDENTIDAD DE LA CLÍNICA ═══ */}
-      <div className="bg-white dark:bg-dark-100 p-5 rounded-2xl border border-surface-200 dark:border-slate-800 shadow-sm transition-all">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          
-          <div className="flex items-center gap-5">
-            <div className="relative group">
-              <div className="w-20 h-20 rounded-2xl bg-biovet-50 dark:bg-biovet-950 flex items-center justify-center overflow-hidden border-2 border-biovet-100 dark:border-biovet-900 shadow-inner">
-                {clinic?.logo ? (
-                  <img src={clinic.logo} alt={clinic.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                ) : (
-                  <Building2 className="w-10 h-10 text-biovet-400 opacity-50" />
-                )}
-              </div>
-            </div>
+      {/* ═══ MARCA DE AGUA: LOGO DE LA CLÍNICA (O APP POR DEFECTO) ═══ */}
+      <div className="fixed inset-0 flex justify-center pointer-events-none z-20 overflow-hidden">
+        <img 
+          src={clinic?.logo || "/logo_main.webp"} 
+          alt="Watermark" 
+          className="w-250 h-250 object-contain opacity-[0.03] dark:opacity-[0.06] grayscale select-none"
+        />
+      </div>
 
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-heading font-bold text-slate-800 dark:text-white tracking-tight">
-                  {clinic?.name || "Configura tu Clínica"}
-                </h1>
-                {!clinic && (
-                  <Link 
-                    to="/clinic" 
-                    className="flex items-center gap-1.5 px-2 py-1 bg-warning-50 text-warning-600 dark:bg-warning-900/20 dark:text-warning-400 rounded-md text-[10px] font-bold uppercase tracking-wider hover:bg-warning-100 transition-colors border border-warning-200 dark:border-warning-800"
-                  >
-                    <Settings2 size={12} />
-                    Completar Perfil
-                  </Link>
-                )}
-              </div>
-
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-                {clinic?.rif && (
-                  <span className="flex items-center gap-1.5 font-semibold text-biovet-600 dark:text-biovet-400 bg-biovet-50 dark:bg-biovet-900/30 px-2 py-0.5 rounded-lg border border-biovet-100 dark:border-biovet-800">
-                    <Hash size={14} /> {clinic.rif}
-                  </span>
-                )}
-                {clinic?.phone && (
-                  <span className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
-                    <Phone size={14} className="text-biovet-500" /> {clinic.phone}
-                  </span>
-                )}
-                {clinic?.city && (
-                  <span className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
-                    <MapPin size={14} className="text-biovet-500" /> {clinic.city}, {clinic.country}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col md:items-end border-t md:border-t-0 border-slate-100 dark:border-slate-800 pt-4 md:pt-0">
-            <DashboardHeader 
-              userName={displayName} 
-              authData={{
-                isLegacyUser: authData?.isLegacyUser,
-                planType: authData?.planType,
-                trialEndedAt: authData?.trialEndedAt ?? undefined,
-                patientCount: authData?.patientCount,
-              }}
-            />
-          </div>
+      {/* ═══ TOP BAR: FECHA ═══ */}
+      <div className="flex justify-end items-center px-4">
+        <div className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-white/50 dark:bg-white/5 border border-slate-100 dark:border-slate-800 shadow-sm">
+          <CalendarIcon size={16} className="text-biovet-500" />
+          <span className="text-xs font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest">
+            {formatLongDate(new Date())}
+          </span>
         </div>
       </div>
 
-      {/* ═══ RESTO DE MÉTRICAS (Igual al original) ═══ */}
-      <MetricsGrid
-        todayAppointments={dashboard.todayAppointments.length}
-        todayConsultations={dashboard.todayConsultations.length}
-        todayGrooming={dashboard.todayGrooming.length}
-        todayRevenue={dashboard.todayRevenue}
-        totalPatients={dashboard.patients.length}
-        totalOwners={dashboard.owners.length}
-        pendingDebt={dashboard.pendingDebt}
-        pendingInvoicesCount={dashboard.pendingInvoicesCount}
-        monthRevenue={dashboard.monthRevenue}
-        onPendingDebtClick={() => setShowPendingInvoices(true)}
+      {/* ═══ HEADER: IDENTIDAD UNIFICADA (INCLUYE POWERED BY) ═══ */}
+      <DashboardHeader 
+        userName={displayName}
+        clinicData={clinic} 
+        authData={authData}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <AgendaSection appointments={dashboard.todayAppointments} />
-        <AlertsSection vaccinations={dashboard.upcomingVaccinations} dewormings={dashboard.upcomingDewormings} />
-      </div>
+      {/* ═══ RESTO DEL CONTENIDO ═══ */}
+      <div className="relative z-10 space-y-10">
+        <MetricsGrid
+          todayAppointments={dashboard.todayAppointments.length}
+          todayConsultations={dashboard.todayConsultations.length}
+          todayGrooming={dashboard.todayGrooming.length}
+          todayRevenue={dashboard.todayRevenue}
+          totalPatients={dashboard.patients.length}
+          totalOwners={dashboard.owners.length}
+          pendingDebt={dashboard.pendingDebt}
+          pendingInvoicesCount={dashboard.pendingInvoicesCount}
+          monthRevenue={dashboard.monthRevenue}
+          onPendingDebtClick={() => setShowPendingInvoices(true)}
+        />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ConsultationsSection consultations={dashboard.todayConsultations} />
-        <GroomingSection groomingServices={dashboard.todayGrooming} />
-      </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <AgendaSection appointments={dashboard.todayAppointments} />
+          <AlertsSection vaccinations={dashboard.upcomingVaccinations} dewormings={dashboard.upcomingDewormings} />
+        </div>
 
-      <RevenueChart data={dashboard.revenueChartData} weekRevenue={dashboard.weekRevenue} monthRevenue={dashboard.monthRevenue} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <ConsultationsSection consultations={dashboard.todayConsultations} />
+          <GroomingSection groomingServices={dashboard.todayGrooming} />
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <PieChartCard title="Servicios Realizados" icon={Stethoscope} data={dashboard.servicesChartData} tooltipLabel="Total" />
-        <PieChartCard title="Especies Atendidas" icon={PawPrint} data={dashboard.speciesChartData} tooltipLabel="Pacientes" />
+        <div className="rounded-[2.5rem] overflow-hidden border border-slate-100 dark:border-slate-800 shadow-sm bg-white dark:bg-dark-200 p-2">
+          <RevenueChart data={dashboard.revenueChartData} weekRevenue={dashboard.weekRevenue} monthRevenue={dashboard.monthRevenue} />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <PieChartCard title="Servicios Realizados" icon={Stethoscope} data={dashboard.servicesChartData} tooltipLabel="Total" />
+          <PieChartCard title="Especies Atendidas" icon={PawPrint} data={dashboard.speciesChartData} tooltipLabel="Pacientes" />
+        </div>
       </div>
 
       <PendingInvoicesModal isOpen={showPendingInvoices} onClose={() => setShowPendingInvoices(false)} invoices={dashboard.pendingInvoices} />

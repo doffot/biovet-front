@@ -135,7 +135,7 @@ export function InvoicePayments({
 
       {/* Modal de confirmación */}
       {showCancelConfirm && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/50">
+        <div className="fixed inset-0 z-110 flex items-center justify-center p-4 bg-black/50">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
@@ -220,7 +220,7 @@ function PaymentRow({
       }`}
     >
       <div
-        className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+        className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
           isCancelled ? "bg-gray-200" : "bg-emerald-100"
         }`}
       >
@@ -281,7 +281,7 @@ function PaymentRow({
         <button
           onClick={onCancel}
           disabled={isCancelling}
-          className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50 flex-shrink-0"
+          className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50 shrink-0"
           title="Anular pago"
         >
           <RotateCcw className="w-4 h-4" />

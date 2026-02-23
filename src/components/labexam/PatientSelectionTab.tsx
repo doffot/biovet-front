@@ -8,7 +8,9 @@ import {
   CheckCircle2, 
   PawPrint,
   ChevronRight,
-  Loader2
+  Loader2,
+  User,
+  Info
 } from "lucide-react";
 import { getPatients, getPatientById } from "../../api/patientAPI";
 import { useAuth } from "../../hooks/useAuth";
@@ -38,8 +40,8 @@ const PatientAvatar = ({
 }) => {
   const sizeClasses = {
     sm: "w-8 h-8",
-    md: "w-10 h-10",
-    lg: "w-12 h-12"
+    md: "w-11 h-11",
+    lg: "w-14 h-14"
   };
   
   const hasPhoto = patient.photo && typeof patient.photo === 'string';
@@ -49,14 +51,14 @@ const PatientAvatar = ({
       <img
         src={patient.photo!}
         alt={patient.name}
-        className={`${sizeClasses[size]} rounded-lg object-cover shrink-0 border border-slate-700`}
+        className={`${sizeClasses[size]} rounded-lg object-cover shrink-0 border border-surface-300 dark:border-slate-700`}
       />
     );
   }
   
   return (
-    <div className={`${sizeClasses[size]} rounded-lg flex items-center justify-center shrink-0 bg-slate-700`}>
-      <PawPrint className={`${size === "lg" ? "w-6 h-6" : "w-5 h-5"} text-slate-400`} />
+    <div className={`${sizeClasses[size]} rounded-lg flex items-center justify-center shrink-0 bg-surface-200 dark:bg-dark-100 border border-surface-300 dark:border-slate-700`}>
+      <PawPrint className={`${size === "lg" ? "w-7 h-7" : "w-5 h-5"} text-slate-400`} />
     </div>
   );
 };
@@ -187,20 +189,20 @@ export function PatientSelectionTab({
     if (preloadedPatient) return (
       <div className="space-y-5">
         <div className="text-center">
-          <div className="w-14 h-14 mx-auto mb-3 rounded-xl bg-green-600 flex items-center justify-center">
+          <div className="w-14 h-14 mx-auto mb-3 rounded-xl bg-success-500 flex items-center justify-center">
             <CheckCircle2 className="w-7 h-7 text-white" />
           </div>
           <h3 className="text-lg font-bold">Paciente Detectado</h3>
         </div>
-        <div className="p-4 bg-green-900/10 border border-green-600/30 rounded-xl flex items-center gap-4">
+        <div className="p-4 bg-success-50 dark:bg-success-950/20 border border-success-200 dark:border-success-800 rounded-xl flex items-center gap-4">
           <PatientAvatar patient={preloadedPatient} size="lg" />
           <div className="flex-1">
-            <p className="text-lg font-bold text-green-500">{preloadedPatient.name}</p>
-            <p className="text-sm text-slate-400">{preloadedPatient.species} {preloadedPatient.breed && `• ${preloadedPatient.breed}`}</p>
+            <p className="text-lg font-bold text-success-700 dark:text-success-400">{preloadedPatient.name}</p>
+            <p className="text-sm text-slate-500">{preloadedPatient.species} {preloadedPatient.breed && `• ${preloadedPatient.breed}`}</p>
           </div>
         </div>
         <div className="flex justify-center pt-2">
-          <button type="button" onClick={onPatientSelected} className="btn-primary flex items-center gap-2 px-8">
+          <button type="button" onClick={onPatientSelected} className="btn-primary px-8">
             Continuar <ChevronRight className="w-5 h-5" />
           </button>
         </div>
@@ -209,17 +211,18 @@ export function PatientSelectionTab({
   }
 
   if (isManual) return (
-    <div className="space-y-5">
-      <div className="text-center">
-        <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-biovet-500 flex items-center justify-center text-white">
-          <UserPlus className="w-6 h-6" />
+    <div className="space-y-6">
+      <div className="flex items-center gap-3 border-b border-surface-200 dark:border-dark-100 pb-4">
+        <div className="w-10 h-10 rounded-lg bg-biovet-500 flex items-center justify-center text-white">
+          <UserPlus className="w-5 h-5" />
         </div>
-        <h3 className="text-lg font-bold">Paciente Referido</h3>
+        <h3 className="text-lg font-bold">Datos del Paciente Referido</h3>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <div className="col-span-2 sm:col-span-1">
-          <label className="label">Nombre *</label>
-          <input type="text" value={patientName} onChange={(e) => setPatientName(e.target.value)} className="input" placeholder="Ej: Max" />
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="md:col-span-2">
+          <label className="label">Nombre del Paciente *</label>
+          <input type="text" value={patientName} onChange={(e) => setPatientName(e.target.value)} className="input" placeholder="Nombre de la mascota" />
         </div>
         <div>
           <label className="label">Especie *</label>
@@ -230,7 +233,7 @@ export function PatientSelectionTab({
         </div>
         <div>
           <label className="label">Raza</label>
-          <input type="text" value={breed} onChange={(e) => setBreed(e.target.value)} className="input" placeholder="Ej: Labrador" />
+          <input type="text" value={breed} onChange={(e) => setBreed(e.target.value)} className="input" placeholder="Ej: Poodle" />
         </div>
         <div>
           <label className="label">Sexo</label>
@@ -240,23 +243,29 @@ export function PatientSelectionTab({
             <option value="Hembra">Hembra</option>
           </select>
         </div>
-        <div>
-          <label className="label">Edad</label>
-          <input type="text" value={age} onChange={(e) => setAge(e.target.value)} className="input" placeholder="Ej: 2 años" />
-        </div>
-        <div>
-          <label className="label">Peso (kg)</label>
-          <input type="number" step="0.1" value={weight} onChange={(e) => setWeight(e.target.value === "" ? "" : Number(e.target.value))} className="input" placeholder="12.5" />
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="label">Edad</label>
+            <input type="text" value={age} onChange={(e) => setAge(e.target.value)} className="input" placeholder="2 años" />
+          </div>
+          <div>
+            <label className="label">Peso (kg)</label>
+            <input type="number" step="0.1" value={weight} onChange={(e) => setWeight(e.target.value === "" ? "" : Number(e.target.value))} className="input" placeholder="0.0" />
+          </div>
         </div>
       </div>
-      <div className="space-y-2">
-        <label className="label text-biovet-500">Nombre del Dueño *</label>
-        <input type="text" value={ownerName} onChange={(e) => setOwnerName(e.target.value)} className="input" placeholder="Nombre completo" />
+
+      <div className="p-4 bg-surface-50 dark:bg-dark-200 border border-surface-200 dark:border-slate-700 rounded-lg space-y-3">
+        <label className="label text-biovet-600 dark:text-biovet-400 flex items-center gap-2">
+          <User className="w-4 h-4" /> Nombre del Propietario *
+        </label>
+        <input type="text" value={ownerName} onChange={(e) => setOwnerName(e.target.value)} className="input" placeholder="Nombre completo del dueño" />
       </div>
+
       <div className="flex justify-end gap-3 pt-2">
         <button type="button" onClick={() => setIsManual(false)} className="btn-secondary">Volver</button>
-        <button type="button" onClick={handleSaveManual} disabled={!patientName || !ownerName} className="btn-primary flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4" /> Continuar
+        <button type="button" onClick={handleSaveManual} disabled={!patientName || !ownerName} className="btn-primary">
+          <CheckCircle2 className="w-4 h-4" /> Registrar y Continuar
         </button>
       </div>
     </div>
@@ -264,37 +273,78 @@ export function PatientSelectionTab({
 
   return (
     <div className="space-y-5">
-      <div className="text-center">
-        <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-biovet-500 flex items-center justify-center text-white">
-          <PawPrint className="w-6 h-6" />
-        </div>
-        <h3 className="text-lg font-bold">Seleccionar Paciente</h3>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <button type="button" onClick={handleUseManual} className="btn-secondary flex items-center justify-center gap-2 py-3 border-dashed border-2">
-          <UserPlus className="w-5 h-5" /> <span>Paciente Referido</span>
-        </button>
-        <button type="button" disabled={!selectedPatient} onClick={() => selectedPatient && handleSelectExisting(selectedPatient)} className="btn-primary flex items-center justify-center gap-2">
-          <CheckCircle2 className="w-5 h-5" /> <span>Usar Seleccionado</span>
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-bold flex items-center gap-2">
+          <PawPrint className="w-5 h-5 text-biovet-500" /> Seleccionar Paciente
+        </h3>
+        <button type="button" onClick={handleUseManual} className="text-biovet-600 dark:text-biovet-400 text-sm font-bold hover:underline flex items-center gap-1">
+          <UserPlus className="w-4 h-4" /> Paciente Referido
         </button>
       </div>
+
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-        <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Buscar..." className="input pl-10" />
+        <input 
+          type="text" 
+          value={searchQuery} 
+          onChange={(e) => setSearchQuery(e.target.value)} 
+          placeholder="Buscar por nombre, raza o dueño..." 
+          className="input pl-10 h-12" 
+        />
       </div>
-      <div className="max-h-64 overflow-y-auto rounded-xl border border-slate-700 divide-y divide-slate-700">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-biovet-500" /></div>
-        ) : filteredPatients.map((patient) => (
-          <div key={patient._id} onClick={() => setSelectedPatient(patient)} className={`p-3 cursor-pointer flex items-center gap-3 transition-colors ${selectedPatient?._id === patient._id ? "bg-biovet-500/10 border-l-4 border-biovet-500" : "hover:bg-slate-800"}`}>
-            <PatientAvatar patient={patient} size="md" />
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold truncate">{patient.name}</p>
-              <p className="text-xs text-slate-400 truncate">{patient.breed || "Sin raza"} • {getOwnerName(patient.owner)}</p>
+
+      <div className="border border-surface-300 dark:border-slate-700 rounded-xl overflow-hidden bg-white dark:bg-dark-300 shadow-sm">
+        <div className="max-h-80 overflow-y-auto custom-scrollbar">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-10"><Loader2 className="w-8 h-8 animate-spin text-biovet-500" /></div>
+          ) : filteredPatients.length > 0 ? (
+            <div className="divide-y divide-surface-200 dark:divide-slate-800">
+              {filteredPatients.map((patient) => {
+                const isSelected = selectedPatient?._id === patient._id;
+                return (
+                  <div 
+                    key={patient._id} 
+                    onClick={() => setSelectedPatient(patient)} 
+                    className={`p-3 cursor-pointer flex items-center gap-4 transition-colors ${
+                      isSelected ? "bg-biovet-50 dark:bg-biovet-950/30" : "hover:bg-surface-50 dark:hover:bg-dark-200"
+                    }`}
+                  >
+                    <PatientAvatar patient={patient} size="md" />
+                    <div className="flex-1 min-w-0">
+                      <p className={`font-bold truncate ${isSelected ? "text-biovet-600 dark:text-biovet-400" : "text-slate-700 dark:text-slate-200"}`}>
+                        {patient.name}
+                      </p>
+                      <p className="text-xs text-slate-500 truncate uppercase tracking-wider font-medium">
+                        {patient.breed || "Mestizo"} • {getOwnerName(patient.owner)}
+                      </p>
+                    </div>
+                    {isSelected ? (
+                      <CheckCircle2 className="w-6 h-6 text-biovet-500" />
+                    ) : (
+                      <ChevronRight className="w-5 h-5 text-slate-300" />
+                    )}
+                  </div>
+                );
+              })}
             </div>
-            <ChevronRight className="w-4 h-4 text-slate-500" />
-          </div>
-        ))}
+          ) : (
+            <div className="py-12 text-center text-slate-500 space-y-2">
+              <Info className="w-8 h-8 mx-auto opacity-20" />
+              <p>No se encontraron pacientes.</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="pt-2">
+        <button 
+          type="button" 
+          disabled={!selectedPatient} 
+          onClick={() => selectedPatient && handleSelectExisting(selectedPatient)} 
+          className="btn-primary w-full py-4 text-base shadow-lg shadow-biovet-500/10"
+        >
+          Usar Paciente Seleccionado
+        </button>
       </div>
     </div>
   );

@@ -25,6 +25,9 @@ import { ObservationsTab } from "../../components/labexam/ObservationsTab";
 import ShareResultsModal from "@/components/labexam/ShareResultsModal";
 import type { DifferentialField, LabExam, LabExamFormData } from "@/types/labExam";
 
+// Importación necesaria para el pago
+import { PaymentModal } from "../../components/payment/PaymentModal";
+
 // Sonidos
 import segmentedSound from "/sounds/segmented.mp3";
 import bandSound from "/sounds/band.mp3";
@@ -92,6 +95,10 @@ export default function CreateLabExamView() {
   const [activeTab, setActiveTab] = useState<TabId>("patient");
   const [isClosing, setIsClosing] = useState(false);
 
+  // --- ESTADOS PARA LÓGICA DE PAGO ---
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [examCostUSD, setExamCostUSD] = useState(0);
+
   const [differentialCount, setDifferentialCount] = useState<
     LabExamFormData["differentialCount"]
   >({
@@ -119,6 +126,7 @@ export default function CreateLabExamView() {
     formState: { errors },
     watch,
     setValue,
+    getValues,
   } = useForm<LabExamFormData>({
     defaultValues: {
       patientName: "",
@@ -197,6 +205,40 @@ export default function CreateLabExamView() {
     },
     onError: (error: Error) => toast.error(error.message),
   });
+
+  // --- LÓGICA DE CONFIRMACIÓN DE PAGO ---
+  const handlePaymentConfirm = (paymentData: {
+    paymentMethodId?: string;
+    reference?: string;
+    addAmountPaidUSD: number;
+    addAmountPaidBs: number;
+    exchangeRate: number;
+    isPartial: boolean;
+    creditAmountUsed?: number;
+  }) => {
+    const isPayingInBs = paymentData.addAmountPaidBs > 0;
+    const amountPaid = isPayingInBs ? paymentData.addAmountPaidBs : paymentData.addAmountPaidUSD;
+    const currency = isPayingInBs ? "Bs" : "USD";
+
+    const finalData: LabExamFormData = {
+      ...getValues(),
+      differentialCount,
+      totalCells,
+      ownerName: getValues("ownerName")?.trim() || undefined,
+      ownerPhone: getValues("ownerPhone")?.trim() || undefined,
+      // Datos del pago para el API
+      paymentMethodId: paymentData.paymentMethodId,
+      paymentReference: paymentData.reference,
+      exchangeRate: paymentData.exchangeRate,
+      paymentAmount: amountPaid,
+      paymentCurrency: currency,
+      isPartialPayment: paymentData.isPartial,
+      creditAmountUsed: paymentData.creditAmountUsed,
+    };
+
+    mutate(finalData);
+    setShowPaymentModal(false);
+  };
 
   const handleIncrement = (
     field: keyof LabExamFormData["differentialCount"],
@@ -301,13 +343,28 @@ export default function CreateLabExamView() {
     };
 
     const cost = finalData.cost ?? 0;
+    const discount = finalData.discount ?? 0;
+    const totalCost = Math.max(0, cost - discount);
+
     if (cost <= 0) {
       toast.error("El costo del examen debe ser mayor a 0");
       setActiveTab("general");
       return;
     }
 
-    mutate(finalData);
+    setExamCostUSD(totalCost);
+
+    // LÓGICA DE INTERCEPCIÓN
+    if (finalData.patientId) {
+      // Caso 1: Paciente de la clínica (interno) -> Se guarda directo
+      mutate(finalData);
+    } else if (finalData.ownerName) {
+      // Caso 2: Paciente referido/externo -> Se cobra primero
+      setShowPaymentModal(true);
+    } else {
+      toast.error("Debe ingresar los datos del dueño para pacientes externos");
+      setActiveTab("patient");
+    }
   };
 
   useEffect(() => {
@@ -603,6 +660,21 @@ export default function CreateLabExamView() {
           </div>
         </footer>
       </div>
+
+      {/* ═══ MODAL PAGO (Intercepción) ═══ */}
+{showPaymentModal && (
+  <PaymentModal
+    isOpen={showPaymentModal}
+    onClose={() => setShowPaymentModal(false)}
+    onConfirm={handlePaymentConfirm}
+    amountUSD={examCostUSD}
+   
+    patient={{
+      name: watch("patientName"),
+      
+    }}
+  />
+)}
 
       {/* ═══ MODAL PDF ═══ */}
       {showShareModal && savedExamData && (
