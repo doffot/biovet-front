@@ -242,7 +242,7 @@ const ToastItem: React.FC<{ toast: Toast; onRemove: (id: string) => void }> = ({
 // Contenedor de toasts
 const ToastContainer: React.FC<{ toasts: Toast[]; onRemove: (id: string) => void }> = ({ toasts, onRemove }) => {
   return (
-    <div className="fixed top-4 right-4 z-1000 pointer-events-none">
+    <div className="fixed top-4 right-4 z-10000 pointer-events-none">
       <div className="pointer-events-auto flex flex-col items-end">
         {toasts.map((toast) => (
           <ToastItem key={toast.id} toast={toast} onRemove={onRemove} />
