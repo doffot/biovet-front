@@ -2,9 +2,10 @@
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Save, User, CreditCard, Phone, Mail, MapPin } from "lucide-react";
+import { ArrowLeft, Save, User, CreditCard, Phone, Mail, MapPin, AlertCircle, Clock } from "lucide-react";
 import { createOwner } from "@/api/OwnerAPI";
 import { toast } from "@/components/Toast";
+import { useAuth } from "@/hooks/useAuth"; // Importamos useAuth
 import type { OwnerFormData } from "@/types/owner";
 
 export type OwnerFormInputs = {
@@ -50,6 +51,9 @@ const ErrorMessage = ({ message }: { message?: string }) => (
 export default function CreateOwnerView() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  
+  // Obtenemos el estado del plan
+  const { plan } = useAuth();
 
   const {
     register,
@@ -79,6 +83,12 @@ export default function CreateOwnerView() {
   });
 
   const handleForm = (formData: OwnerFormInputs) => {
+    // VALIDACIÓN DE BLOQUEO
+    if (plan.isBlocked) {
+      toast.warning("Acceso restringido", plan.blockReason, { persistent: true });
+      return;
+    }
+
     const ownerData: OwnerFormData = {
       name: formData.name,
       contact: `${formData.countryCode}${formData.phone}`,
@@ -106,9 +116,22 @@ export default function CreateOwnerView() {
         </div>
       </div>
 
+      {/* BANNER DE BLOQUEO */}
+      {plan.isBlocked && (
+        <div className="mb-6 p-4 bg-danger-50 border border-danger-200 rounded-xl flex items-center gap-3 text-danger-700 animate-in fade-in slide-in-from-top-4 duration-500">
+          {plan.isTimeExpired ? <Clock className="w-5 h-5 shrink-0" /> : <AlertCircle className="w-5 h-5 shrink-0" />}
+          <div>
+            <p className="text-sm font-bold">
+              {plan.isTimeExpired ? "Periodo de Prueba Expirado" : "Límite Alcanzado"}
+            </p>
+            <p className="text-xs opacity-90">{plan.blockReason}</p>
+          </div>
+        </div>
+      )}
+
       {/* Formulario */}
       <form onSubmit={handleSubmit(handleForm)} noValidate>
-        <div className="bg-white dark:bg-dark-200 border border-surface-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden">
+        <div className={`bg-white dark:bg-dark-200 border border-surface-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden transition-all ${plan.isBlocked ? 'opacity-60 pointer-events-none grayscale-[0.5]' : ''}`}>
           
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
@@ -281,12 +304,18 @@ export default function CreateOwnerView() {
               >
                 Cancelar
               </button>
-              <button type="submit" disabled={isPending} className="btn-primary">
+              <button 
+                type="submit" 
+                disabled={isPending || plan.isBlocked} 
+                className={`btn-primary ${plan.isBlocked ? 'bg-slate-400 cursor-not-allowed shadow-none' : ''}`}
+              >
                 {isPending ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     Guardando...
                   </>
+                ) : plan.isBlocked ? (
+                  "Plan Agotado"
                 ) : (
                   <>
                     <Save size={18} />

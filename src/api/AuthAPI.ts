@@ -1,7 +1,7 @@
 import { isAxiosError } from "axios";
 
 import api from "@/lib/axios";
-import { userProfileSchema, userSchema, type ChangePasswordForm, type confirmToken, type ForgotPasswordForm, type NewPasswordForm, type RequestConfirmationCodeForm, type UpdateProfileForm, type UserLoginForm, type UserProfile, type UserRegistrationForm } from "@/types/auth";
+import { userProfileSchema, userSchema, type ChangePasswordForm, type confirmToken, type ForgotPasswordForm, type NewPasswordForm, type RequestConfirmationCodeForm, type UpdateProfileForm, type User, type UserLoginForm, type UserProfile, type UserRegistrationForm } from "@/types/auth";
 
 export async function createAccount(formData: UserRegistrationForm) {
   try {
@@ -114,13 +114,17 @@ export async function updatePasswordWithToken({
   }
 }
 
-export async function getUser() {
+export async function getUser(): Promise<User> { // <-- Agregamos el retorno explícito
   try {
     const { data } = await api.get("/auth/user");
     const response = userSchema.safeParse(data);
+    
     if (response.success) {
       return response.data;
     }
+    
+    // Si safeParse falla, lanzamos error para que useQuery sepa que falló
+    throw new Error("Formato de usuario inválido");
   } catch (error) {
     if (isAxiosError(error) && error.response) {
       throw new Error(error.response.data.error || "Error al obtener usuario");

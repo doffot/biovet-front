@@ -12,6 +12,8 @@ import {
   X,
   FileText,
   Save,
+  AlertCircle,
+  Clock,
 } from "lucide-react";
 import { toast } from "@/components/Toast";
 import { createPatient } from "@/api/patientAPI";
@@ -64,11 +66,11 @@ export default function CreatePatientView() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   
-  // DOS referencias: una para galería y otra para cámara
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   
-  const { data: vetData } = useAuth();
+  // Obtenemos vetData y la lógica de plan del hook useAuth
+  const { data: vetData, plan } = useAuth();
 
   const [isClosing, setIsClosing] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -163,6 +165,12 @@ export default function CreatePatientView() {
   };
 
   const onSubmit = (data: PatientFormData) => {
+    // VALIDACIÓN DE BLOQUEO (PACIENTES O TIEMPO)
+    if (plan.isBlocked) {
+      toast.warning("Acceso restringido", plan.blockReason, { persistent: true });
+      return;
+    }
+
     if (!selectedSex) {
       toast.error("Falta información", "El sexo es obligatorio");
       return;
@@ -248,8 +256,22 @@ export default function CreatePatientView() {
         {/* Content */}
         <main className="flex-1 overflow-y-auto bg-surface-50 dark:bg-dark-300 p-4 sm:p-6 pb-40 sm:pb-32">
           <div className="max-w-4xl mx-auto">
+            
+            {/* BANNER DE BLOQUEO DINÁMICO */}
+            {plan.isBlocked && (
+              <div className="mb-6 p-4 bg-danger-50 border border-danger-200 rounded-2xl flex items-center gap-3 text-danger-700 animate-in fade-in slide-in-from-top-4 duration-500">
+                {plan.isTimeExpired ? <Clock className="w-5 h-5 shrink-0" /> : <AlertCircle className="w-5 h-5 shrink-0" />}
+                <div>
+                  <p className="text-sm font-bold">
+                    {plan.isTimeExpired ? "Periodo de Prueba Expirado" : "Límite Alcanzado"}
+                  </p>
+                  <p className="text-xs opacity-90">{plan.blockReason}</p>
+                </div>
+              </div>
+            )}
+
             <form id="patient-form" onSubmit={handleSubmit(onSubmit)} noValidate>
-              <div className="bg-white dark:bg-dark-200 rounded-2xl shadow-sm border border-surface-200 dark:border-dark-100 overflow-hidden">
+              <div className={`bg-white dark:bg-dark-200 rounded-2xl shadow-sm border border-surface-200 dark:border-dark-100 overflow-hidden ${plan.isBlocked ? 'opacity-60 pointer-events-none grayscale-[0.5]' : ''}`}>
                 <div className="flex flex-col md:flex-row">
 
                   {/* FOTO */}
@@ -291,7 +313,6 @@ export default function CreatePatientView() {
                       )}
                     </div>
 
-                    {/* Input oculto para GALERÍA */}
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -300,19 +321,16 @@ export default function CreatePatientView() {
                       onChange={handleImageChange}
                     />
 
-                    {/* Input oculto para CÁMARA */}
                     <input
                       ref={cameraInputRef}
                       type="file"
                       accept="image/*"
-                      capture="environment" // "user" para frontal, "environment" para trasera
+                      capture="environment"
                       className="hidden"
                       onChange={handleImageChange}
                     />
 
-                    {/* Botones */}
                     <div className="w-full flex flex-col gap-2">
-                      {/* Botón TOMAR FOTO (visible solo en móvil) */}
                       <button
                         type="button"
                         onClick={() => cameraInputRef.current?.click()}
@@ -322,7 +340,6 @@ export default function CreatePatientView() {
                         TOMAR FOTO
                       </button>
 
-                      {/* Botón SUBIR DESDE GALERÍA */}
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
@@ -347,7 +364,6 @@ export default function CreatePatientView() {
                   {/* CAMPOS */}
                   <div className="w-full md:w-2/3 p-6 sm:p-8">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
-                      {/* Nombre */}
                       <div className="flex flex-col gap-1.5">
                         <label className="label">
                           Nombre <span className="text-danger-500">*</span>
@@ -361,7 +377,6 @@ export default function CreatePatientView() {
                         {errors.name && <p className="error-text">Campo obligatorio</p>}
                       </div>
 
-                      {/* Fecha de nacimiento */}
                       <div className="flex flex-col gap-1.5">
                         <label className="label">
                           F. Nacimiento <span className="text-danger-500">*</span>
@@ -374,7 +389,6 @@ export default function CreatePatientView() {
                         {errors.birthDate && <p className="error-text">Campo obligatorio</p>}
                       </div>
 
-                      {/* Especie */}
                       <div className="flex flex-col gap-1.5">
                         <label className="label">
                           Especie <span className="text-danger-500">*</span>
@@ -393,7 +407,6 @@ export default function CreatePatientView() {
                         {errors.species && <p className="error-text">Campo obligatorio</p>}
                       </div>
 
-                      {/* Raza */}
                       <div className="flex flex-col gap-1.5">
                         <label className="label">Raza</label>
                         <input
@@ -404,7 +417,6 @@ export default function CreatePatientView() {
                         />
                       </div>
 
-                      {/* Sexo */}
                       <div className="flex flex-col gap-1.5">
                         <label className="label">
                           Sexo <span className="text-danger-500">*</span>
@@ -441,7 +453,6 @@ export default function CreatePatientView() {
                         </div>
                       </div>
 
-                      {/* Peso */}
                       <div className="flex flex-col gap-1.5">
                         <label className="label">Peso (kg)</label>
                         <input
@@ -453,7 +464,6 @@ export default function CreatePatientView() {
                         />
                       </div>
 
-                      {/* Color */}
                       <div className="flex flex-col gap-1.5">
                         <label className="label">Color / Pelaje</label>
                         <input
@@ -464,7 +474,6 @@ export default function CreatePatientView() {
                         />
                       </div>
 
-                      {/* Identificación */}
                       <div className="flex flex-col gap-1.5">
                         <label className="label">Identificación</label>
                         <input
@@ -475,7 +484,6 @@ export default function CreatePatientView() {
                         />
                       </div>
 
-                      {/* Observaciones */}
                       <div className="sm:col-span-2 flex flex-col gap-1.5 mt-1">
                         <label className="label flex items-center gap-2">
                           <FileText size={14} className="text-surface-400" />
@@ -508,20 +516,20 @@ export default function CreatePatientView() {
             <button
               form="patient-form"
               type="submit"
-              disabled={isPending}
-              className="btn-primary px-8 shadow-lg shadow-biovet-500/20"
+              // Botón deshabilitado por carga o por plan bloqueado
+              disabled={isPending || plan.isBlocked}
+              className={`btn-primary px-8 shadow-lg transition-all ${plan.isBlocked ? "bg-slate-400 cursor-not-allowed shadow-none" : "shadow-biovet-500/20"}`}
             >
               {isPending ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <Save className="w-4 h-4" />
               )}
-              {isPending ? "Registrando..." : "Registrar Mascota"}
+              {plan.isBlocked ? "Plan Agotado" : isPending ? "Registrando..." : "Registrar Mascota"}
             </button>
           </div>
         </footer>
 
-        {/* Hidden fields */}
         <input type="hidden" {...register("mainVet")} />
         <input type="hidden" {...register("referringVet")} />
       </div>
