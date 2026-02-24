@@ -68,7 +68,7 @@ function PlanBadge({ planType, isLegacyUser, trialEndedAt, patientCount = 0 }: P
   // Usuario Legacy/VIP
   if (isLegacyUser) {
     return (
-      <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-100 to-yellow-100 dark:from-amber-900/30 dark:to-yellow-900/30 border border-amber-300 dark:border-amber-700 shadow-sm">
+      <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-linear-to-r from-amber-100 to-yellow-100 dark:from-amber-900/30 dark:to-yellow-900/30 border border-amber-300 dark:border-amber-700 shadow-sm">
         <Crown className="w-4 h-4 text-amber-500" />
         <span className="text-xs font-black uppercase tracking-wider text-amber-700 dark:text-amber-400">
           Platinum VIP
@@ -184,7 +184,7 @@ function PlanBadge({ planType, isLegacyUser, trialEndedAt, patientCount = 0 }: P
   // Plan Premium
   if (planType === "premium") {
     return (
-      <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-900/30 dark:to-green-900/30 border border-emerald-300 dark:border-emerald-700 shadow-sm">
+      <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-linear-to-r from-emerald-50 to-green-50 dark:from-emerald-900/30 dark:to-green-900/30 border border-emerald-300 dark:border-emerald-700 shadow-sm">
         <Crown className="w-4 h-4 text-emerald-500" />
         <span className="text-xs font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
           Plan Premium
