@@ -1,5 +1,6 @@
 // src/components/dashboard/DashboardHeader.tsx
-import { Settings2, Camera, MapPin, Hash } from "lucide-react";
+import { formatLongDate } from "@/utils/dashboardUtils";
+import { Settings2, Camera, MapPin, Hash, CalendarIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface DashboardHeaderProps {
@@ -79,6 +80,15 @@ export function DashboardHeader({ userName, authData, clinicData }: DashboardHea
               <Hash size={14} className="text-biovet-500" />
               <span>{clinicData?.rif ? `RIF: ${clinicData.rif}` : "RIF: J-00000000-0"}</span>
             </div>
+             {/* ═══ TOP BAR: FECHA ═══ */}
+      <div className="flex justify-end items-center px-4">
+        <div className="flex items-center gap-3 px-4 py-2 ">
+          <CalendarIcon size={16} className="text-biovet-500" />
+          <span className="text-xs font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest">
+            {formatLongDate(new Date())}
+          </span>
+        </div>
+      </div>
           </div>
         </div>
       </div>
@@ -100,8 +110,8 @@ export function DashboardHeader({ userName, authData, clinicData }: DashboardHea
 
         {/* POWERED BY + LOGO APP en una sola línea (Esquina inferior derecha) */}
         <div className="flex items-center gap-2 opacity-40 hover:opacity-100 transition-opacity mt-4 md:mt-0">
-          <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Powered by</span>
-          <img src="/logo_main.webp" alt="Biovet Track" className="h-5 grayscale contrast-125" />
+          <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Powered by <span className="text-slate-800"> BioVetTrack</span></span>
+          {/* <img src="/logo_main.webp" alt="Biovet Track" className="h-5 grayscale contrast-125" /> */}
         </div>
         
       </div>

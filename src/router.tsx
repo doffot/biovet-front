@@ -67,6 +67,7 @@ import ConfirmAccountView from "./views/auth/ConfirmAccountView";
 import ForgotPasswordView from "./views/auth/ForgotPasswordView";
 import NewPasswordView from "./views/auth/NewPasswordView";
 import RequestNewToken from "./views/auth/RequestNewToken";
+import InvoiceDetailView from "./views/invoices/InvoiceDetailView";
 
 export default function Router() {
   return (
@@ -184,6 +185,7 @@ export default function Router() {
             <Route path="grooming" element={<GroomingReportView />} />
             <Route path="invoices" element={<InvoiceReportView />} />
           </Route>
+            <Route path="/invoices/:id" element={<InvoiceDetailView />} />
 
           {/* CONFIGURACIONES */}
          <Route path="/settings">

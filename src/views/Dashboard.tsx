@@ -1,11 +1,10 @@
-// src/views/dashboard/DashboardView.tsx
+// src/views/dashboard/Dashboard.tsx
 import { useMemo, useState } from "react";
-import { Stethoscope, PawPrint, Calendar as CalendarIcon } from "lucide-react";
+import { Stethoscope, PawPrint } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useQuery } from "@tanstack/react-query";
 import { getMyClinic } from "@/api/veterinaryClinicAPI";
-import { formatLongDate } from "@/utils/dashboardUtils";
 
 import { 
   AgendaSection, 
@@ -24,7 +23,6 @@ export default function DashboardView() {
   const dashboard = useDashboardData();
   const [showPendingInvoices, setShowPendingInvoices] = useState(false);
 
-  // Obtener datos de la clínica
   const { data: clinic } = useQuery({
     queryKey: ["my-clinic"],
     queryFn: getMyClinic,
@@ -35,7 +33,7 @@ export default function DashboardView() {
   return (
     <div className="relative p-4 lg:p-8 max-w-7xl mx-auto space-y-10 animate-fade-in">
       
-      {/* ═══ MARCA DE AGUA: LOGO DE LA CLÍNICA (O APP POR DEFECTO) ═══ */}
+      {/* MARCA DE AGUA */}
       <div className="fixed inset-0 flex justify-center pointer-events-none z-20 overflow-hidden">
         <img 
           src={clinic?.logo || "/logo_main.webp"} 
@@ -44,24 +42,14 @@ export default function DashboardView() {
         />
       </div>
 
-      {/* ═══ TOP BAR: FECHA ═══ */}
-      <div className="flex justify-end items-center px-4">
-        <div className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-white/50 dark:bg-white/5 border border-slate-100 dark:border-slate-800 shadow-sm">
-          <CalendarIcon size={16} className="text-biovet-500" />
-          <span className="text-xs font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest">
-            {formatLongDate(new Date())}
-          </span>
-        </div>
-      </div>
-
-      {/* ═══ HEADER: IDENTIDAD UNIFICADA (INCLUYE POWERED BY) ═══ */}
+      {/* HEADER */}
       <DashboardHeader 
         userName={displayName}
         clinicData={clinic} 
         authData={authData}
       />
 
-      {/* ═══ RESTO DEL CONTENIDO ═══ */}
+      {/* CONTENIDO */}
       <div className="relative z-10 space-y-10">
         <MetricsGrid
           todayAppointments={dashboard.todayAppointments.length}
@@ -96,7 +84,14 @@ export default function DashboardView() {
         </div>
       </div>
 
-      <PendingInvoicesModal isOpen={showPendingInvoices} onClose={() => setShowPendingInvoices(false)} invoices={dashboard.pendingInvoices} />
+     
+      <PendingInvoicesModal 
+        isOpen={showPendingInvoices} 
+        onClose={() => setShowPendingInvoices(false)} 
+        invoices={dashboard.pendingInvoices}
+        onRefresh={dashboard.refetchInvoices}
+        isRefreshing={dashboard.isRefetchingInvoices}
+      />
     </div>
   );
 }

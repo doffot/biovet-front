@@ -310,7 +310,7 @@ export function InvoiceReportTable({ invoices }: InvoiceReportTableProps) {
           </div>
 
           {/* Limpiar */}
-          <button onClick={resetFilters} className="btn-ghost text-xs !px-3 !py-2 !gap-1.5">
+          <button onClick={resetFilters} className="btn-ghost text-xs px-3 py-2 gap-1.5">
             <RefreshCw className="w-3.5 h-3.5" />
             Limpiar
           </button>
@@ -335,7 +335,7 @@ export function InvoiceReportTable({ invoices }: InvoiceReportTableProps) {
           <button
             onClick={handleExportCSV}
             disabled={filteredInvoices.length === 0}
-            className="btn-secondary text-xs !px-3 !py-2"
+            className="btn-secondary text-xs px-3 py-2"
           >
             <Download className="w-3.5 h-3.5" />
             {selectedIds.size > 0 ? `Exportar (${selectedIds.size})` : "Exportar CSV"}
@@ -429,7 +429,7 @@ export function InvoiceReportTable({ invoices }: InvoiceReportTableProps) {
 
                       {/* Cliente */}
                       <td className="px-4 py-3">
-                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate max-w-[180px]">
+                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate max-w-45">
                           {getOwnerName(invoice)}
                         </p>
                         {ownerPhone && (
@@ -441,7 +441,7 @@ export function InvoiceReportTable({ invoices }: InvoiceReportTableProps) {
 
                       {/* Descripción */}
                       <td className="px-4 py-3 hidden md:table-cell">
-                        <p className="text-sm text-slate-700 dark:text-slate-200 truncate max-w-[200px]">
+                        <p className="text-sm text-slate-700 dark:text-slate-200 truncate max-w-50">
                           {getItemsSummary(invoice)}
                         </p>
                         <p className="text-[11px] text-surface-500 dark:text-slate-400 mt-0.5">

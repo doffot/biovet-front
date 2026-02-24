@@ -1,6 +1,6 @@
 // src/views/dashboard/hooks/useDashboardData.ts
-import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMemo, useEffect, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
   QUERY_CONFIG,
@@ -127,6 +127,8 @@ function extractId(ref: string | { _id: string } | undefined | null): string | u
 }
 
 export function useDashboardData() {
+  const queryClient = useQueryClient();
+
   // ========== QUERIES ==========
   const appointmentsQuery = useQuery<Appointment[]>({
     queryKey: ["dashboard", "appointments"],
@@ -176,6 +178,23 @@ export function useDashboardData() {
     ...QUERY_CONFIG_EXTENDED,
   });
 
+  //  Función para refrescar facturas
+  const refetchInvoices = useCallback(() => {
+    invoicesQuery.refetch();
+  }, [invoicesQuery]);
+
+  //  Escuchar evento global de actualización de facturas
+  useEffect(() => {
+    const handleInvoicesUpdated = () => {
+      console.log("📥 Evento 'invoices-updated' recibido, refrescando...");
+      queryClient.invalidateQueries({ queryKey: ["dashboard", "invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+    };
+
+    window.addEventListener('invoices-updated', handleInvoicesUpdated);
+    return () => window.removeEventListener('invoices-updated', handleInvoicesUpdated);
+  }, [queryClient]);
+
   // Extraer datos
   const appointments = appointmentsQuery.data ?? [];
   const groomingServices = groomingQuery.data ?? [];
@@ -196,6 +215,9 @@ export function useDashboardData() {
     invoicesQuery.isLoading &&
     patientsQuery.isLoading &&
     ownersQuery.isLoading;
+
+  //  Estado de refetch de facturas
+  const isRefetchingInvoices = invoicesQuery.isFetching;
 
   // Fecha de hoy en formato YYYY-MM-DD
   const todayStr = useMemo(() => getTodayDateString(), []);
@@ -285,11 +307,8 @@ export function useDashboardData() {
         return nextDate >= todayStr && nextDate <= nextWeek;
       })
       .map((v) => {
-        // Buscar el paciente asociado
         const patientId = extractId(v.patientId);
         const patientData = patientId ? patientsMap.get(patientId) : undefined;
-
-        // Buscar el dueño del paciente
         const ownerId = patientData ? extractId(patientData.owner) : undefined;
         const ownerData = ownerId ? ownersMap.get(ownerId) : undefined;
 
@@ -301,7 +320,7 @@ export function useDashboardData() {
         };
       })
       .sort((a, b) => a.daysLeft - b.daysLeft)
-      .slice(0, 10); // Aumentado a 10 para mostrar más alertas
+      .slice(0, 10);
   }, [vaccinations, patientsMap, ownersMap, todayStr]);
 
   const upcomingDewormings = useMemo((): DewormingWithDaysLeft[] => {
@@ -314,11 +333,8 @@ export function useDashboardData() {
         return nextDate >= todayStr && nextDate <= nextWeek;
       })
       .map((d) => {
-        // Buscar el paciente asociado
         const patientId = extractId(d.patientId);
         const patientData = patientId ? patientsMap.get(patientId) : undefined;
-
-        // Buscar el dueño del paciente
         const ownerId = patientData ? extractId(patientData.owner) : undefined;
         const ownerData = ownerId ? ownersMap.get(ownerId) : undefined;
 
@@ -330,7 +346,7 @@ export function useDashboardData() {
         };
       })
       .sort((a, b) => a.daysLeft - b.daysLeft)
-      .slice(0, 10); // Aumentado a 10 para mostrar más alertas
+      .slice(0, 10);
   }, [dewormings, patientsMap, ownersMap, todayStr]);
 
   // ========== DATOS PARA GRÁFICOS ==========
@@ -402,7 +418,7 @@ export function useDashboardData() {
     pendingInvoicesCount,
     pendingInvoices,
 
-    // Alertas (ahora con datos enriquecidos)
+    // Alertas
     upcomingVaccinations,
     upcomingDewormings,
 
@@ -410,5 +426,9 @@ export function useDashboardData() {
     revenueChartData,
     servicesChartData,
     speciesChartData,
+
+    //  refetch para facturas
+    refetchInvoices,
+    isRefetchingInvoices,
   };
 }
