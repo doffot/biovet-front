@@ -13,47 +13,46 @@
   --font-heading: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
   --font-ui: 'Inter', ui-sans-serif, system-ui, sans-serif;
 
-  /* --- PALETA BIOVET TRACK --- */
-  --color-biovet-50: #f0f9fb;
-  --color-biovet-100: #d9eff3;
-  --color-biovet-200: #bee4ec;
-  --color-biovet-300: #91cedc;
-  --color-biovet-400: #5db0c6;
-  --color-biovet-500: #08708a;
-  --color-biovet-600: #065a71;
-  --color-biovet-700: #084a5d;
-  --color-biovet-800: #0b3e4e;
-  --color-biovet-900: #0d3542;
-  --color-biovet-950: #05222c;
-  --color-biovet-add: #0077B6;
+ --color-biovet-50: #f0f7f9;
+  --color-biovet-100: #d9eef2;
+  --color-biovet-200: #b8dfe8;
+  --color-biovet-300: #88c6d6;
+  --color-biovet-400: #4da2b9;
+  --color-biovet-500: #0a7a95; /* Cian de la "V" (izquierda) */
+  --color-biovet-600: #08627a;
+  --color-biovet-700: #0a4f63;
+  --color-biovet-800: #0d4151;
+  --color-biovet-900: #0f3743;
+  --color-biovet-950: #06232b;
+  --color-biovet-add: #0091AD; /* Acento vibrante */
 
-  /* --- SUCCESS --- */
-  --color-success-50: #f0fdf4;
-  --color-success-100: #dcfce7;
-  --color-success-200: #bbf7d0;
-  --color-success-300: #86efac;
-  --color-success-400: #4ade80;
-  --color-success-500: #22c55e;
-  --color-success-600: #16a34a;
-  --color-success-700: #15803d;
-  --color-success-800: #166534;
-  --color-success-900: #14532d;
-  --color-success-950: #052e16;
+  /* --- SUCCESS (Basada en el Verde Lima de la flecha y la huella) --- */
+  --color-success-50: #f7fee7;
+  --color-success-100: #ecfccb;
+  --color-success-200: #d9f99d;
+  --color-success-300: #bef264;
+  --color-success-400: #a3e635;
+  --color-success-500: #84cc16; /* Verde de la flecha/huella */
+  --color-success-600: #65a30d;
+  --color-success-700: #4d7c0f;
+  --color-success-800: #3f6212;
+  --color-success-900: #365314;
+  --color-success-950: #1a2e05;
 
-  /* --- DANGER --- */
-  --color-danger-50: #fef2f2;
-  --color-danger-100: #fee2e2;
-  --color-danger-200: #fecaca;
-  --color-danger-300: #fca5a5;
-  --color-danger-400: #f87171;
-  --color-danger-500: #ef4444;
-  --color-danger-600: #dc2626;
-  --color-danger-700: #b91c1c;
-  --color-danger-800: #991b1b;
-  --color-danger-900: #7f1d1d;
-  --color-danger-950: #450a0a;
+  /* --- DANGER (Equilibrado para fondos oscuros) --- */
+  --color-danger-50: #fff1f2;
+  --color-danger-100: #ffe4e6;
+  --color-danger-200: #fecdd3;
+  --color-danger-300: #fda4af;
+  --color-danger-400: #fb7185;
+  --color-danger-500: #f43f5e; 
+  --color-danger-600: #e11d48;
+  --color-danger-700: #be123c;
+  --color-danger-800: #9f1239;
+  --color-danger-900: #881337;
+  --color-danger-950: #4c0519;
 
-  /* --- WARNING --- */
+  /* --- WARNING (Acento cálido equilibrado) --- */
   --color-warning-50: #fffbeb;
   --color-warning-100: #fef3c7;
   --color-warning-200: #fde68a;
@@ -66,26 +65,25 @@
   --color-warning-900: #78350f;
   --color-warning-950: #451a03;
 
-  /* --- SURFACE (modo claro) --- */
-  --color-surface-50: #fafbfc;
-  --color-surface-100: #f4f6f8;
-  --color-surface-200: #ebeef2;
-  --color-surface-300: #dfe3e8;
-  --color-surface-400: #c4cdd5;
-  --color-surface-500: #919eab;
-  --color-surface-600: #637381;
-  --color-surface-700: #454f5b;
-  --color-surface-800: #212b36;
-  --color-surface-900: #161c24;
+  /* --- SURFACE (Grises neutros extraídos del diseño) --- */
+  --color-surface-50: #f9fafb;
+  --color-surface-100: #f3f4f6;
+  --color-surface-200: #e5e7eb;
+  --color-surface-300: #d1d5db;
+  --color-surface-400: #9ca3af;
+  --color-surface-500: #6b7280;
+  --color-surface-600: #4b5563;
+  --color-surface-700: #374151;
+  --color-surface-800: #1f2937;
+  --color-surface-900: #111827;
 
-  /* --- DARK (modo oscuro) --- */
-  --color-dark-50: #1e293b;
-  --color-dark-100: #1a2234;
-  --color-dark-200: #151c2c;
-  --color-dark-300: #111827;
-  --color-dark-400: #0d1320;
-  --color-dark-500: #0a0f18;
-
+  /* --- DARK (Fondo Grafito / Negro Mate del Logo) --- */
+  --color-dark-50: #2a2a2a; 
+  --color-dark-100: #242424;
+  --color-dark-200: #1e1e1e; /* Tarjetas */
+  --color-dark-300: #1a1a1a; /* Fondo principal */
+  --color-dark-400: #141414;
+  --color-dark-500: #0f0f0f; /* Sombras profundas */
    --animate-slide-in-left: slide-in-left 0.3s ease-out;
 }
 

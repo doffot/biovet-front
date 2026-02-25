@@ -28,72 +28,95 @@ export default function NewPasswordFormComponent({ token }: { token: confirmToke
   const password = watch("password");
   const handleNewPassword = (formData: NewPasswordForm) => mutate({ formData, token });
 
-  // Estilos comunes para mantener limpieza
-  const iconLeftStyles = "absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/40 z-10 pointer-events-none";
-  const iconRightStyles = "absolute right-4 top-1/2 -translate-y-1/2 text-white/40 z-10 hover:text-white transition-colors cursor-pointer";
-  const inputStyles = `relative z-0 w-full pl-12 pr-12 py-3.5 bg-white/10 backdrop-blur-md border rounded-xl text-white placeholder-white/30 text-sm focus:outline-none transition-all`;
+  // ESTILOS UNIFICADOS (Stealth & BioVet Palette)
+  const inputBaseStyles = `
+    w-full py-3.5 md:py-4 text-sm 
+    bg-dark-400/40 backdrop-blur-md
+    border rounded-xl text-white 
+    placeholder-white/20 font-medium 
+    focus:outline-none focus:bg-dark-400/60
+    transition-all duration-300 relative z-0
+  `;
+
+  const iconLeftStyles = "absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-biovet-400 z-10 pointer-events-none group-focus-within:text-success-400 transition-colors";
+  const iconRightStyles = "absolute right-4 top-1/2 -translate-y-1/2 text-white/20 z-20 hover:text-success-400 transition-colors cursor-pointer";
+  const errorTextStyles = "text-danger-400 text-[10px] font-black uppercase tracking-widest px-2 mt-1 block";
 
   return (
     <div className="animate-in fade-in zoom-in duration-500">
-      <div className="text-center mb-6">
+      <div className="text-center mb-8">
         <div className="flex justify-center mb-4">
-           <ShieldCheck className="w-12 h-12 text-cyan-400 opacity-80" />
+          <div className="p-3 bg-biovet-500/10 rounded-full border-2 border-biovet-500/20">
+            <ShieldCheck className="w-10 h-10 text-biovet-400" />
+          </div>
         </div>
-        <h2 className="text-2xl font-black text-white uppercase tracking-tighter">Nueva Contraseña</h2>
-        <p className="text-white/50 text-xs mt-1">Crea una clave que no uses en otros sitios</p>
+        <h2 className="text-2xl font-black text-white uppercase tracking-widest">Nueva Clave</h2>
+        <p className="text-white/50 text-xs mt-2 font-medium">Define tu nueva credencial de acceso profesional</p>
       </div>
 
       <form onSubmit={handleSubmit(handleNewPassword)} className="space-y-4">
         {/* Nueva Contraseña */}
-        <div className="relative">
-          <Lock className={iconLeftStyles} />
-          <input
-            type={showPwd ? "text" : "password"}
-            placeholder="Nueva contraseña"
-            className={`${inputStyles} ${errors.password ? 'border-red-500' : 'border-white/20 focus:border-cyan-500'}`}
-            {...register("password", { 
-              required: "La contraseña es obligatoria", 
-              minLength: { value: 8, message: "Mínimo 8 caracteres" } 
-            })}
-          />
-          <button type="button" onClick={() => setShowPwd(!showPwd)} className={iconRightStyles}>
-            {showPwd ? <EyeOff size={18} /> : <Eye size={18} />}
-          </button>
+        <div>
+          <div className="relative group">
+            <Lock className={iconLeftStyles} />
+            <input
+              type={showPwd ? "text" : "password"}
+              placeholder="Nueva contraseña"
+              className={`${inputBaseStyles} pl-12 pr-12 ${
+                errors.password ? 'border-danger-500/50' : 'border-white/10 focus:border-success-500/50'
+              }`}
+              {...register("password", { 
+                required: "La contraseña es obligatoria", 
+                minLength: { value: 8, message: "Mínimo 8 caracteres" } 
+              })}
+            />
+            <button type="button" onClick={() => setShowPwd(!showPwd)} className={iconRightStyles}>
+              {showPwd ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+          {errors.password && <span className={errorTextStyles}>{errors.password.message}</span>}
         </div>
-        {errors.password && <p className="text-red-400 text-[10px] font-bold px-2">{errors.password.message as string}</p>}
 
         {/* Confirmar Contraseña */}
-        <div className="relative">
-          <Lock className={iconLeftStyles} />
-          <input
-            type={showCPwd ? "text" : "password"}
-            placeholder="Confirmar contraseña"
-            className={`${inputStyles} ${errors.confirmPassword ? 'border-red-500' : 'border-white/20 focus:border-cyan-500'}`}
-            {...register("confirmPassword", {
-              required: "Confirma tu contraseña",
-              validate: v => v === password || "Las contraseñas no coinciden"
-            })}
-          />
-          <button type="button" onClick={() => setShowCPwd(!showCPwd)} className={iconRightStyles}>
-            {showCPwd ? <EyeOff size={18} /> : <Eye size={18} />}
-          </button>
+        <div>
+          <div className="relative group">
+            <Lock className={iconLeftStyles} />
+            <input
+              type={showCPwd ? "text" : "password"}
+              placeholder="Confirmar contraseña"
+              className={`${inputBaseStyles} pl-12 pr-12 ${
+                errors.confirmPassword ? 'border-danger-500/50' : 'border-white/10 focus:border-success-500/50'
+              }`}
+              {...register("confirmPassword", {
+                required: "Confirma tu contraseña",
+                validate: v => v === password || "Las contraseñas no coinciden"
+              })}
+            />
+            <button type="button" onClick={() => setShowCPwd(!showCPwd)} className={iconRightStyles}>
+              {showCPwd ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+          {errors.confirmPassword && <span className={errorTextStyles}>{errors.confirmPassword.message}</span>}
         </div>
-        {errors.confirmPassword && <p className="text-red-400 text-[10px] font-bold px-2">{errors.confirmPassword.message as string}</p>}
 
-        <div className="pt-2">
+        <div className="pt-4">
           <button
             type="submit"
             disabled={isPending}
-            className="w-full bg-[#08718d] hover:bg-[#0a86a6] text-white font-bold py-4 rounded-xl transition-all shadow-xl flex items-center justify-center uppercase tracking-widest text-sm"
+            className="w-full bg-biovet-500 text-white font-black uppercase tracking-widest py-4 rounded-xl shadow-lg shadow-biovet-500/20 hover:bg-biovet-400 active:scale-[0.98] transition-all disabled:opacity-50 border border-white/10 flex items-center justify-center gap-2"
           >
             {isPending ? (
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
-              "Guardar Cambios"
+              "Actualizar Acceso"
             )}
           </button>
         </div>
       </form>
+
+      <p className="text-center text-[10px] text-white/30 mt-8 font-black uppercase tracking-widest">
+        © 2026 BioVetTrack
+      </p>
     </div>
   );
 }

@@ -87,7 +87,7 @@ export default function PatientLayout() {
       
       {/* DESKTOP Header */}
       <div className="hidden lg:flex flex-col h-full">
-        <div className="sticky top-0 z-30 bg-surface-100/95 dark:bg-dark-300/95 backdrop-blur-md border-b border-surface-300 dark:border-dark-100 px-6 pt-6 -mx-6 -mt-6">
+        <div className="sticky top-0 z-30 bg-surface-100/95 dark:bg-dark-300/95 backdrop-blur-md border-b border-surface-300 dark:border-dark-100 px-6 pt-6 ">
           <div className="flex items-start justify-between mb-6">
             <div className="flex gap-5">
               <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-surface-200 dark:hover:bg-dark-100 text-slate-500">

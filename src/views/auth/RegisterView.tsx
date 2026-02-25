@@ -64,28 +64,25 @@ export default function RegisterView() {
     mutate(dataToSend);
   };
 
-  // ESTILOS UNIFICADOS (Solución al Autofill y Z-index)
+  // ESTILOS UNIFICADOS - Consistentes con LoginView
   const inputBaseStyles = `
     w-full py-2.5 md:py-3 text-sm 
-    bg-white/10 backdrop-blur-sm
+    bg-dark-400/40 backdrop-blur-md
     border rounded-xl text-white 
-    placeholder-white/40 font-medium 
-    focus:outline-none focus:bg-white/15
-    transition-all
+    placeholder-white/20 font-medium 
+    focus:outline-none focus:bg-dark-400/60
+    transition-all duration-300
     relative z-0
-    /* Fix para eliminar el fondo blanco de Chrome */
-    [&:-webkit-autofill]:[-webkit-box-shadow:0_0_0_50px_#1e293b_inset]
-    [&:-webkit-autofill]:[-webkit-text-fill-color:white]
   `;
 
-  const iconStyles = "absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-white/70 pointer-events-none z-10";
-  const errorBadgeStyles = "text-danger-300 text-[10px] px-2 py-0.5 rounded-lg font-semibold bg-danger-500/20 backdrop-blur-sm inline-block mt-1";
+  const iconStyles = "absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-biovet-400 group-focus-within:text-success-400 transition-colors pointer-events-none z-10";
+  const errorTextStyles = "text-danger-400 text-[10px] font-black uppercase tracking-wider px-2 mt-1 block";
 
   return (
     <>
       <div className="mb-6 text-center">
-        <p className="text-white/90 text-xs md:text-sm font-medium leading-relaxed">
-          Únete a BioVetTrack y profesionaliza tu gestión clínica veterinaria.
+        <p className="text-white/70 text-xs md:text-sm font-semibold uppercase tracking-widest">
+          Crea tu cuenta profesional
         </p>
       </div>
 
@@ -93,149 +90,147 @@ export default function RegisterView() {
         
         {/* Nombre y Apellido */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="relative">
+          <div className="relative group">
             <User className={iconStyles} />
             <input
               type="text"
               placeholder="Nombre"
-              className={`${inputBaseStyles} pl-10 ${errors.name ? 'border-danger-400' : 'border-white/30 focus:border-biovet-400'}`}
-              {...register("name", { required: "El nombre es obligatorio" })}
+              className={`${inputBaseStyles} pl-10 ${errors.name ? 'border-danger-500/50' : 'border-white/10 focus:border-success-500/50'}`}
+              {...register("name", { required: "Obligatorio" })}
             />
-            {errors.name && <span className={errorBadgeStyles}>{errors.name.message as string}</span>}
+            {errors.name && <span className={errorTextStyles}>{errors.name.message as string}</span>}
           </div>
-          <div className="relative">
+          <div className="relative group">
             <User className={iconStyles} />
             <input
               type="text"
               placeholder="Apellido"
-              className={`${inputBaseStyles} pl-10 ${errors.lastName ? 'border-danger-400' : 'border-white/30 focus:border-biovet-400'}`}
-              {...register("lastName", { required: "El apellido es obligatorio" })}
+              className={`${inputBaseStyles} pl-10 ${errors.lastName ? 'border-danger-500/50' : 'border-white/10 focus:border-success-500/50'}`}
+              {...register("lastName", { required: "Obligatorio" })}
             />
-            {errors.lastName && <span className={errorBadgeStyles}>{errors.lastName.message as string}</span>}
+            {errors.lastName && <span className={errorTextStyles}>{errors.lastName.message as string}</span>}
           </div>
         </div>
 
         {/* Email */}
-        <div className="relative">
+        <div className="relative group">
           <Mail className={iconStyles} />
           <input
             type="email"
             placeholder="Correo electrónico"
             autoComplete="email"
-            className={`${inputBaseStyles} pl-10 ${errors.email ? 'border-danger-400' : 'border-white/30 focus:border-biovet-400'}`}
+            className={`${inputBaseStyles} pl-10 ${errors.email ? 'border-danger-500/50' : 'border-white/10 focus:border-success-500/50'}`}
             {...register("email", { 
-              required: "El email es obligatorio",
+              required: "Email obligatorio",
               pattern: { value: /\S+@\S+\.\S+/, message: "Email inválido" }
             })}
           />
-          {errors.email && <span className={errorBadgeStyles}>{errors.email.message as string}</span>}
+          {errors.email && <span className={errorTextStyles}>{errors.email.message as string}</span>}
         </div>
 
         {/* WhatsApp y Prefijo */}
         <div className="flex gap-2">
           <select
             {...register("countryCode")}
-            className="w-24 bg-white/10 backdrop-blur-sm border border-white/30 rounded-xl text-white text-sm focus:outline-none focus:bg-white/20 cursor-pointer z-10"
+            className="w-24 bg-dark-400/40 backdrop-blur-md border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-success-500/50 cursor-pointer z-10"
           >
             {countryCodes.map((c) => (
-              <option key={c.code} value={c.code} className="bg-slate-900 text-white">{c.code}</option>
+              <option key={c.code} value={c.code} className="bg-dark-300 text-white">{c.code}</option>
             ))}
           </select>
-          <div className="relative flex-1">
+          <div className="relative flex-1 group">
             <Phone className={iconStyles} />
             <input
               type="tel"
-              placeholder="WhatsApp (ej: 4121234567)"
-              className={`${inputBaseStyles} pl-10 ${errors.whatsapp ? 'border-danger-400' : 'border-white/30 focus:border-biovet-400'}`}
+              placeholder="WhatsApp"
+              className={`${inputBaseStyles} pl-10 ${errors.whatsapp ? 'border-danger-500/50' : 'border-white/10 focus:border-success-500/50'}`}
               {...register("whatsapp", { 
                 required: "Requerido",
                 pattern: { value: /^[0-9]+$/, message: "Solo números" }
               })}
             />
-            {errors.whatsapp && <span className={errorBadgeStyles}>{errors.whatsapp.message as string}</span>}
+            {errors.whatsapp && <span className={errorTextStyles}>{errors.whatsapp.message as string}</span>}
           </div>
         </div>
 
         {/* CI y Estado */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="relative">
+          <div className="relative group">
             <FileText className={iconStyles} />
             <input
               type="text"
               placeholder="Cédula"
-              className={`${inputBaseStyles} pl-10 ${errors.ci ? 'border-danger-400' : 'border-white/30 focus:border-biovet-400'}`}
+              className={`${inputBaseStyles} pl-10 ${errors.ci ? 'border-danger-500/50' : 'border-white/10 focus:border-success-500/50'}`}
               {...register("ci", { required: "Requerido" })}
             />
-            {errors.ci && <span className={errorBadgeStyles}>{errors.ci.message as string}</span>}
+            {errors.ci && <span className={errorTextStyles}>{errors.ci.message as string}</span>}
           </div>
-          <div className="relative">
+          <div className="relative group">
             <MapPin className={iconStyles} />
             <select
-              className={`${inputBaseStyles} pl-10 pr-4 appearance-none ${errors.estado ? 'border-danger-400' : 'border-white/30 focus:border-biovet-400'}`}
-              {...register("estado", { required: "Selecciona un estado" })}
+              className={`${inputBaseStyles} pl-10 pr-4 appearance-none ${errors.estado ? 'border-danger-500/50' : 'border-white/10 focus:border-success-500/50'}`}
+              {...register("estado", { required: "Selecciona estado" })}
             >
-              <option value="" className="bg-slate-900">Estado...</option>
-              {estadosVenezuela.map(e => <option key={e} value={e} className="bg-slate-900">{e}</option>)}
+              <option value="" className="bg-dark-300">Estado...</option>
+              {estadosVenezuela.map(e => <option key={e} value={e} className="bg-dark-300">{e}</option>)}
             </select>
           </div>
         </div>
 
         {/* CMV Profesional */}
-        <div className="relative">
+        <div className="relative group">
           <FileText className={iconStyles} />
           <input
             type="text"
             disabled={!selectedEstado}
-            placeholder={selectedEstado ? `Nº CMV ${selectedEstado}` : "Primero selecciona un estado"}
-            className={`${inputBaseStyles} pl-10 disabled:opacity-50 ${errors.cmv ? 'border-danger-400' : 'border-white/30 focus:border-biovet-400'}`}
-            {...register("cmv", { required: "El CMV es obligatorio" })}
+            placeholder={selectedEstado ? `Nº CMV ${selectedEstado}` : "Selecciona un estado"}
+            className={`${inputBaseStyles} pl-10 disabled:opacity-30 ${errors.cmv ? 'border-danger-500/50' : 'border-white/10 focus:border-success-500/50'}`}
+            {...register("cmv", { required: "CMV obligatorio" })}
           />
-          {errors.cmv && <span className={errorBadgeStyles}>{errors.cmv.message as string}</span>}
+          {errors.cmv && <span className={errorTextStyles}>{errors.cmv.message as string}</span>}
         </div>
 
         {/* Contraseñas */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="relative">
+          <div className="relative group">
             <Lock className={iconStyles} />
             <input
               type={showPassword ? "text" : "password"}
               placeholder="Contraseña"
-              autoComplete="new-password"
-              className={`${inputBaseStyles} pl-10 pr-10 ${errors.password ? 'border-danger-400' : 'border-white/30 focus:border-biovet-400'}`}
+              className={`${inputBaseStyles} pl-10 pr-10 ${errors.password ? 'border-danger-500/50' : 'border-white/10 focus:border-success-500/50'}`}
               {...register("password", { 
                 required: "Requerido",
-                minLength: { value: 6, message: "Mínimo 6 caracteres" } 
+                minLength: { value: 6, message: "Mínimo 6" } 
               })}
             />
             <button 
               type="button" 
               onClick={() => setShowPassword(!showPassword)} 
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white z-20"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/20 hover:text-success-400 z-20"
             >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
-            {errors.password && <span className={errorBadgeStyles}>{errors.password.message as string}</span>}
+            {errors.password && <span className={errorTextStyles}>{errors.password.message as string}</span>}
           </div>
-          <div className="relative">
+          <div className="relative group">
             <Lock className={iconStyles} />
             <input
               type={showConfirmPassword ? "text" : "password"}
               placeholder="Confirmar"
-              autoComplete="new-password"
-              className={`${inputBaseStyles} pl-10 pr-10 ${errors.confirmPassword ? 'border-danger-400' : 'border-white/30 focus:border-biovet-400'}`}
+              className={`${inputBaseStyles} pl-10 pr-10 ${errors.confirmPassword ? 'border-danger-500/50' : 'border-white/10 focus:border-success-500/50'}`}
               {...register("confirmPassword", { 
-                required: "Confirma contraseña",
+                required: "Confirma",
                 validate: v => v === watch('password') || "No coinciden" 
               })}
             />
             <button 
               type="button" 
               onClick={() => setShowConfirmPassword(!showConfirmPassword)} 
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white z-20"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/20 hover:text-success-400 z-20"
             >
-              {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
-            {errors.confirmPassword && <span className={errorBadgeStyles}>{errors.confirmPassword.message as string}</span>}
+            {errors.confirmPassword && <span className={errorTextStyles}>{errors.confirmPassword.message as string}</span>}
           </div>
         </div>
 
@@ -244,27 +239,23 @@ export default function RegisterView() {
           <button
             type="submit"
             disabled={isPending}
-            className="w-full bg-biovet-500 text-white font-bold py-3 rounded-xl transition-all transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-70 shadow-lg hover:bg-biovet-600 border-2 border-biovet-400/30"
+            className="w-full bg-biovet-500 text-white font-black uppercase tracking-widest py-4 rounded-xl shadow-lg shadow-biovet-500/20 hover:bg-biovet-400 hover:shadow-biovet-500/40 active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none border border-white/10"
           >
             {isPending ? (
               <div className="flex items-center justify-center gap-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>Creando cuenta...</span>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <span>Procesando...</span>
               </div>
-            ) : 'Registrarse'}
+            ) : 'Crear Cuenta'}
           </button>
         </div>
       </form>
 
-      <p className="text-center mt-6 text-white/70 text-sm">
+      <p className="text-center mt-6 text-white/50 text-xs font-bold uppercase tracking-widest">
         ¿Ya tienes cuenta?{' '}
-        <Link to="/auth/login" className="text-biovet-300 font-semibold hover:text-white transition-colors">
+        <Link to="/auth/login" className="text-success-400 hover:text-white transition-colors ml-1">
           Inicia Sesión
         </Link>
-      </p>
-
-      <p className="text-center text-[10px] text-white/40 mt-8">
-        © 2024 BioVetTrack. Sistema profesional de gestión veterinaria.
       </p>
     </>
   );
