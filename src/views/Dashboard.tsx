@@ -36,7 +36,7 @@ export default function DashboardView() {
       {/* MARCA DE AGUA */}
       <div className="fixed inset-0 flex justify-center pointer-events-none z-20 overflow-hidden">
         <img 
-          src={clinic?.logo || "/logo_main.webp"} 
+          src={clinic?.logo || "/logobiovet.png"} 
           alt="Watermark" 
           className="w-250 h-250 object-contain opacity-[0.03] dark:opacity-[0.06] grayscale select-none"
         />
