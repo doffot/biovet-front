@@ -9,6 +9,8 @@ import { toast } from "@/components/Toast";
 import type { Vaccination, VaccinationFormData } from "@/types/vaccination";
 import type { Patient } from "@/types/patient";
 
+// Importamos el tipo (sin schema zod)
+
 import { VaccinationModalHeader } from "./modal/VaccinationModalHeader";
 import { VaccinationSourceSelector } from "./modal/VaccinationSourceSelector";
 import { VaccinationMainForm } from "./modal/VaccinationMainForm";
@@ -37,6 +39,7 @@ export default function CreateVaccinationModal({
   const queryClient = useQueryClient();
   const isEditing = !!vaccinationToEdit;
 
+  // --- RHF SETUP (Sin Resolver) ---
   const {
     register,
     handleSubmit,
@@ -60,6 +63,7 @@ export default function CreateVaccinationModal({
   const watchedDate = watch("vaccinationDate");
   const isInternal = watchedSource === "internal";
 
+  // --- Helpers ---
   const isPuppy = () => {
     if (!patient.birthDate) return false;
     const birth = new Date(patient.birthDate);
@@ -80,9 +84,9 @@ export default function CreateVaccinationModal({
     queryFn: getActiveProducts,
     enabled: isOpen,
   });
-  
   const vaccineProducts = products.filter((p) => p.category === "vacuna");
 
+  // --- Efectos ---
   useEffect(() => {
     if (isOpen) {
       if (vaccinationToEdit) {
@@ -121,29 +125,21 @@ export default function CreateVaccinationModal({
     }
   }, [isOpen, vaccinationToEdit, reset]);
 
-  // FIX PARA VERCEL: Llenado de precio forzando tipos y validación
   useEffect(() => {
-    if (isInternal && watchedProductId && vaccineProducts.length > 0) {
-      // Comparamos como String para evitar fallos de ID en producción
-      const product = vaccineProducts.find((p) => String(p._id) === String(watchedProductId));
-      if (product) {
-        // Marcamos como sucio y validamos para que RHF no ignore el cambio
-        setValue("cost", product.salePrice, {
-          shouldValidate: true,
-          shouldDirty: true,
-          shouldTouch: true
-        });
-      }
+    if (isInternal && watchedProductId) {
+      const product = vaccineProducts.find((p) => p._id === watchedProductId);
+      if (product) setValue("cost", product.salePrice);
     }
   }, [watchedProductId, isInternal, vaccineProducts, setValue]);
 
   useEffect(() => {
     if (!isInternal && watchedDate) {
       const nextDate = calculateNextDose(watchedDate);
-      setValue("nextVaccinationDate", nextDate, { shouldValidate: true });
+      setValue("nextVaccinationDate", nextDate);
     }
   }, [watchedDate, isInternal, setValue]);
 
+  // --- Mutaciones ---
   const handleSuccess = (action: string) => {
     toast.success(`Vacuna ${action}`, `Registro procesado correctamente.`);
     queryClient.invalidateQueries({ queryKey: ["vaccinations", patient._id] });
@@ -168,11 +164,10 @@ export default function CreateVaccinationModal({
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
+  // --- Submit con Validación Manual ---
   const onSubmit = (data: VaccinationFormValues) => {
-    // Validación de seguridad para el tipo de vacuna (evita el Toast vacío)
-    if (!data.vaccineType || data.vaccineType === "") {
-      return toast.warning("Requerido", "Selecciona el tipo de vacuna");
-    }
+    // 1. Validaciones Manuales (Toast)
+    if (!data.vaccineType) return toast.warning("Requerido", "Selecciona el tipo de vacuna");
     
     if (data.vaccineType === "Otra" && !data.customVaccineName?.trim()) {
       return toast.warning("Requerido", "Especifica el nombre de la vacuna");
@@ -180,17 +175,18 @@ export default function CreateVaccinationModal({
 
     if (data.source === "internal") {
       if (!data.productId) return toast.warning("Requerido", "Selecciona un producto del inventario");
-      if (Number(data.cost) <= 0) return toast.warning("Requerido", "El costo es obligatorio");
+      if ((data.cost || 0) <= 0) return toast.warning("Requerido", "El costo es obligatorio para vacunas internas");
       if (!data.nextVaccinationDate) return toast.warning("Requerido", "Define la próxima dosis");
     }
 
+    // 2. Preparar Payload
     const finalVaccineType = data.vaccineType === "Otra" ? data.customVaccineName! : data.vaccineType;
 
     const payload: VaccinationFormData & { productId?: string } = {
       vaccinationDate: data.vaccinationDate,
       vaccineType: finalVaccineType,
       source: data.source,
-      cost: Number(data.cost) || 0,
+      cost: data.cost || 0,
       nextVaccinationDate: data.nextVaccinationDate || undefined,
       laboratory: data.laboratory || undefined,
       batchNumber: data.batchNumber || undefined,
@@ -200,8 +196,11 @@ export default function CreateVaccinationModal({
 
     if (data.source === "internal") {
       payload.productId = data.productId;
+    } else {
+      delete payload.productId;
     }
 
+    // 3. Enviar
     if (isEditing) updateMutation.mutate(payload);
     else createMutation.mutate(payload);
   };
