@@ -121,12 +121,17 @@ export default function CreateVaccinationModal({
     }
   }, [isOpen, vaccinationToEdit, reset]);
 
-  // CORRECCIÓN PARA PRODUCCIÓN: Llenado de precio
+  // FIX: Llenado de precio con persistencia de estado
   useEffect(() => {
     if (isInternal && watchedProductId && vaccineProducts.length > 0) {
       const product = vaccineProducts.find((p) => String(p._id) === String(watchedProductId));
       if (product) {
-        setValue("cost", product.salePrice);
+        // Usamos opciones extendidas para que RHF reconozca el cambio como manual
+        setValue("cost", product.salePrice, {
+          shouldValidate: true,
+          shouldDirty: true,
+          shouldTouch: true
+        });
       }
     }
   }, [watchedProductId, isInternal, vaccineProducts, setValue]);
@@ -134,7 +139,7 @@ export default function CreateVaccinationModal({
   useEffect(() => {
     if (!isInternal && watchedDate) {
       const nextDate = calculateNextDose(watchedDate);
-      setValue("nextVaccinationDate", nextDate);
+      setValue("nextVaccinationDate", nextDate, { shouldValidate: true });
     }
   }, [watchedDate, isInternal, setValue]);
 
@@ -163,7 +168,10 @@ export default function CreateVaccinationModal({
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   const onSubmit = (data: VaccinationFormValues) => {
-    if (!data.vaccineType) return toast.warning("Requerido", "Selecciona el tipo de vacuna");
+    // Verificación de seguridad para el Tipo de Vacuna
+    if (!data.vaccineType || data.vaccineType === "") {
+      return toast.warning("Requerido", "Selecciona el tipo de vacuna");
+    }
     
     if (data.vaccineType === "Otra" && !data.customVaccineName?.trim()) {
       return toast.warning("Requerido", "Especifica el nombre de la vacuna");
@@ -171,7 +179,7 @@ export default function CreateVaccinationModal({
 
     if (data.source === "internal") {
       if (!data.productId) return toast.warning("Requerido", "Selecciona un producto del inventario");
-      if ((data.cost || 0) <= 0) return toast.warning("Requerido", "El costo es obligatorio para vacunas internas");
+      if (!data.cost || data.cost <= 0) return toast.warning("Requerido", "El costo es obligatorio");
       if (!data.nextVaccinationDate) return toast.warning("Requerido", "Define la próxima dosis");
     }
 
@@ -181,7 +189,7 @@ export default function CreateVaccinationModal({
       vaccinationDate: data.vaccinationDate,
       vaccineType: finalVaccineType,
       source: data.source,
-      cost: data.cost || 0,
+      cost: Number(data.cost) || 0,
       nextVaccinationDate: data.nextVaccinationDate || undefined,
       laboratory: data.laboratory || undefined,
       batchNumber: data.batchNumber || undefined,

@@ -7,7 +7,7 @@ interface Props {
   errors: FieldErrors<VaccinationFormValues>;
   isInternal: boolean;
   vaccineProducts: any[];
-  selectedProduct: string; // Este es watchedProductId
+  selectedProduct: string; 
   vaccineType: string;
   vaccineTypesList: string[];
   isPuppy: boolean;
@@ -66,7 +66,7 @@ export function VaccinationMainForm({
             {...register("cost", { valueAsNumber: true })} 
             min="0" 
             step="0.01" 
-            className="input text-sm" 
+            className="input text-sm bg-white dark:bg-dark-300" 
             readOnly={isInternal && !!selectedProduct} 
           />
         </div>
