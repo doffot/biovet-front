@@ -121,12 +121,13 @@ export default function CreateVaccinationModal({
     }
   }, [isOpen, vaccinationToEdit, reset]);
 
-  // FIX: Llenado de precio con persistencia de estado
+  // FIX PARA VERCEL: Llenado de precio forzando tipos y validación
   useEffect(() => {
     if (isInternal && watchedProductId && vaccineProducts.length > 0) {
+      // Comparamos como String para evitar fallos de ID en producción
       const product = vaccineProducts.find((p) => String(p._id) === String(watchedProductId));
       if (product) {
-        // Usamos opciones extendidas para que RHF reconozca el cambio como manual
+        // Marcamos como sucio y validamos para que RHF no ignore el cambio
         setValue("cost", product.salePrice, {
           shouldValidate: true,
           shouldDirty: true,
@@ -168,7 +169,7 @@ export default function CreateVaccinationModal({
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   const onSubmit = (data: VaccinationFormValues) => {
-    // Verificación de seguridad para el Tipo de Vacuna
+    // Validación de seguridad para el tipo de vacuna (evita el Toast vacío)
     if (!data.vaccineType || data.vaccineType === "") {
       return toast.warning("Requerido", "Selecciona el tipo de vacuna");
     }
@@ -179,7 +180,7 @@ export default function CreateVaccinationModal({
 
     if (data.source === "internal") {
       if (!data.productId) return toast.warning("Requerido", "Selecciona un producto del inventario");
-      if (!data.cost || data.cost <= 0) return toast.warning("Requerido", "El costo es obligatorio");
+      if (Number(data.cost) <= 0) return toast.warning("Requerido", "El costo es obligatorio");
       if (!data.nextVaccinationDate) return toast.warning("Requerido", "Define la próxima dosis");
     }
 
