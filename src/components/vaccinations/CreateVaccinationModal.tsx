@@ -59,6 +59,8 @@ const CreateVaccinationModal: FC<CreateVaccinationModalProps> = ({
       cost: 0,
       vaccineType: "",
       productId: "",
+      customVaccineName: "",
+      nextVaccinationDate: "",
     },
   });
 
@@ -66,6 +68,7 @@ const CreateVaccinationModal: FC<CreateVaccinationModalProps> = ({
   const watchedProductId = watch("productId");
   const watchedVaccineType = watch("vaccineType");
   const watchedDate = watch("vaccinationDate");
+  const watchedCost = watch("cost");
   const isInternal = watchedSource === "internal";
 
   // --- Helpers ---
@@ -88,11 +91,11 @@ const CreateVaccinationModal: FC<CreateVaccinationModalProps> = ({
     return date.toISOString().split("T")[0];
   };
 
-  // Query de productos - Solo carga si isOpen Y isInternal
-  const { data: products = [] } = useQuery({
+  // ✅ CORRECCIÓN: enabled solo con isOpen (cargar productos siempre)
+  const { data: products = [], isLoading: loadingProducts } = useQuery({
     queryKey: ["products", "active"],
     queryFn: getActiveProducts,
-    enabled: isOpen && isInternal,
+    enabled: isOpen,
   });
 
   const vaccineProducts = products.filter((p) => p.category === "vacuna");
@@ -143,17 +146,17 @@ const CreateVaccinationModal: FC<CreateVaccinationModalProps> = ({
     }
   }, [isOpen, vaccinationToEdit, reset]);
 
-  // Efecto: Calcular costo cuando selecciona producto
+  // ✅ CORRECCIÓN: Calcular costo - verificar que productos estén cargados
   useEffect(() => {
-    if (isInternal && watchedProductId && vaccineProducts.length > 0) {
+    if (isInternal && watchedProductId && !loadingProducts && vaccineProducts.length > 0) {
       const product = vaccineProducts.find((p) => p._id === watchedProductId);
-      if (product) {
+      if (product && product.salePrice) {
         setValue("cost", product.salePrice, { shouldDirty: true });
       }
     }
-  }, [watchedProductId, isInternal, vaccineProducts, setValue]);
+  }, [watchedProductId, isInternal, vaccineProducts, loadingProducts, setValue]);
 
-  // Efecto: Resetear cuando cambia a externo
+  // ✅ CORRECCIÓN: Resetear cuando cambia a externo
   useEffect(() => {
     if (!isInternal) {
       setValue("cost", 0);
@@ -197,26 +200,24 @@ const CreateVaccinationModal: FC<CreateVaccinationModalProps> = ({
 
   // --- Submit con Validación Manual ---
   const onSubmit = (data: VaccinationFormValues) => {
-    if (!data.vaccineType)
+    if (!data.vaccineType) {
       return toast.warning("Requerido", "Selecciona el tipo de vacuna");
+    }
 
     if (data.vaccineType === "Otra" && !data.customVaccineName?.trim()) {
       return toast.warning("Requerido", "Especifica el nombre de la vacuna");
     }
 
     if (data.source === "internal") {
-      if (!data.productId)
-        return toast.warning(
-          "Requerido",
-          "Selecciona un producto del inventario"
-        );
-      if ((data.cost || 0) <= 0)
-        return toast.warning(
-          "Requerido",
-          "El costo es obligatorio para vacunas internas"
-        );
-      if (!data.nextVaccinationDate)
+      if (!data.productId) {
+        return toast.warning("Requerido", "Selecciona un producto del inventario");
+      }
+      if ((data.cost || 0) <= 0) {
+        return toast.warning("Requerido", "El costo es obligatorio para vacunas internas");
+      }
+      if (!data.nextVaccinationDate) {
         return toast.warning("Requerido", "Define la próxima dosis");
+      }
     }
 
     const finalVaccineType =
@@ -263,6 +264,19 @@ const CreateVaccinationModal: FC<CreateVaccinationModalProps> = ({
         >
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar">
             <VaccinationSourceSelector source={watchedSource} setValue={setValue} />
+
+            {/* 🔍 DEBUG VISUAL - BORRAR DESPUÉS DE PROBAR */}
+            <div className="bg-yellow-100 dark:bg-yellow-900 p-3 rounded-lg mb-4 text-xs space-y-1 border-2 border-yellow-500">
+              <p><strong>🔍 Cargando:</strong> {loadingProducts ? "SÍ" : "NO"}</p>
+              <p><strong>🔍 Productos totales:</strong> {products.length}</p>
+              <p><strong>🔍 Vacunas filtradas:</strong> {vaccineProducts.length}</p>
+              <p><strong>🔍 ProductId:</strong> {watchedProductId || "vacío"}</p>
+              <p><strong>🔍 VaccineType:</strong> {watchedVaccineType || "vacío"}</p>
+              <p><strong>🔍 Costo:</strong> {watchedCost}</p>
+              <p><strong>🔍 isInternal:</strong> {isInternal ? "SÍ" : "NO"}</p>
+            </div>
+            {/* 🔍 FIN DEBUG */}
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
               <VaccinationMainForm
                 register={register}
