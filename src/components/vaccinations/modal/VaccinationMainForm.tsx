@@ -24,55 +24,105 @@ export function VaccinationMainForm({
 }: Props) {
   return (
     <div className="space-y-4">
-      {/* Selector de producto */}
+      {/* Selector de producto del inventario */}
       {isInternal && (
-        <div className="bg-biovet-50 dark:bg-biovet-950/30 border border-biovet-200 dark:border-biovet-800 rounded-xl p-3 sm:p-4">
-          <label className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-biovet-700 dark:text-biovet-300 mb-2">
-            <Package className="w-4 h-4" />
-            Producto del inventario <span className="text-danger-500">*</span>
+        <div className="p-4 bg-biovet-50/30 dark:bg-dark-300 rounded-2xl border border-biovet-100 space-y-3">
+          <label className="text-[11px] font-bold text-biovet-600 uppercase flex items-center gap-2">
+            <Package size={14} /> Producto en Inventario
           </label>
-          <select {...register("productId")} className="input text-sm">
+          <select
+            {...register("productId")}
+            className="w-full bg-white dark:bg-dark-200 border-slate-200 rounded-lg p-2.5 text-sm dark:text-white"
+          >
             <option value="">-- Seleccionar producto --</option>
             {vaccineProducts.map((p) => (
-              <option key={p._id} value={p._id}>{p.name} — ${p.salePrice}</option>
+              <option key={String(p._id)} value={String(p._id)}>
+                {p.name} — ${p.salePrice}
+              </option>
             ))}
           </select>
         </div>
       )}
 
-      {/* Tipo */}
+      {/* Tipo de Vacuna */}
       <div>
-        <label className="label text-xs sm:text-sm"><Syringe className="w-3.5 h-3.5 inline mr-1.5" />Tipo de Vacuna <span className="text-danger-500">*</span></label>
-        <select {...register("vaccineType")} className="input text-sm">
+        <label className="text-[11px] font-bold text-slate-400 uppercase mb-1.5 flex items-center gap-2">
+          <Syringe size={14} /> Tipo de Vacuna
+        </label>
+        <select
+          {...register("vaccineType")}
+          className="w-full bg-slate-50 dark:bg-dark-300 border-none rounded-xl p-3 text-sm dark:text-white font-medium"
+        >
           <option value="">-- Seleccionar tipo --</option>
-          {vaccineTypesList.map((t) => <option key={t} value={t}>{t}</option>)}
+          {vaccineTypesList.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
         </select>
       </div>
 
-      {/* Otra */}
+      {/* Input condicional si selecciona "Otra" */}
       {vaccineType === "Otra" && (
-        <div>
-          <label className="label text-xs sm:text-sm">Especificar vacuna <span className="text-danger-500">*</span></label>
-          <input type="text" {...register("customVaccineName")} placeholder="Nombre" className="input text-sm" />
+        <div className="animate-in fade-in slide-in-from-top-1">
+          <label className="text-[11px] font-bold text-slate-400 uppercase mb-1.5 block">
+            Nombre de la Vacuna
+          </label>
+          <input
+            type="text"
+            {...register("customVaccineName")}
+            placeholder="Ej. Parvovirus Refuerzo"
+            className="w-full bg-slate-50 dark:bg-dark-300 border-none rounded-xl p-3 text-sm dark:text-white"
+          />
         </div>
       )}
 
-      {/* Fecha/Costo */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4">
+      {/* Fecha y Costo (Costo sin valueAsNumber para evitar errores de Vercel) */}
+      <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="label text-xs sm:text-sm"><Calendar className="w-3.5 h-3.5 inline mr-1.5" />Fecha <span className="text-danger-500">*</span></label>
-          <input type="date" {...register("vaccinationDate")} max={new Date().toISOString().split("T")[0]} className="input text-sm" />
+          <label className="text-[11px] font-bold text-slate-400 uppercase mb-1.5  flex items-center gap-2">
+            <Calendar size={14} /> Fecha
+          </label>
+          <input
+            type="date"
+            {...register("vaccinationDate")}
+            className="w-full bg-slate-50 dark:bg-dark-300 border-none rounded-xl p-3 text-sm dark:text-white"
+          />
         </div>
         <div>
-          <label className="label text-xs sm:text-sm"><DollarSign className="w-3.5 h-3.5 inline mr-1.5" />Costo {isInternal && <span className="text-danger-500">*</span>}</label>
-          <input type="number" {...register("cost", { valueAsNumber: true })} min="0" step="0.01" className="input text-sm" readOnly={isInternal && !!selectedProduct} />
+          <label className="text-[11px] font-bold text-biovet-600 uppercase mb-1.5  flex items-center gap-2">
+            <DollarSign size={14} /> Costo Total
+          </label>
+          <div
+            className={`flex items-center p-3 rounded-xl transition-colors ${isInternal ? "bg-slate-50 dark:bg-dark-300/50" : "bg-orange-50/50"}`}
+          >
+            <span className="text-slate-400 font-bold mr-1">$</span>
+            <input
+              type="number"
+              {...register("cost")}
+              readOnly={isInternal && !!selectedProduct}
+              className="bg-transparent border-none p-0 text-sm font-bold focus:ring-0 w-full dark:text-white"
+            />
+          </div>
         </div>
       </div>
 
-      {/* Proxima */}
+      {/* Próxima Cita */}
       <div>
-        <label className="label text-xs sm:text-sm"><Clock className="w-3.5 h-3.5 inline mr-1.5" />Próxima Dosis {isInternal && <span className="text-danger-500">*</span>} {!isInternal && <span className="text-slate-400 text-xs">(Auto: {isPuppy ? "+21d" : "+1y"})</span>}</label>
-        <input type="date" {...register("nextVaccinationDate")} min={new Date().toISOString().split("T")[0]} className="input text-sm" readOnly={!isInternal} />
+        <label className="text-[11px] font-bold text-biovet-600 uppercase mb-1.5  flex items-center gap-2">
+          <Clock size={14} /> Próxima Dosis{" "}
+          {!isInternal && (
+            <span className="text-[9px] lowercase opacity-60">
+              (Auto {isPuppy ? "+21d" : "+1y"})
+            </span>
+          )}
+        </label>
+        <input
+          type="date"
+          {...register("nextVaccinationDate")}
+          className="w-full bg-biovet-50/50 dark:bg-biovet-900/10 border-biovet-100 rounded-xl p-3 text-sm dark:text-white"
+          readOnly={!isInternal}
+        />
       </div>
     </div>
   );
