@@ -42,7 +42,10 @@ export function VaccinationMainForm({
 
       {/* Tipo */}
       <div>
-        <label className="label text-xs sm:text-sm"><Syringe className="w-3.5 h-3.5 inline mr-1.5" />Tipo de Vacuna <span className="text-danger-500">*</span></label>
+        <label className="label text-xs sm:text-sm">
+          <Syringe className="w-3.5 h-3.5 inline mr-1.5" />
+          Tipo de Vacuna <span className="text-danger-500">*</span>
+        </label>
         <select {...register("vaccineType")} className="input text-sm">
           <option value="">-- Seleccionar tipo --</option>
           {vaccineTypesList.map((t) => <option key={t} value={t}>{t}</option>)}
@@ -52,27 +55,64 @@ export function VaccinationMainForm({
       {/* Otra */}
       {vaccineType === "Otra" && (
         <div>
-          <label className="label text-xs sm:text-sm">Especificar vacuna <span className="text-danger-500">*</span></label>
-          <input type="text" {...register("customVaccineName")} placeholder="Nombre" className="input text-sm" />
+          <label className="label text-xs sm:text-sm">
+            Especificar vacuna <span className="text-danger-500">*</span>
+          </label>
+          <input 
+            type="text" 
+            {...register("customVaccineName")} 
+            placeholder="Nombre" 
+            className="input text-sm" 
+          />
         </div>
       )}
 
       {/* Fecha/Costo */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4">
         <div>
-          <label className="label text-xs sm:text-sm"><Calendar className="w-3.5 h-3.5 inline mr-1.5" />Fecha <span className="text-danger-500">*</span></label>
-          <input type="date" {...register("vaccinationDate")} max={new Date().toISOString().split("T")[0]} className="input text-sm" />
+          <label className="label text-xs sm:text-sm">
+            <Calendar className="w-3.5 h-3.5 inline mr-1.5" />
+            Fecha <span className="text-danger-500">*</span>
+          </label>
+          <input 
+            type="date" 
+            {...register("vaccinationDate")} 
+            max={new Date().toISOString().split("T")[0]} 
+            className="input text-sm" 
+          />
         </div>
         <div>
-          <label className="label text-xs sm:text-sm"><DollarSign className="w-3.5 h-3.5 inline mr-1.5" />Costo {isInternal && <span className="text-danger-500">*</span>}</label>
-          <input type="number" {...register("cost", { valueAsNumber: true })} min="0" step="0.01" className="input text-sm" readOnly={isInternal && !!selectedProduct} />
+          <label className="label text-xs sm:text-sm">
+            <DollarSign className="w-3.5 h-3.5 inline mr-1.5" />
+            Costo {isInternal && <span className="text-danger-500">*</span>}
+          </label>
+          <input 
+            type="number" 
+            {...register("cost", { valueAsNumber: true })} 
+            min="0" 
+            step="0.01" 
+            className="input text-sm disabled:bg-slate-100 disabled:dark:bg-dark-300 disabled:cursor-not-allowed" 
+            disabled={isInternal && !!selectedProduct}
+          />
         </div>
       </div>
 
-      {/* Proxima */}
+      {/* Próxima */}
       <div>
-        <label className="label text-xs sm:text-sm"><Clock className="w-3.5 h-3.5 inline mr-1.5" />Próxima Dosis {isInternal && <span className="text-danger-500">*</span>} {!isInternal && <span className="text-slate-400 text-xs">(Auto: {isPuppy ? "+21d" : "+1y"})</span>}</label>
-        <input type="date" {...register("nextVaccinationDate")} min={new Date().toISOString().split("T")[0]} className="input text-sm" readOnly={!isInternal} />
+        <label className="label text-xs sm:text-sm">
+          <Clock className="w-3.5 h-3.5 inline mr-1.5" />
+          Próxima Dosis {isInternal && <span className="text-danger-500">*</span>}
+          {!isInternal && (
+            <span className="text-slate-400 text-xs">(Auto: {isPuppy ? "+21d" : "+1y"})</span>
+          )}
+        </label>
+        <input 
+          type="date" 
+          {...register("nextVaccinationDate")} 
+          min={new Date().toISOString().split("T")[0]} 
+          className="input text-sm disabled:bg-slate-100 disabled:dark:bg-dark-300 disabled:cursor-not-allowed" 
+          disabled={!isInternal}
+        />
       </div>
     </div>
   );
