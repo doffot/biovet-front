@@ -122,7 +122,6 @@ export default function CreateVaccinationModal({
     if (!isInternal) {
       setValue("cost", 0);
       setValue("productId", "");
-      // Calcular próxima dosis automáticamente
       if (watchedDate) {
         setValue("nextVaccinationDate", calculateNextDose(watchedDate));
       }
@@ -139,7 +138,7 @@ export default function CreateVaccinationModal({
     }
   }, [watchedProductId, isInternal, vaccineProducts, setValue]);
 
-  // Reset formulario cuando abre/cierra
+  // Reset formulario
   useEffect(() => {
     if (isOpen) {
       if (vaccinationToEdit) {
@@ -207,7 +206,6 @@ export default function CreateVaccinationModal({
 
   // Submit
   const onSubmit = (data: FormValues) => {
-    // Validaciones
     if (!data.vaccineType) {
       return toast.warning("Requerido", "Selecciona el tipo de vacuna");
     }
@@ -244,38 +242,38 @@ export default function CreateVaccinationModal({
 
   if (!isOpen) return null;
 
-  // Obtener precio del producto seleccionado para mostrar
   const selectedProductPrice = vaccineProducts.find(
     (p) => p._id === watchedProductId
   )?.salePrice;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-      <div className="bg-white dark:bg-dark-200 w-full max-w-3xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden border border-slate-200 dark:border-dark-100">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div className="bg-white dark:bg-dark-200 w-full max-w-3xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden border border-surface-200 dark:border-dark-100">
+        
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-100 dark:border-dark-100 flex justify-between items-center">
+        <div className="px-6 py-4 border-b border-surface-200 dark:border-dark-100 flex justify-between items-center bg-surface-50 dark:bg-dark-300">
           <div className="flex items-center gap-3">
             <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center ${
+              className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                 isInternal
-                  ? "bg-biovet-50 text-biovet-600"
-                  : "bg-warning-50 text-warning-600"
+                  ? "bg-biovet-100 text-biovet-600 dark:bg-biovet-950 dark:text-biovet-400"
+                  : "bg-warning-100 text-warning-600 dark:bg-warning-950 dark:text-warning-400"
               }`}
             >
               <Syringe size={20} />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-800 dark:text-white">
+              <h2 className="text-lg font-bold font-heading text-slate-800 dark:text-white">
                 {isEditing ? "Editar" : "Nueva"} Vacunación
               </h2>
-              <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">
-                Paciente: {patient.name}
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                Paciente: <span className="text-biovet-600 dark:text-biovet-400">{patient.name}</span>
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-dark-100 rounded-xl transition-colors text-slate-400"
+            className="p-2 hover:bg-surface-100 dark:hover:bg-dark-100 rounded-lg transition-colors text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
           >
             <X size={20} />
           </button>
@@ -283,31 +281,32 @@ export default function CreateVaccinationModal({
 
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="overflow-y-auto p-6 space-y-6"
+          className="overflow-y-auto p-6 space-y-6 custom-scrollbar"
         >
           {/* Selector de Origen */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
               onClick={() => setValue("source", "internal")}
-              className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${
+              className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${
                 isInternal
-                  ? "border-biovet-500 bg-biovet-50/50"
-                  : "border-slate-100 opacity-60"
+                  ? "border-biovet-500 bg-biovet-50 dark:bg-biovet-950/50 dark:border-biovet-400"
+                  : "border-surface-200 dark:border-dark-100 hover:border-surface-300 dark:hover:border-dark-50"
               }`}
             >
               <Building2
-                className={isInternal ? "text-biovet-600" : "text-slate-400"}
+                size={20}
+                className={isInternal ? "text-biovet-600 dark:text-biovet-400" : "text-slate-400"}
               />
               <div className="text-left">
                 <p
-                  className={`font-bold text-sm ${
-                    isInternal ? "text-biovet-700" : "text-slate-500"
+                  className={`font-semibold text-sm ${
+                    isInternal ? "text-biovet-700 dark:text-biovet-300" : "text-slate-500 dark:text-slate-400"
                   }`}
                 >
                   Interno
                 </p>
-                <p className="text-[10px] text-slate-400 uppercase font-bold">
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-medium tracking-wide">
                   Stock Clínica
                 </p>
               </div>
@@ -316,43 +315,41 @@ export default function CreateVaccinationModal({
             <button
               type="button"
               onClick={() => setValue("source", "external")}
-              className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${
+              className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${
                 !isInternal
-                  ? "border-warning-500 bg-warning-50/50"
-                  : "border-slate-100 opacity-60"
+                  ? "border-warning-500 bg-warning-50 dark:bg-warning-950/50 dark:border-warning-400"
+                  : "border-surface-200 dark:border-dark-100 hover:border-surface-300 dark:hover:border-dark-50"
               }`}
             >
               <Home
-                className={!isInternal ? "text-warning-600" : "text-slate-400"}
+                size={20}
+                className={!isInternal ? "text-warning-600 dark:text-warning-400" : "text-slate-400"}
               />
               <div className="text-left">
                 <p
-                  className={`font-bold text-sm ${
-                    !isInternal ? "text-warning-700" : "text-slate-500"
+                  className={`font-semibold text-sm ${
+                    !isInternal ? "text-warning-700 dark:text-warning-300" : "text-slate-500 dark:text-slate-400"
                   }`}
                 >
                   Externo
                 </p>
-                <p className="text-[10px] text-slate-400 uppercase font-bold">
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-medium tracking-wide">
                   Fuera de Clínica
                 </p>
               </div>
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Columna Izquierda */}
             <div className="space-y-4">
               {/* Tipo de Vacuna */}
               <div>
-                <label className="text-[11px] font-bold text-slate-400 uppercase mb-1.5 block">
-                  <Syringe size={12} className="inline mr-1" />
+                <label className="label flex items-center gap-1.5">
+                  <Syringe size={14} className="text-slate-400" />
                   Tipo de Vacuna <span className="text-danger-500">*</span>
                 </label>
-                <select
-                  {...register("vaccineType")}
-                  className="w-full bg-slate-50 dark:bg-dark-300 border-none rounded-xl p-3 text-sm dark:text-white"
-                >
+                <select {...register("vaccineType")} className="input">
                   <option value="">-- Seleccionar tipo --</option>
                   {VACCINE_TYPES.map((t) => (
                     <option key={t} value={t}>
@@ -362,32 +359,29 @@ export default function CreateVaccinationModal({
                 </select>
               </div>
 
-              {/* Nombre personalizado si es "Otra" */}
+              {/* Nombre personalizado */}
               {watchedVaccineType === "Otra" && (
                 <div>
-                  <label className="text-[11px] font-bold text-slate-400 uppercase mb-1.5 block">
+                  <label className="label">
                     Especificar Vacuna <span className="text-danger-500">*</span>
                   </label>
                   <input
                     {...register("customVaccineName")}
                     placeholder="Nombre de la vacuna"
-                    className="w-full bg-slate-50 dark:bg-dark-300 border-none rounded-xl p-3 text-sm dark:text-white"
+                    className="input"
                   />
                 </div>
               )}
 
-              {/* Producto del inventario (solo interno) */}
+              {/* Producto del inventario */}
               {isInternal && (
-                <div className="p-4 bg-biovet-50/30 dark:bg-dark-300 rounded-2xl border border-biovet-100 space-y-3">
-                  <label className="text-[11px] font-bold text-biovet-600 uppercase block">
-                    <Package size={12} className="inline mr-1" />
+                <div className="p-4 bg-biovet-50 dark:bg-biovet-950/30 rounded-xl border border-biovet-200 dark:border-biovet-800">
+                  <label className="label flex items-center gap-1.5 text-biovet-700 dark:text-biovet-300">
+                    <Package size={14} />
                     Producto en Inventario <span className="text-danger-500">*</span>
                   </label>
-                  <select
-                    {...register("productId")}
-                    className="w-full bg-white dark:bg-dark-200 border-slate-200 rounded-lg p-2.5 text-sm dark:text-white"
-                  >
-                    <option value="">Seleccionar producto...</option>
+                  <select {...register("productId")} className="input">
+                    <option value="">-- Seleccionar producto --</option>
                     {vaccineProducts.map((p) => (
                       <option key={p._id} value={p._id}>
                         {p.name} ({p.stockUnits} unid.) — ${p.salePrice}
@@ -399,25 +393,26 @@ export default function CreateVaccinationModal({
 
               {/* Fecha de aplicación */}
               <div>
-                <label className="text-[11px] font-bold text-slate-400 uppercase mb-1.5 block">
-                  <Calendar size={12} className="inline mr-1" />
+                <label className="label flex items-center gap-1.5">
+                  <Calendar size={14} className="text-slate-400" />
                   Fecha de Aplicación <span className="text-danger-500">*</span>
                 </label>
                 <input
                   type="date"
                   {...register("vaccinationDate")}
                   max={new Date().toISOString().split("T")[0]}
-                  className="w-full bg-slate-50 dark:bg-dark-300 border-none rounded-xl p-3 text-sm dark:text-white"
+                  className="input"
                 />
               </div>
 
               {/* Próxima dosis */}
               <div>
-                <label className="text-[11px] font-bold text-biovet-600 uppercase mb-1.5 flex items-center gap-2">
-                  <Clock size={12} />
-                  Próxima Dosis {isInternal && <span className="text-danger-500">*</span>}
+                <label className="label flex items-center gap-1.5">
+                  <Clock size={14} className="text-biovet-500" />
+                  <span className="text-biovet-700 dark:text-biovet-300">Próxima Dosis</span>
+                  {isInternal && <span className="text-danger-500">*</span>}
                   {!isInternal && (
-                    <span className="text-slate-400 font-normal">
+                    <span className="text-slate-400 text-xs font-normal ml-1">
                       (Auto: {isPuppy() ? "+21 días" : "+1 año"})
                     </span>
                   )}
@@ -426,7 +421,7 @@ export default function CreateVaccinationModal({
                   type="date"
                   {...register("nextVaccinationDate")}
                   min={new Date().toISOString().split("T")[0]}
-                  className="w-full bg-biovet-50/50 dark:bg-biovet-900/10 border-biovet-100 rounded-xl p-3 text-sm dark:text-white"
+                  className={`input ${!isInternal ? "bg-surface-100 dark:bg-dark-300 cursor-not-allowed" : ""}`}
                   readOnly={!isInternal}
                 />
               </div>
@@ -436,52 +431,48 @@ export default function CreateVaccinationModal({
             <div className="space-y-4">
               {/* Laboratorio */}
               <div>
-                <label className="text-[11px] font-bold text-slate-400 uppercase mb-1.5 block">
-                  <FlaskConical size={12} className="inline mr-1" />
+                <label className="label flex items-center gap-1.5">
+                  <FlaskConical size={14} className="text-slate-400" />
                   Laboratorio
                 </label>
                 <input
                   {...register("laboratory")}
                   placeholder="Ej. Zoetis, MSD, etc."
-                  className="w-full bg-slate-50 dark:bg-dark-300 border-none rounded-xl p-3 text-sm dark:text-white"
+                  className="input"
                 />
               </div>
 
               {/* Lote y Vencimiento */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-bold text-slate-400 uppercase mb-1.5 block">
-                    Número de Lote
-                  </label>
+                  <label className="label">Número de Lote</label>
                   <input
                     {...register("batchNumber")}
                     placeholder="Lote"
-                    className="w-full bg-slate-50 dark:bg-dark-300 border-none rounded-xl p-3 text-sm dark:text-white"
+                    className="input"
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-bold text-slate-400 uppercase mb-1.5 block">
-                    Vencimiento
-                  </label>
+                  <label className="label">Vencimiento</label>
                   <input
                     type="date"
                     {...register("expirationDate")}
-                    className="w-full bg-slate-50 dark:bg-dark-300 border-none rounded-xl p-3 text-sm dark:text-white"
+                    className="input"
                   />
                 </div>
               </div>
 
               {/* Observaciones */}
               <div>
-                <label className="text-[11px] font-bold text-slate-400 uppercase mb-1.5 block">
-                  <FileText size={12} className="inline mr-1" />
+                <label className="label flex items-center gap-1.5">
+                  <FileText size={14} className="text-slate-400" />
                   Observaciones
                 </label>
                 <textarea
                   {...register("observations")}
                   placeholder="Notas adicionales..."
-                  rows={3}
-                  className="w-full bg-slate-50 dark:bg-dark-300 border-none rounded-xl p-3 text-sm dark:text-white resize-none"
+                  rows={4}
+                  className="input resize-none"
                 />
               </div>
             </div>
@@ -489,63 +480,58 @@ export default function CreateVaccinationModal({
 
           {/* Costo */}
           <div
-            className={`flex items-center justify-between p-4 rounded-2xl transition-colors ${
-              isInternal
-                ? "bg-slate-50 dark:bg-dark-300/50"
-                : "bg-orange-50/50 opacity-80"
-            }`}
-          >
-            <div className="flex flex-col">
-              <span className="text-[10px] font-bold text-slate-400 uppercase">
-                <DollarSign size={10} className="inline" /> Costo total
-              </span>
-              <div className="flex items-baseline gap-1">
-                <span
-                  className={`text-lg font-black ${
-                    isInternal ? "text-biovet-600" : "text-slate-400"
-                  }`}
-                >
-                  $
-                </span>
-                <span
-                  className={`text-xl font-black ${
-                    isInternal ? "text-biovet-600" : "text-slate-400"
-                  }`}
-                >
-                  {isInternal ? selectedProductPrice || 0 : 0}
-                </span>
-                <input type="hidden" {...register("cost", { valueAsNumber: true })} />
-              </div>
-            </div>
-            <p className="text-[10px] text-slate-400 italic max-w-50 text-right">
-              {isInternal
-                ? "* Se descontará del inventario automáticamente."
-                : "* Aplicación externa: No afecta el inventario."}
-            </p>
-          </div>
+  className={`flex items-center justify-between p-4 rounded-xl border ${
+    isInternal
+      ? "bg-biovet-50 dark:bg-biovet-950/30 border-biovet-200 dark:border-biovet-800"
+      : "bg-surface-100 dark:bg-dark-300 border-surface-200 dark:border-dark-100"
+  }`}
+>
+  <div className="flex flex-col">
+    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide flex items-center gap-1">
+      <DollarSign size={12} />
+      Costo total
+    </span>
+    <div className="flex items-baseline gap-0.5 mt-1">
+      <span
+        className={`text-2xl font-bold font-heading ${
+          isInternal ? "text-biovet-600 dark:text-biovet-400" : "text-slate-400"
+        }`}
+      >
+        ${isInternal ? selectedProductPrice || 0 : 0}
+      </span>
+      <span className="text-xs text-slate-400 ml-1">USD</span>
+    </div>
+    <input type="hidden" {...register("cost", { valueAsNumber: true })} />
+  </div>
+  <p className="text-[11px] text-slate-500 dark:text-slate-400 max-w-50 text-right leading-relaxed">
+    {isInternal
+      ? "Se descontará del inventario automáticamente."
+      : "Aplicación externa: No afecta el inventario."}
+  </p>
+</div>
         </form>
 
         {/* Footer */}
-        <div className="p-6 border-t border-slate-100 flex justify-end gap-3 bg-white dark:bg-dark-200">
+        <div className="px-6 py-4 border-t border-surface-200 dark:border-dark-100 flex justify-end gap-3 bg-surface-50 dark:bg-dark-300">
           <button
             type="button"
             onClick={onClose}
-            className="btn-secondary flex items-center gap-2"
+            disabled={isPending}
+            className="btn-secondary"
           >
             Cancelar
           </button>
           <button
             onClick={handleSubmit(onSubmit)}
             disabled={isPending}
-            className="btn-primary flex items-center gap-2"
+            className="btn-primary"
           >
             {isPending ? (
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
-              <>
-                <Save size={18} /> {isEditing ? "Actualizar" : "Guardar"}
-              </>
+              <Save size={18} />
             )}
+            <span>{isPending ? "Guardando..." : isEditing ? "Actualizar" : "Guardar"}</span>
           </button>
         </div>
       </div>
