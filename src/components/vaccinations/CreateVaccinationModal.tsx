@@ -1,39 +1,47 @@
 import { useEffect } from "react";
+import type { FC } from "react";
 import { createPortal } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
-import { Save,  Building2, Home } from "lucide-react";
+import { Save } from "lucide-react";
 import { createVaccination, updateVaccination } from "@/api/vaccinationAPI";
 import { getActiveProducts } from "@/api/productAPI";
 import { toast } from "@/components/Toast";
 import type { Vaccination, VaccinationFormData } from "@/types/vaccination";
 import type { Patient } from "@/types/patient";
-import type { Product } from "@/types/product";
 
 import { VaccinationModalHeader } from "./modal/VaccinationModalHeader";
+import { VaccinationSourceSelector } from "./modal/VaccinationSourceSelector";
 import { VaccinationMainForm } from "./modal/VaccinationMainForm";
 import { VaccinationDetailsForm } from "./modal/VaccinationDetailsForm";
 import type { VaccinationFormValues } from "./modal/formSchema";
 
 const VACCINE_TYPES = [
-  "Antirrábica", "Parvovirus", "Parvovirus y Moquillo", "Triple Canina",
-  "Tos de Perrera", "Quíntuple", "Séxtuple", "Quíntuple Felina",
-  "Triple Felina", "Otra",
+  "Antirrábica",
+  "Parvovirus",
+  "Parvovirus y Moquillo",
+  "Triple Canina",
+  "Tos de Perrera",
+  "Quíntuple",
+  "Séxtuple",
+  "Quíntuple Felina",
+  "Triple Felina",
+  "Otra",
 ];
 
-interface Props {
+interface CreateVaccinationModalProps {
   isOpen: boolean;
   onClose: () => void;
   patient: Patient;
   vaccinationToEdit?: Vaccination | null;
 }
 
-export default function CreateVaccinationModal({
+const CreateVaccinationModal: FC<CreateVaccinationModalProps> = ({
   isOpen,
   onClose,
   patient,
   vaccinationToEdit,
-}: Props) {
+}) => {
   const queryClient = useQueryClient();
   const isEditing = !!vaccinationToEdit;
 
@@ -60,11 +68,16 @@ export default function CreateVaccinationModal({
   const watchedDate = watch("vaccinationDate");
   const isInternal = watchedSource === "internal";
 
+  // --- Helpers ---
   const isPuppy = () => {
     if (!patient.birthDate) return false;
     const birth = new Date(patient.birthDate);
     const now = new Date();
-    return (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth()) < 12;
+    return (
+      (now.getFullYear() - birth.getFullYear()) * 12 +
+        (now.getMonth() - birth.getMonth()) <
+      12
+    );
   };
 
   const calculateNextDose = (fromDate: string) => {
@@ -75,28 +88,32 @@ export default function CreateVaccinationModal({
     return date.toISOString().split("T")[0];
   };
 
-  const { data: products = [] } = useQuery<Product[]>({
+  // Query de productos - Solo carga si isOpen Y isInternal
+  const { data: products = [] } = useQuery({
     queryKey: ["products", "active"],
     queryFn: getActiveProducts,
-    enabled: isOpen,
+    enabled: isOpen && isInternal,
   });
-  
+
   const vaccineProducts = products.filter((p) => p.category === "vacuna");
 
-  // EFECTO: Carga de datos iniciales al editar
+  // --- Efecto: Reset del formulario ---
   useEffect(() => {
     if (isOpen) {
       if (vaccinationToEdit) {
         const typeExists = VACCINE_TYPES.includes(vaccinationToEdit.vaccineType);
         let pId = "";
         if (vaccinationToEdit.productId) {
-           pId = typeof vaccinationToEdit.productId === 'object' 
-             ? (vaccinationToEdit.productId as any)._id 
-             : vaccinationToEdit.productId;
+          pId =
+            typeof vaccinationToEdit.productId === "object"
+              ? (vaccinationToEdit.productId as any)._id
+              : vaccinationToEdit.productId;
         }
 
         reset({
-          vaccinationDate: vaccinationToEdit.vaccinationDate.toString().split("T")[0],
+          vaccinationDate: vaccinationToEdit.vaccinationDate
+            .toString()
+            .split("T")[0],
           vaccineType: typeExists ? vaccinationToEdit.vaccineType : "Otra",
           customVaccineName: typeExists ? "" : vaccinationToEdit.vaccineType,
           source: vaccinationToEdit.source,
@@ -104,8 +121,12 @@ export default function CreateVaccinationModal({
           cost: vaccinationToEdit.cost || 0,
           laboratory: vaccinationToEdit.laboratory || "",
           batchNumber: vaccinationToEdit.batchNumber || "",
-          expirationDate: vaccinationToEdit.expirationDate ? vaccinationToEdit.expirationDate.toString().split("T")[0] : "",
-          nextVaccinationDate: vaccinationToEdit.nextVaccinationDate ? vaccinationToEdit.nextVaccinationDate.toString().split("T")[0] : "",
+          expirationDate: vaccinationToEdit.expirationDate
+            ? vaccinationToEdit.expirationDate.toString().split("T")[0]
+            : "",
+          nextVaccinationDate: vaccinationToEdit.nextVaccinationDate
+            ? vaccinationToEdit.nextVaccinationDate.toString().split("T")[0]
+            : "",
           observations: vaccinationToEdit.observations || "",
         });
       } else {
@@ -116,27 +137,23 @@ export default function CreateVaccinationModal({
           vaccineType: "",
           productId: "",
           customVaccineName: "",
+          nextVaccinationDate: "",
         });
       }
     }
   }, [isOpen, vaccinationToEdit, reset]);
 
-  // EFECTO: Igual que Desparasitación - Sincroniza precio y producto
+  // Efecto: Calcular costo cuando selecciona producto
   useEffect(() => {
     if (isInternal && watchedProductId && vaccineProducts.length > 0) {
-      const prod = vaccineProducts.find((p) => String(p._id) === String(watchedProductId));
-      if (prod) {
-        setValue("cost", prod.salePrice, { shouldValidate: true, shouldDirty: true });
-        // Si no hay tipo seleccionado, sugerimos el nombre del producto
-        if (!watchedVaccineType) {
-           setValue("vaccineType", "Otra");
-           setValue("customVaccineName", prod.name);
-        }
+      const product = vaccineProducts.find((p) => p._id === watchedProductId);
+      if (product) {
+        setValue("cost", product.salePrice, { shouldDirty: true });
       }
     }
   }, [watchedProductId, isInternal, vaccineProducts, setValue]);
 
-  // EFECTO: Limpieza al cambiar origen (Evita basura en el payload)
+  // Efecto: Resetear cuando cambia a externo
   useEffect(() => {
     if (!isInternal) {
       setValue("cost", 0);
@@ -144,6 +161,7 @@ export default function CreateVaccinationModal({
     }
   }, [isInternal, setValue]);
 
+  // Efecto: Calcular próxima dosis para externos
   useEffect(() => {
     if (!isInternal && watchedDate) {
       const nextDate = calculateNextDose(watchedDate);
@@ -151,98 +169,149 @@ export default function CreateVaccinationModal({
     }
   }, [watchedDate, isInternal, setValue]);
 
-  const { mutate: handleSave, isPending } = useMutation({
-    mutationFn: (data: VaccinationFormData & { productId?: string }) => 
-      isEditing ? updateVaccination(vaccinationToEdit!._id!, data) : createVaccination(patient._id, data),
-    onSuccess: () => {
-      toast.success(isEditing ? "Actualizado" : "Guardado", "Registro procesado con éxito");
-      queryClient.invalidateQueries({ queryKey: ["vaccinations", patient._id] });
-      queryClient.invalidateQueries({ queryKey: ["inventory", "all"] });
-      onClose();
-    },
-    onError: (e: any) => toast.error("Error", e.message),
+  // --- Mutaciones ---
+  const handleSuccess = (action: string) => {
+    toast.success(`Vacuna ${action}`, `Registro procesado correctamente.`);
+    queryClient.invalidateQueries({ queryKey: ["vaccinations", patient._id] });
+    queryClient.invalidateQueries({ queryKey: ["inventory", "all"] });
+    onClose();
+  };
+
+  const handleError = (error: Error) => toast.error("Error", error.message);
+
+  const createMutation = useMutation({
+    mutationFn: (data: VaccinationFormData & { productId?: string }) =>
+      createVaccination(patient._id, data),
+    onSuccess: () => handleSuccess("creada"),
+    onError: handleError,
   });
 
+  const updateMutation = useMutation({
+    mutationFn: (data: VaccinationFormData & { productId?: string }) =>
+      updateVaccination(vaccinationToEdit!._id!, data),
+    onSuccess: () => handleSuccess("actualizada"),
+    onError: handleError,
+  });
+
+  const isPending = createMutation.isPending || updateMutation.isPending;
+
+  // --- Submit con Validación Manual ---
   const onSubmit = (data: VaccinationFormValues) => {
-    // Validaciones manuales antes de enviar (Copia de Desparasitación)
-    if (isInternal && !data.productId) {
-      return toast.warning("Atención", "Selecciona un producto del inventario");
+    if (!data.vaccineType)
+      return toast.warning("Requerido", "Selecciona el tipo de vacuna");
+
+    if (data.vaccineType === "Otra" && !data.customVaccineName?.trim()) {
+      return toast.warning("Requerido", "Especifica el nombre de la vacuna");
     }
 
-    const finalType = data.vaccineType === "Otra" ? data.customVaccineName : data.vaccineType;
-    if (!finalType) return toast.warning("Atención", "Especifica el tipo de vacuna");
+    if (data.source === "internal") {
+      if (!data.productId)
+        return toast.warning(
+          "Requerido",
+          "Selecciona un producto del inventario"
+        );
+      if ((data.cost || 0) <= 0)
+        return toast.warning(
+          "Requerido",
+          "El costo es obligatorio para vacunas internas"
+        );
+      if (!data.nextVaccinationDate)
+        return toast.warning("Requerido", "Define la próxima dosis");
+    }
+
+    const finalVaccineType =
+      data.vaccineType === "Otra" ? data.customVaccineName! : data.vaccineType;
 
     const payload: VaccinationFormData & { productId?: string } = {
-      ...data,
-      cost: isInternal ? Number(data.cost) : 0,
-      vaccineType: finalType!,
-      productId: isInternal ? data.productId : undefined,
+      vaccinationDate: data.vaccinationDate,
+      vaccineType: finalVaccineType,
+      source: data.source,
+      cost: data.source === "internal" ? Number(data.cost) : 0,
+      nextVaccinationDate: data.nextVaccinationDate || undefined,
+      laboratory: data.laboratory || undefined,
+      batchNumber: data.batchNumber || undefined,
+      expirationDate: data.expirationDate || undefined,
+      observations: data.observations || undefined,
     };
 
-    handleSave(payload);
+    if (data.source === "internal") {
+      payload.productId = data.productId;
+    }
+
+    if (isEditing) updateMutation.mutate(payload);
+    else createMutation.mutate(payload);
   };
 
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-      <div className="bg-white dark:bg-dark-200 w-full max-w-4xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden border border-slate-200 dark:border-dark-100">
-        <VaccinationModalHeader patient={patient} isEditing={isEditing} onClose={onClose} isPending={isPending} />
-        
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 overflow-hidden">
-          <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
-            
-            {/* Selector de Origen (Estilo Desparasitación) */}
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                type="button"
-                onClick={() => setValue("source", "internal")}
-                className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${isInternal ? "border-biovet-500 bg-biovet-50/50" : "border-slate-100 opacity-60"}`}
-              >
-                <Building2 className={isInternal ? "text-biovet-600" : "text-slate-400"} />
-                <div className="text-left">
-                  <p className={`font-bold text-sm ${isInternal ? "text-biovet-700" : "text-slate-500"}`}>Interno</p>
-                  <p className="text-[10px] text-slate-400 uppercase font-bold">Stock Clínica</p>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setValue("source", "external")}
-                className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${!isInternal ? "border-warning-500 bg-warning-50/50" : "border-slate-100 opacity-60"}`}
-              >
-                <Home className={!isInternal ? "text-warning-600" : "text-slate-400"} />
-                <div className="text-left">
-                  <p className={`font-bold text-sm ${!isInternal ? "text-warning-700" : "text-slate-500"}`}>Externo</p>
-                  <p className="text-[10px] text-slate-400 uppercase font-bold">Fuera de Clínica</p>
-                </div>
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <VaccinationMainForm 
-                register={register} 
-                errors={errors} 
-                isInternal={isInternal} 
-                vaccineProducts={vaccineProducts} 
-                selectedProduct={watchedProductId || ""} 
-                vaccineType={watchedVaccineType || ""} 
-                vaccineTypesList={VACCINE_TYPES} 
-                isPuppy={isPuppy()} 
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <div className="relative bg-white dark:bg-dark-200 w-full sm:rounded-2xl sm:max-w-4xl sm:mx-4 max-h-[95vh] sm:max-h-[90vh] overflow-hidden shadow-2xl border-t sm:border border-surface-200 dark:border-dark-100 flex flex-col rounded-t-2xl">
+        <VaccinationModalHeader
+          patient={patient}
+          isEditing={isEditing}
+          onClose={onClose}
+          isPending={isPending}
+        />
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="flex flex-col flex-1 overflow-hidden"
+        >
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar">
+            <VaccinationSourceSelector source={watchedSource} setValue={setValue} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
+              <VaccinationMainForm
+                register={register}
+                errors={errors}
+                isInternal={isInternal}
+                vaccineProducts={vaccineProducts}
+                selectedProduct={watchedProductId || ""}
+                vaccineType={watchedVaccineType || ""}
+                vaccineTypesList={VACCINE_TYPES}
+                isPuppy={isPuppy()}
               />
               <VaccinationDetailsForm register={register} />
             </div>
           </div>
-
-          <div className="p-6 border-t border-slate-100 flex justify-end gap-3 bg-white dark:bg-dark-200">
-            <button type="button" onClick={onClose} className="btn-secondary">Cancelar</button>
-            <button type="submit" disabled={isPending} className="btn-primary flex items-center gap-2">
-              {isPending ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save size={18} />}
-              {isEditing ? "Actualizar" : "Guardar Vacuna"}
-            </button>
+          <div className="bg-surface-50 dark:bg-dark-300 border-t border-surface-200 dark:border-dark-100 px-4 sm:px-6 py-3 sm:py-4 shrink-0">
+            <div className="flex gap-3 sm:justify-end">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={isPending}
+                className="btn-secondary flex-1 sm:flex-none text-sm"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={isPending}
+                className="btn-primary flex items-center gap-2"
+              >
+                {isPending ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                <span className="ml-2">
+                  {isPending
+                    ? "Guardando..."
+                    : isEditing
+                      ? "Actualizar"
+                      : "Guardar"}
+                </span>
+              </button>
+            </div>
           </div>
         </form>
       </div>
-    </div>, document.body
+    </div>,
+    document.body
   );
-}
+};
+
+export default CreateVaccinationModal;
