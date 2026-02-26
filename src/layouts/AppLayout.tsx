@@ -1,4 +1,5 @@
 // src/layouts/AppLayout.tsx
+
 import { Outlet } from "react-router-dom";
 import { useEffect } from "react";
 import { useLayoutStore } from "../store/useLayoutStore";
@@ -16,47 +17,31 @@ export const AppLayout = () => {
   }, [initializeTheme]);
 
   return (
-    
     <div className="h-screen bg-surface-100 dark:bg-dark-300 transition-colors duration-300 overflow-hidden font-sans">
-      {/* Sidebar - Solo visible en desktop (*/}
       <Sidebar />
 
-      {/* Contenedor Principal */}
       <div
         className={`
           flex flex-col h-full transition-all duration-300
-          
-          /* MÓVIL: Sin margen a la izquierda (ocupa todo) */
           ml-0 
-          
-          /* DESKTOP: Margen izquierdo según el estado del sidebar */
-          ${sidebarCollapsed ? "lg:ml-16" : "lg:ml-56"}
-
-          /* --- CAMBIO CLAVE AQUÍ --- */
-          /* Hacemos que este contenedor sea el que tenga el scroll */
-          overflow-y-auto
+          ${sidebarCollapsed ? "lg:ml-16" : "lg:ml-60"}
         `}
       >
-        {/* Header - Desktop (Solo se ve en pantallas grandes) */}
-        <div className="hidden lg:block sticky top-0 z-30">
+        {/* ✅ Header FUERA del scroll - siempre fijo */}
+        <div className="hidden lg:block shrink-0">
           <Header />
         </div>
 
-        {/* Header - Mobile/Tablet (Solo se ve en pantallas pequeñas) */}
-        <div className="lg:hidden block sticky top-0 z-30">
+        <div className="lg:hidden block shrink-0">
           <MobileHeader />
         </div>
 
-        {/* Área de Contenido */}
-        <main className="flex-1 relative">
-          {/* Ajustado max-w para que no se corte en desktop */}
-          <div className="h-full w-full max-w-7xl mx-auto p-0 lg:p-6">
-            <Outlet />
-          </div>
+        {/* ✅ Solo el contenido tiene scroll */}
+        <main className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
+          <Outlet />
         </main>
 
-        {/* Bottom Tabs - Solo visible en mobile/tablet */}
-        <div className="lg:hidden block">
+        <div className="lg:hidden block shrink-0">
           <MobileBottomTabs />
         </div>
       </div>

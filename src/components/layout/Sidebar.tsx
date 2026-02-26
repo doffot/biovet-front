@@ -156,7 +156,7 @@ export const Sidebar = () => {
       )}
 
       {/* NAVEGACIÓN */}
-      <nav className="flex-1 py-4 px-3 space-y-6 overflow-y-auto scrollbar-none">
+      <nav className="flex-1 py-4 px-3 space-y-6 overflow-y-auto overflow-x-hidden custom-scrollbar">
         {menuItems.map((section, idx) => (
           <div key={idx} className="space-y-2">
             {!collapsed && (
@@ -214,13 +214,11 @@ export const Sidebar = () => {
       {/* OVERLAY MOBILE */}
       <div className={`fixed inset-0 bg-dark-500/80 backdrop-blur-md z-40 lg:hidden transition-opacity duration-300 ${sidebarMobileOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={closeMobileSidebar} />
 
-      {/* SIDEBAR MOBILE: Fondo Dark Grafito (dark-400 a dark-300) */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-linear-to-b from-dark-400 to-dark-300 transform transition-transform duration-300 ease-out lg:hidden ${sidebarMobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <SidebarContent collapsed={false} isMobile={true} />
       </aside>
 
-      {/* SIDEBAR DESKTOP: Fondo Dark Grafito (dark-400 a dark-300) */}
-      <aside className={`hidden lg:flex flex-col fixed inset-y-0 left-0 z-40 bg-linear-to-b from-dark-400 via-dark-400 to-dark-300 border-r border-white/5 transition-all duration-300 ease-in-out ${sidebarCollapsed ? 'w-16' : 'w-56'}`}>
+      <aside className={`hidden lg:flex flex-col fixed inset-y-0 left-0 z-40 bg-linear-to-b from-dark-400 via-dark-400 to-dark-300 border-r border-white/5 transition-all duration-300 ease-in-out ${sidebarCollapsed ? 'w-16' : 'w-60'}`}>
         <SidebarContent collapsed={sidebarCollapsed} isMobile={false} />
       </aside>
     </>

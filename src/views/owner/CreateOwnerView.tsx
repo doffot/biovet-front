@@ -70,17 +70,20 @@ export default function CreateOwnerView() {
     },
   });
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: createOwner,
-    onSuccess: (data) => {
-      toast.success("¡Creado!", data.msg || "Propietario registrado correctamente");
-      queryClient.invalidateQueries({ queryKey: ["owners"] });
-      navigate("/owners");
-    },
-    onError: (error: Error) => {
-      toast.error("Error", error.message);
-    },
-  });
+ const { mutate, isPending } = useMutation({
+  mutationFn: createOwner,
+  onSuccess: (data) => {
+    toast.success(
+      "¡Cliente registrado!", 
+      `${data.owner.name}  ha sido agregado exitosamente`
+    );
+    queryClient.invalidateQueries({ queryKey: ["owners"] });
+    navigate(`/owners/${data.owner._id}`);
+  },
+  onError: (error: Error) => {
+    toast.error("Error al registrar", error.message);
+  },
+});
 
   const handleForm = (formData: OwnerFormInputs) => {
     // VALIDACIÓN DE BLOQUEO

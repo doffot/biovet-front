@@ -527,7 +527,7 @@ export const Header = () => {
       <div className="flex items-center gap-4">
         <div className="lg:hidden flex items-center">
           <img
-            src="/logo_main.webp"
+            src="/logobiovet.png"
             alt="BioVet Track"
             className="h-8 object-contain"
           />

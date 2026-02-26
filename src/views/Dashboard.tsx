@@ -33,7 +33,7 @@ export default function DashboardView() {
   return (
     <div className="relative p-4 lg:p-8 max-w-7xl mx-auto space-y-10 animate-fade-in">
       
-      {/* MARCA DE AGUA */}
+     
       <div className="fixed inset-0 flex justify-center pointer-events-none z-20 overflow-hidden">
         <img 
           src={clinic?.logo || "/logobiovet.png"} 
