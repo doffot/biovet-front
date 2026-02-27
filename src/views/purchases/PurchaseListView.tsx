@@ -1,4 +1,5 @@
 // src/views/purchases/PurchaseListView.tsx
+
 import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -10,11 +11,15 @@ import {
   FileText,
   ArrowLeft,
   RefreshCw,
+  DollarSign,
+  Clock,
+  CheckCircle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { getAllPurchases } from "@/api/purchaseAPI";
 import Spinner from "@/components/Spinner";
+import { StatCard } from "@/components/ui/StatCard";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -28,15 +33,15 @@ const STATUS_FILTERS = [
 const STATUS_CONFIG: Record<string, { label: string; badge: string }> = {
   completada: {
     label: "Completada",
-    badge: "bg-success-50 dark:bg-success-950 text-success-600 dark:text-success-400 border-success-200 dark:border-success-800",
+    badge: "badge badge-success",
   },
   pendiente: {
     label: "Pendiente",
-    badge: "bg-warning-50 dark:bg-warning-950 text-warning-600 dark:text-warning-400 border-warning-200 dark:border-warning-800",
+    badge: "badge badge-warning",
   },
   cancelada: {
     label: "Cancelada",
-    badge: "bg-danger-50 dark:bg-danger-950 text-danger-600 dark:text-danger-400 border-danger-200 dark:border-danger-800",
+    badge: "badge badge-danger",
   },
 };
 
@@ -50,6 +55,16 @@ export default function PurchaseListView() {
     queryKey: ["purchases"],
     queryFn: getAllPurchases,
   });
+
+  // Stats
+  const stats = useMemo(() => {
+    const total = purchases.length;
+    const totalAmount = purchases.reduce((sum, p) => sum + (p.totalAmount || 0), 0);
+    const completadas = purchases.filter((p) => p.status === "completada").length;
+    const pendientes = purchases.filter((p) => p.status === "pendiente").length;
+
+    return { total, totalAmount, completadas, pendientes };
+  }, [purchases]);
 
   // Filtros
   const filteredPurchases = useMemo(() => {
@@ -90,45 +105,73 @@ export default function PurchaseListView() {
 
   return (
     <div className="flex flex-col h-full bg-surface-100 dark:bg-dark-300">
-      {/* HEADER FIJO */}
+      {/* ═══════════════════════════════════════
+          HEADER FIJO
+          ═══════════════════════════════════════ */}
       <div className="shrink-0 px-4 sm:px-8 pt-4 sm:pt-6 pb-0 space-y-4 sm:space-y-5">
         {/* Título */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 sm:gap-4">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => navigate(-1)}
-              className="text-surface-400 hover:text-surface-600 dark:text-slate-400 dark:hover:text-slate-200 transition-colors cursor-pointer"
+              className="p-2 rounded-lg bg-white dark:bg-dark-200 border border-surface-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-surface-50 dark:hover:bg-dark-100 transition-colors"
             >
-              <ArrowLeft size={20} />
+              <ArrowLeft className="w-5 h-5" />
             </button>
-            <div>
-              <h1 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white leading-tight">
-                Historial de Compras
-              </h1>
-              <p className="text-[13px] text-biovet-500 font-medium">
-                {totalCountText}
-              </p>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 bg-linear-to-br from-biovet-500 to-biovet-600 rounded-xl flex items-center justify-center shadow-lg shadow-biovet-500/20">
+                <ShoppingBag className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white font-heading">
+                  Historial de Compras
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                  {totalCountText}
+                </p>
+              </div>
             </div>
           </div>
 
-          <Link
-            to="/purchases/new"
-            className="flex items-center gap-2 px-4 sm:px-5 py-2.5 bg-biovet-500 hover:bg-biovet-600 text-white rounded-lg font-bold text-[13px] transition-all shadow-sm cursor-pointer active:scale-[0.98]"
-          >
-            <div className="p-0.5 border-2 border-white rounded-full">
-              <Plus size={12} strokeWidth={3} />
-            </div>
-            <span className="hidden sm:inline">Agregar</span>
+          <Link to="/purchases/new" className="btn-primary shrink-0">
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">Nueva Compra</span>
           </Link>
         </div>
 
-        <div className="border border-biovet-200/50 dark:border-biovet-800/30" />
+        {/* Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <StatCard
+            label="Total Compras"
+            value={stats.total}
+            icon={ShoppingBag}
+            variant="primary"
+          />
+          <StatCard
+            label="Monto Total"
+            value={`$${stats.totalAmount.toFixed(2)}`}
+            icon={DollarSign}
+            variant="success"
+          />
+          <StatCard
+            label="Completadas"
+            value={stats.completadas}
+            icon={CheckCircle}
+            variant="neutral"
+          />
+          <StatCard
+            label="Pendientes"
+            value={stats.pendientes}
+            icon={Clock}
+            variant="warning"
+          />
+        </div>
 
         {/* Filtros */}
         <div className="flex flex-col sm:flex-row gap-3">
           {/* Búsqueda */}
           <div className="relative flex-1 sm:max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400 dark:text-slate-500 pointer-events-none" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
             <input
               type="text"
               placeholder="Buscar proveedor o producto..."
@@ -137,7 +180,7 @@ export default function PurchaseListView() {
                 setSearchTerm(e.target.value);
                 setCurrentPage(1);
               }}
-              className="input pl-9 pr-8"
+              className="input pl-10 pr-9"
             />
             {searchTerm && (
               <button
@@ -145,9 +188,9 @@ export default function PurchaseListView() {
                   setSearchTerm("");
                   setCurrentPage(1);
                 }}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 hover:bg-surface-200 dark:hover:bg-dark-50 rounded transition-colors cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-surface-100 dark:hover:bg-dark-100 rounded transition-colors"
               >
-                <X className="w-4 h-4 text-surface-400 dark:text-slate-500" />
+                <X className="w-4 h-4 text-slate-400" />
               </button>
             )}
           </div>
@@ -172,7 +215,7 @@ export default function PurchaseListView() {
           {hasActiveFilters && (
             <button
               onClick={handleClearFilters}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-biovet-500 hover:bg-biovet-50 dark:hover:bg-biovet-950 rounded-lg transition-colors cursor-pointer shrink-0"
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-biovet-600 dark:text-biovet-400 hover:bg-biovet-50 dark:hover:bg-biovet-950 rounded-lg transition-colors shrink-0"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               Limpiar
@@ -181,22 +224,24 @@ export default function PurchaseListView() {
         </div>
       </div>
 
-      {/* CONTENIDO SCROLLEABLE */}
-      <div className="flex-1 overflow-hidden px-4 sm:px-8 pb-4 sm:pb-8">
-        <div className="bg-white dark:bg-dark-100 rounded-xl border border-surface-300 dark:border-slate-700 shadow-sm h-full flex flex-col overflow-hidden">
+      {/* ═══════════════════════════════════════
+          CONTENIDO SCROLLEABLE
+          ═══════════════════════════════════════ */}
+      <div className="flex-1 overflow-hidden px-4 sm:px-8 pb-24 lg:pb-8 pt-4">
+        <div className="bg-white dark:bg-dark-100 rounded-xl border border-surface-200 dark:border-slate-700 shadow-sm h-full flex flex-col overflow-hidden">
           {paginatedPurchases.length === 0 ? (
             /* Empty State */
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center">
-                <div className="w-14 h-14 mx-auto mb-3 bg-surface-100 dark:bg-dark-200 rounded-full flex items-center justify-center border border-surface-300 dark:border-slate-700">
-                  <ShoppingBag className="w-7 h-7 text-surface-400 dark:text-slate-500" />
+                <div className="w-14 h-14 mx-auto mb-3 bg-surface-100 dark:bg-dark-200 rounded-full flex items-center justify-center border border-surface-200 dark:border-slate-700">
+                  <ShoppingBag className="w-7 h-7 text-slate-400 dark:text-slate-500" />
                 </div>
                 <p className="text-slate-700 dark:text-slate-200 font-semibold text-sm mb-1">
                   {hasActiveFilters
                     ? "Sin resultados"
                     : "No hay compras registradas"}
                 </p>
-                <p className="text-surface-500 dark:text-slate-400 text-xs mb-3">
+                <p className="text-slate-500 dark:text-slate-400 text-xs mb-3">
                   {hasActiveFilters
                     ? "Prueba con otros filtros"
                     : "Registra tu primera compra"}
@@ -204,7 +249,7 @@ export default function PurchaseListView() {
                 {hasActiveFilters ? (
                   <button
                     onClick={handleClearFilters}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-biovet-500 hover:bg-biovet-50 dark:hover:bg-biovet-950 rounded-lg transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-biovet-500 hover:bg-biovet-50 dark:hover:bg-biovet-950 rounded-lg transition-colors"
                   >
                     <RefreshCw className="w-3.5 h-3.5" />
                     Limpiar filtros
@@ -212,7 +257,7 @@ export default function PurchaseListView() {
                 ) : (
                   <Link
                     to="/purchases/new"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-biovet-500 text-white text-sm font-semibold rounded-lg hover:bg-biovet-600 transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-biovet-500 text-white text-sm font-semibold rounded-lg hover:bg-biovet-600 transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                     Registrar Compra
@@ -225,27 +270,27 @@ export default function PurchaseListView() {
               {/* Desktop Table */}
               <div className="hidden lg:block flex-1 overflow-auto custom-scrollbar relative">
                 <table className="w-full text-sm">
-                  <thead className="sticky top-0 bg-surface-50 dark:bg-dark-200 border-b border-surface-300 dark:border-slate-700 z-10">
+                  <thead className="sticky top-0 bg-surface-50 dark:bg-dark-200 border-b border-surface-200 dark:border-slate-700 z-10">
                     <tr>
-                      <th className="px-4 py-3 text-[11px] font-semibold text-surface-500 dark:text-slate-400 uppercase tracking-wider text-left">
+                      <th className="px-4 py-3 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-left">
                         Compra
                       </th>
-                      <th className="px-4 py-3 text-[11px] font-semibold text-surface-500 dark:text-slate-400 uppercase tracking-wider text-left">
+                      <th className="px-4 py-3 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-left">
                         Proveedor
                       </th>
-                      <th className="px-4 py-3 text-[11px] font-semibold text-surface-500 dark:text-slate-400 uppercase tracking-wider text-left hidden xl:table-cell">
+                      <th className="px-4 py-3 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-left hidden xl:table-cell">
                         Productos
                       </th>
-                      <th className="px-4 py-3 text-[11px] font-semibold text-surface-500 dark:text-slate-400 uppercase tracking-wider text-left">
+                      <th className="px-4 py-3 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">
                         Total
                       </th>
-                      <th className="px-4 py-3 text-[11px] font-semibold text-surface-500 dark:text-slate-400 uppercase tracking-wider text-left hidden md:table-cell">
+                      <th className="px-4 py-3 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-left hidden md:table-cell">
                         Método
                       </th>
-                      <th className="px-4 py-3 text-[11px] font-semibold text-surface-500 dark:text-slate-400 uppercase tracking-wider text-left">
+                      <th className="px-4 py-3 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-left">
                         Fecha
                       </th>
-                      <th className="px-4 py-3 text-[11px] font-semibold text-surface-500 dark:text-slate-400 uppercase tracking-wider text-center">
+                      <th className="px-4 py-3 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-center">
                         Estado
                       </th>
                     </tr>
@@ -256,21 +301,20 @@ export default function PurchaseListView() {
                       return (
                         <tr
                           key={purchase._id}
-                          className="hover:bg-surface-50/50 dark:hover:bg-dark-200/30 transition-colors"
+                          className="group hover:bg-surface-50/70 dark:hover:bg-dark-200/30 transition-colors"
                         >
                           {/* Compra */}
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-2.5">
-                              <div className="w-9 h-9 rounded-full bg-biovet-500/10 flex items-center justify-center shrink-0">
-                                <FileText className="w-4 h-4 text-biovet-500" />
+                              <div className="w-9 h-9 rounded-lg bg-biovet-100 dark:bg-biovet-900/50 flex items-center justify-center shrink-0">
+                                <FileText className="w-4 h-4 text-biovet-600 dark:text-biovet-400" />
                               </div>
                               <div>
-                                <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                                  #{purchase._id.substring(0, 8)}
+                                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                  #{purchase._id.substring(0, 8).toUpperCase()}
                                 </p>
-                                <p className="text-[11px] text-surface-500 dark:text-slate-400">
-                                  {purchase.items.length} producto
-                                  {purchase.items.length !== 1 ? "s" : ""}
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                  {purchase.items.length} producto{purchase.items.length !== 1 ? "s" : ""}
                                 </p>
                               </div>
                             </div>
@@ -285,7 +329,7 @@ export default function PurchaseListView() {
 
                           {/* Productos */}
                           <td className="px-4 py-3 hidden xl:table-cell">
-                            <p className="text-sm text-surface-500 dark:text-slate-400 max-w-50 truncate">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-50 truncate">
                               {purchase.items
                                 .map((item) => `${item.productName} (${item.quantity})`)
                                 .join(", ")}
@@ -293,33 +337,29 @@ export default function PurchaseListView() {
                           </td>
 
                           {/* Total */}
-                          <td className="px-4 py-3">
-                            <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                          <td className="px-4 py-3 text-right">
+                            <p className="text-sm font-bold text-slate-900 dark:text-white">
                               ${purchase.totalAmount.toFixed(2)}
                             </p>
                           </td>
 
                           {/* Método */}
                           <td className="px-4 py-3 hidden md:table-cell">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-biovet-50 dark:bg-biovet-950 text-biovet-600 dark:text-biovet-300 border-biovet-200 dark:border-biovet-800 capitalize">
+                            <span className="badge badge-biovet capitalize">
                               {purchase.paymentMethod}
                             </span>
                           </td>
 
                           {/* Fecha */}
                           <td className="px-4 py-3">
-                            <p className="text-sm text-surface-500 dark:text-slate-400">
-                              {format(new Date(purchase.createdAt), "dd MMM yyyy", {
-                                locale: es,
-                              })}
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                              {format(new Date(purchase.createdAt), "dd MMM yyyy", { locale: es })}
                             </p>
                           </td>
 
                           {/* Estado */}
                           <td className="px-4 py-3 text-center">
-                            <span
-                              className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusCfg.badge}`}
-                            >
+                            <span className={statusCfg.badge}>
                               {statusCfg.label}
                             </span>
                           </td>
@@ -341,28 +381,26 @@ export default function PurchaseListView() {
                     >
                       {/* Top */}
                       <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                          <div className="w-9 h-9 rounded-full bg-biovet-500/10 flex items-center justify-center shrink-0">
-                            <FileText className="w-4 h-4 text-biovet-500" />
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-9 h-9 rounded-lg bg-biovet-100 dark:bg-biovet-900/50 flex items-center justify-center shrink-0">
+                            <FileText className="w-4 h-4 text-biovet-600 dark:text-biovet-400" />
                           </div>
-                          <div className="flex-1 min-w-0">
+                          <div className="min-w-0">
                             <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                              #{purchase._id.substring(0, 8)}
+                              #{purchase._id.substring(0, 8).toUpperCase()}
                             </p>
-                            <p className="text-[11px] text-surface-500 dark:text-slate-400">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
                               {purchase.provider || "Sin proveedor"}
                             </p>
                           </div>
                         </div>
-                        <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border shrink-0 ${statusCfg.badge}`}
-                        >
+                        <span className={`${statusCfg.badge} shrink-0`}>
                           {statusCfg.label}
                         </span>
                       </div>
 
                       {/* Productos */}
-                      <p className="text-[11px] text-surface-500 dark:text-slate-400 line-clamp-2">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
                         {purchase.items
                           .map((item) => `${item.productName} (${item.quantity})`)
                           .join(", ")}
@@ -371,16 +409,14 @@ export default function PurchaseListView() {
                       {/* Bottom */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-biovet-50 dark:bg-biovet-950 text-biovet-600 dark:text-biovet-300 border-biovet-200 dark:border-biovet-800 capitalize">
+                          <span className="badge badge-biovet capitalize">
                             {purchase.paymentMethod}
                           </span>
-                          <span className="text-[11px] text-surface-500 dark:text-slate-400">
-                            {format(new Date(purchase.createdAt), "dd MMM yyyy", {
-                              locale: es,
-                            })}
+                          <span className="text-xs text-slate-500 dark:text-slate-400">
+                            {format(new Date(purchase.createdAt), "dd MMM yyyy", { locale: es })}
                           </span>
                         </div>
-                        <p className="text-base font-bold text-slate-700 dark:text-slate-200">
+                        <p className="text-base font-bold text-slate-900 dark:text-white">
                           ${purchase.totalAmount.toFixed(2)}
                         </p>
                       </div>
@@ -393,22 +429,20 @@ export default function PurchaseListView() {
 
           {/* Paginación */}
           {totalPages > 1 && (
-            <div className="shrink-0 px-4 py-3 bg-surface-50 dark:bg-dark-200 border-t border-surface-300 dark:border-slate-700 flex items-center justify-between">
-              <p className="text-[11px] text-surface-500 dark:text-slate-400 font-medium">
-                {startIndex + 1}-
-                {Math.min(startIndex + ITEMS_PER_PAGE, filteredPurchases.length)}{" "}
-                de {filteredPurchases.length}
+            <div className="shrink-0 px-4 py-3 bg-surface-50 dark:bg-dark-200 border-t border-surface-200 dark:border-slate-700 flex items-center justify-between">
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, filteredPurchases.length)} de {filteredPurchases.length}
               </p>
               <div className="flex gap-1.5">
                 <button
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage <= 1}
-                  className="px-3 py-1.5 text-xs font-medium rounded-lg border border-surface-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-surface-100 dark:hover:bg-dark-50 disabled:opacity-40 disabled:pointer-events-none transition-colors cursor-pointer"
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg border border-surface-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-surface-100 dark:hover:bg-dark-100 disabled:opacity-40 disabled:pointer-events-none transition-colors"
                 >
                   Anterior
                 </button>
 
-                <div className="flex items-center gap-1">
+                <div className="hidden sm:flex items-center gap-1">
                   {[...Array(totalPages)].map((_, i) => {
                     const page = i + 1;
                     if (
@@ -420,10 +454,10 @@ export default function PurchaseListView() {
                         <button
                           key={page}
                           onClick={() => setCurrentPage(page)}
-                          className={`w-8 h-8 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                          className={`w-8 h-8 rounded-lg text-xs font-medium transition-all ${
                             currentPage === page
                               ? "bg-biovet-500 text-white shadow-sm"
-                              : "border border-surface-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-biovet-400"
+                              : "border border-surface-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-biovet-400"
                           }`}
                         >
                           {page}
@@ -432,10 +466,7 @@ export default function PurchaseListView() {
                     }
                     if (page === currentPage - 2 || page === currentPage + 2) {
                       return (
-                        <span
-                          key={page}
-                          className="text-surface-400 dark:text-slate-500 px-1 text-xs"
-                        >
+                        <span key={page} className="text-slate-400 px-1 text-xs">
                           ...
                         </span>
                       );
@@ -445,11 +476,9 @@ export default function PurchaseListView() {
                 </div>
 
                 <button
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
-                  }
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   disabled={currentPage >= totalPages}
-                  className="px-3 py-1.5 text-xs font-medium rounded-lg border border-surface-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-surface-100 dark:hover:bg-dark-50 disabled:opacity-40 disabled:pointer-events-none transition-colors cursor-pointer"
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg border border-surface-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-surface-100 dark:hover:bg-dark-100 disabled:opacity-40 disabled:pointer-events-none transition-colors"
                 >
                   Siguiente
                 </button>
