@@ -1,3 +1,4 @@
+// src/components/ui/Toast.tsx
 import React, { useState, useEffect, createContext, useContext, useCallback } from 'react';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 
@@ -60,8 +61,47 @@ export const toast = {
   }
 };
 
+// Configuración de estilos por tipo
+const toastConfig = {
+  success: {
+    icon: CheckCircle,
+    containerClass: 'bg-white dark:bg-dark-200 border-success-200 dark:border-success-800',
+    iconContainerClass: 'bg-success-100 dark:bg-success-900/50',
+    iconClass: 'text-success-600 dark:text-success-400',
+    titleClass: 'text-success-700 dark:text-success-300',
+    messageClass: 'text-success-600/80 dark:text-success-400/80',
+  },
+  error: {
+    icon: AlertCircle,
+    containerClass: 'bg-white dark:bg-dark-200 border-danger-200 dark:border-danger-800',
+    iconContainerClass: 'bg-danger-100 dark:bg-danger-900/50',
+    iconClass: 'text-danger-600 dark:text-danger-400',
+    titleClass: 'text-danger-700 dark:text-danger-300',
+    messageClass: 'text-danger-600/80 dark:text-danger-400/80',
+  },
+  warning: {
+    icon: AlertTriangle,
+    containerClass: 'bg-white dark:bg-dark-200 border-warning-200 dark:border-warning-800',
+    iconContainerClass: 'bg-warning-100 dark:bg-warning-900/50',
+    iconClass: 'text-warning-600 dark:text-warning-400',
+    titleClass: 'text-warning-700 dark:text-warning-300',
+    messageClass: 'text-warning-600/80 dark:text-warning-400/80',
+  },
+  info: {
+    icon: Info,
+    containerClass: 'bg-white dark:bg-dark-200 border-biovet-200 dark:border-biovet-800',
+    iconContainerClass: 'bg-biovet-100 dark:bg-biovet-900/50',
+    iconClass: 'text-biovet-600 dark:text-biovet-400',
+    titleClass: 'text-biovet-700 dark:text-biovet-300',
+    messageClass: 'text-biovet-600/80 dark:text-biovet-400/80',
+  },
+};
+
 // Componente individual de Toast
-const ToastItem: React.FC<{ toast: Toast; onRemove: (id: string) => void }> = ({ toast: toastData, onRemove }) => {
+const ToastItem: React.FC<{ toast: Toast; onRemove: (id: string) => void }> = ({ 
+  toast: toastData, 
+  onRemove 
+}) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
 
@@ -86,71 +126,7 @@ const ToastItem: React.FC<{ toast: Toast; onRemove: (id: string) => void }> = ({
     }, 300);
   };
 
-  const getToastConfig = () => {
-    switch (toastData.type) {
-      case 'success':
-        return {
-          icon: CheckCircle,
-          // Light mode
-          lightBg: 'bg-success-50',
-          lightBorder: 'border-success-200',
-          lightIconBg: 'bg-success-500',
-          lightTitle: 'text-success-700',
-          lightMessage: 'text-success-600',
-          // Dark mode
-          darkBg: 'dark:bg-success-950',
-          darkBorder: 'dark:border-success-800',
-          darkIconBg: 'dark:bg-success-600',
-          darkTitle: 'dark:text-success-400',
-          darkMessage: 'dark:text-success-300',
-        };
-      case 'error':
-        return {
-          icon: AlertCircle,
-          lightBg: 'bg-danger-50',
-          lightBorder: 'border-danger-200',
-          lightIconBg: 'bg-danger-500',
-          lightTitle: 'text-danger-700',
-          lightMessage: 'text-danger-600',
-          darkBg: 'dark:bg-danger-950',
-          darkBorder: 'dark:border-danger-800',
-          darkIconBg: 'dark:bg-danger-600',
-          darkTitle: 'dark:text-danger-400',
-          darkMessage: 'dark:text-danger-300',
-        };
-      case 'warning':
-        return {
-          icon: AlertTriangle,
-          lightBg: 'bg-warning-50',
-          lightBorder: 'border-warning-200',
-          lightIconBg: 'bg-warning-500',
-          lightTitle: 'text-warning-700',
-          lightMessage: 'text-warning-600',
-          darkBg: 'dark:bg-warning-950',
-          darkBorder: 'dark:border-warning-800',
-          darkIconBg: 'dark:bg-warning-600',
-          darkTitle: 'dark:text-warning-400',
-          darkMessage: 'dark:text-warning-300',
-        };
-      case 'info':
-      default:
-        return {
-          icon: Info,
-          lightBg: 'bg-biovet-50',
-          lightBorder: 'border-biovet-200',
-          lightIconBg: 'bg-biovet-500',
-          lightTitle: 'text-biovet-700',
-          lightMessage: 'text-biovet-600',
-          darkBg: 'dark:bg-biovet-950',
-          darkBorder: 'dark:border-biovet-800',
-          darkIconBg: 'dark:bg-biovet-600',
-          darkTitle: 'dark:text-biovet-400',
-          darkMessage: 'dark:text-biovet-300',
-        };
-    }
-  };
-
-  const config = getToastConfig();
+  const config = toastConfig[toastData.type];
   const IconComponent = config.icon;
 
   return (
@@ -159,88 +135,79 @@ const ToastItem: React.FC<{ toast: Toast; onRemove: (id: string) => void }> = ({
         transform transition-all duration-300 ease-out mb-3
         ${isVisible && !isRemoving 
           ? 'opacity-100 scale-100 translate-x-0' 
-          : 'opacity-0 scale-95 translate-x-4'
+          : 'opacity-0 scale-95 translate-x-8'
         }
-        ${isRemoving ? 'opacity-0 scale-95 translate-x-4' : ''}
       `}
     >
       <div 
         className={`
-          rounded-xl shadow-lg max-w-sm min-w-[320px] relative overflow-hidden
-          border backdrop-blur-sm
-          ${config.lightBg} ${config.darkBg}
-          ${config.lightBorder} ${config.darkBorder}
+          flex items-start gap-3 p-4
+          rounded-xl border shadow-lg
+          backdrop-blur-sm
+          min-w-[320px] max-w-sm
+          ${config.containerClass}
         `}
-      >        
-        <div className="flex items-start gap-3 p-4">
-          {/* Icono */}
-          <div 
+      >
+        {/* Icono */}
+        <div 
+          className={`
+            shrink-0 w-10 h-10 rounded-xl
+            flex items-center justify-center
+            ${config.iconContainerClass}
+          `}
+        >
+          <IconComponent className={`w-5 h-5 ${config.iconClass}`} />
+        </div>
+        
+        {/* Contenido */}
+        <div className="flex-1 min-w-0 pt-0.5">
+          <h4 
             className={`
-              shrink-0 w-9 h-9 rounded-lg flex items-center justify-center
-              text-white shadow-sm
-              ${config.lightIconBg} ${config.darkIconBg}
+              font-semibold text-sm leading-5 font-heading
+              ${config.titleClass}
             `}
           >
-            <IconComponent size={18} />
-          </div>
-          
-          {/* Contenido */}
-          <div className="flex-1 min-w-0 pt-0.5">
-            <h4 
+            {toastData.title}
+          </h4>
+          {toastData.message && (
+            <p 
               className={`
-                font-semibold text-sm leading-5
-                ${config.lightTitle} ${config.darkTitle}
+                text-xs leading-5 mt-1
+                ${config.messageClass}
               `}
             >
-              {toastData.title}
-            </h4>
-            {toastData.message && (
-              <p 
-                className={`
-                  text-xs leading-5 mt-0.5 opacity-90
-                  ${config.lightMessage} ${config.darkMessage}
-                `}
-              >
-                {toastData.message}
-              </p>
-            )}
-          </div>
-          
-          {/* Botón cerrar */}
-          <button
-            onClick={handleRemove}
-            className="
-              shrink-0 p-1.5 rounded-lg transition-colors
-              text-slate-400 hover:text-slate-600 hover:bg-slate-200/50
-              dark:text-slate-500 dark:hover:text-slate-300 dark:hover:bg-slate-700/50
-            "
-            aria-label="Cerrar notificación"
-          >
-            <X size={16} />
-          </button>
+              {toastData.message}
+            </p>
+          )}
         </div>
-
-        {/* Barra de progreso (si no es persistente) */}
-        {!toastData.persistent && toastData.duration !== 0 && (
-          <div className="h-1 w-full bg-black/5 dark:bg-white/5">
-            <div 
-              className={`
-                h-full origin-left
-                ${config.lightIconBg} ${config.darkIconBg}
-              `}
-              style={{
-                animation: `shrink ${toastData.duration || 5000}ms linear forwards`
-              }}
-            />
-          </div>
-        )}
+        
+        {/* Botón cerrar */}
+        <button
+          onClick={handleRemove}
+          className="
+            shrink-0 p-1.5 -mt-1 -mr-1 rounded-lg 
+            transition-colors
+            text-slate-400 hover:text-slate-600 
+            hover:bg-surface-100
+            dark:text-slate-500 dark:hover:text-slate-300 
+            dark:hover:bg-dark-100
+          "
+          aria-label="Cerrar notificación"
+        >
+          <X className="w-4 h-4" />
+        </button>
       </div>
     </div>
   );
 };
 
 // Contenedor de toasts
-const ToastContainer: React.FC<{ toasts: Toast[]; onRemove: (id: string) => void }> = ({ toasts, onRemove }) => {
+const ToastContainer: React.FC<{ 
+  toasts: Toast[]; 
+  onRemove: (id: string) => void 
+}> = ({ toasts, onRemove }) => {
+  if (toasts.length === 0) return null;
+
   return (
     <div className="fixed top-4 right-4 z-10000 pointer-events-none">
       <div className="pointer-events-auto flex flex-col items-end">
@@ -257,7 +224,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const addToast = useCallback((toastData: Omit<Toast, 'id'>) => {
-    const id = Math.random().toString(36).substr(2, 9);
+    const id = Math.random().toString(36).substring(2, 11);
     const newToast: Toast = { id, ...toastData };
     setToasts(prev => [...prev, newToast]);
   }, []);

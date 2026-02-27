@@ -81,6 +81,7 @@ import PaymentMethodsListView from "./views/payment-methods/PaymentMethodsListVi
 import CreatePaymentMethodView from "./views/payment-methods/CreatePaymentMethodView";
 import ClinicSettingsView from "./views/settings/ClinicSettingsView";
 import InvoiceDetailView from "./views/invoices/InvoiceDetailView";
+import EditProductView from "./views/inventory/EditProductView";
 
 /** * COMPONENTES DE PROTECCIÓN DE RUTA
  */
@@ -194,6 +195,7 @@ export default function Router() {
                             <Route index element={<Navigate to="/inventory/products" replace />} />
                             <Route path="products" element={<ProductListView />} />
                             <Route path="products/create" element={<CreateProductView />} />
+                            <Route path="products/edit/:productId" element={<EditProductView />} />
                             <Route path="stock" element={<StockView />} />
                             <Route path="movements" element={<MovementsView />} />
                             <Route path="low-stock" element={<LowStockView />} />

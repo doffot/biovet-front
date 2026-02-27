@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { 
   X, CheckCircle2, Wallet, CreditCard, TrendingDown, Banknote,
-  Phone, User, PawPrint, Receipt, Sparkles,Loader2
+  Phone, User,  Receipt, Loader2, DollarSign
 } from "lucide-react";
 import { getBCVRate } from "@/utils/exchangeRateService";
 import { getPaymentMethods } from "@/api/paymentAPI";
@@ -78,7 +78,6 @@ export function PaymentModal({
     enabled: isOpen,
   });
 
-  // Cargar tasa BCV
   useEffect(() => {
     if (isOpen) {
       setIsLoadingRate(true);
@@ -95,7 +94,6 @@ export function PaymentModal({
     }
   }, [isOpen]);
 
-  // Reset al cerrar
   useEffect(() => {
     if (!isOpen) {
       setSelectedMethodId("");
@@ -110,28 +108,23 @@ export function PaymentModal({
     }
   }, [isOpen]);
 
-  // --- CÁLCULOS CORREGIDOS ---
   const selectedMethod = useMemo(
     () => paymentMethods.find((m) => m._id === selectedMethodId),
     [paymentMethods, selectedMethodId]
   );
 
   const isBsMethod = selectedMethod?.currency === "Bs" || selectedMethod?.currency === "VES";
-  
-  // Asegurar que amountUSD sea positivo
   const validAmountUSD = Math.max(0, amountUSD);
   const maxCredit = Math.min(creditBalance, validAmountUSD);
 
-  // Parsear crédito de forma segura
   const parsedCreditAmount = creditAmount.trim() === "" ? 0 : parseFloat(creditAmount);
   const effectiveCredit = useCredit && creditAmount.trim() !== "" 
     ? Math.min(Math.max(0, parsedCreditAmount), maxCredit)
     : 0;
 
   const remainingAfterCredit = Math.max(0, validAmountUSD - effectiveCredit);
-  const creditCoversAll = effectiveCredit >= validAmountUSD - 0.01; // tolerancia
+  const creditCoversAll = effectiveCredit >= validAmountUSD - 0.01;
 
-  // Monto a pagar (solo si no está cubierto por crédito)
   const paymentAmount = useMemo(() => {
     if (creditCoversAll) return 0;
     if (isPartialPayment) {
@@ -144,7 +137,6 @@ export function PaymentModal({
   const currentRate = useManualRate ? (parseFloat(manualRate) || 0) : (bcvRate || 0);
   const totalBs = currentRate > 0 ? paymentAmount * currentRate : 0;
 
-  // --- VALIDACIÓN CORREGIDA ---
   const needsPaymentMethod = !creditCoversAll && paymentAmount > 0;
   const needsRate = needsPaymentMethod && isBsMethod && currentRate <= 0;
   const invalidPartialAmount = isPartialPayment && (
@@ -152,7 +144,6 @@ export function PaymentModal({
     parseFloat(customAmount) > remainingAfterCredit
   );
 
-  
   const canSubmit =
     (effectiveCredit > 0 || paymentAmount > 0) &&
     (!needsPaymentMethod || selectedMethodId) &&
@@ -201,134 +192,163 @@ export function PaymentModal({
 
   return (
     <div className="fixed inset-0 z-9999 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={onClose} />
-      <div className="relative w-full max-w-xl bg-white dark:bg-dark-200 border border-surface-200 dark:border-dark-100 rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200">
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm" 
+        onClick={onClose} 
+      />
+      
+      {/* Modal */}
+      <div className="relative w-full max-w-lg bg-white dark:bg-dark-200 rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col border border-surface-200 dark:border-slate-700">
         
-        {/* Header */}
-        <div className="bg-linear-to-r from-biovet-500 to-biovet-600 p-6 shrink-0 relative overflow-hidden">
-          <button
-            onClick={onClose}
-            disabled={isProcessing}
-            className="absolute top-4 right-4 p-2 hover:bg-white/20 rounded-xl transition-colors text-white"
-          >
-            <X className="w-5 h-5" />
-          </button>
-
-          <div className="flex items-start gap-4 pr-8 relative z-10">
-            <div className="shrink-0">
-              {patient?.photo ? (
-                <img
-                  src={patient.photo}
-                  alt={patient.name}
-                  className="w-14 h-14 rounded-xl object-cover border-2 border-white/30 shadow-md"
-                />
-              ) : (
-                <div className="w-14 h-14 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30 shadow-md">
-                  <PawPrint className="w-7 h-7 text-white" />
-                </div>
-              )}
+        {/* ═══════════════════════════════════════
+            HEADER - Simplificado
+            ═══════════════════════════════════════ */}
+        <div className="shrink-0 p-4 border-b border-surface-200 dark:border-slate-700">
+          {/* Fila superior: Título y X */}
+          <div className="flex items-start justify-between gap-4 mb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-biovet-100 dark:bg-biovet-900/50 flex items-center justify-center">
+                <DollarSign className="w-5 h-5 text-biovet-600 dark:text-biovet-400" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white font-heading">
+                  {title}
+                </h2>
+                {patient && (
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {patient.name}
+                  </p>
+                )}
+              </div>
             </div>
+            
+            {/* Botón X más grande y accesible */}
+            <button
+              onClick={onClose}
+              disabled={isProcessing}
+              className="p-2 -m-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-surface-100 dark:hover:text-slate-300 dark:hover:bg-dark-100 transition-colors disabled:opacity-50"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
 
-            <div className="flex-1 min-w-0">
-              <h2 className="text-xl font-bold text-white font-heading truncate">{title}</h2>
-              {patient && (
-                <p className="text-biovet-100 text-sm font-medium mt-0.5">{patient.name}</p>
-              )}
-              {owner && (
-                <div className="flex items-center gap-3 mt-1 text-white/80 text-xs">
-                  <span className="flex items-center gap-1"><User className="w-3 h-3" />{owner.name}</span>
-                  {owner.phone && (
-                    <span className="flex items-center gap-1 opacity-75"><Phone className="w-3 h-3" />{owner.phone}</span>
-                  )}
-                </div>
-              )}
-            </div>
-
+          {/* Info del cliente + Monto */}
+          <div className="flex items-center justify-between gap-4 p-3 bg-surface-50 dark:bg-dark-100 rounded-xl">
+            {owner && (
+              <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400 min-w-0">
+                <User className="w-4 h-4 shrink-0" />
+                <span className="truncate">{owner.name}</span>
+                {owner.phone && (
+                  <>
+                    <span className="text-slate-300 dark:text-slate-600">•</span>
+                    <Phone className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">{owner.phone}</span>
+                  </>
+                )}
+              </div>
+            )}
             <div className="text-right shrink-0">
-              <p className="text-biovet-100 text-[10px] uppercase tracking-wide font-bold">Monto Total</p>
-              <p className="text-2xl font-black text-white tracking-tight">${validAmountUSD.toFixed(2)}</p>
+              <p className="text-[10px] text-slate-400 uppercase tracking-wide font-medium">Total</p>
+              <p className="text-xl font-bold text-biovet-600 dark:text-biovet-400 font-heading">
+                ${validAmountUSD.toFixed(2)}
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-surface-50 dark:bg-dark-300">
+        {/* ═══════════════════════════════════════
+            CONTENIDO SCROLLEABLE
+            ═══════════════════════════════════════ */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
           
           {/* Servicios */}
           {services.length > 0 && (
-            <div className="bg-white dark:bg-dark-200 rounded-xl border border-surface-200 dark:border-dark-100 overflow-hidden shadow-sm">
-              <div className="px-4 py-2 bg-surface-50 dark:bg-dark-100 border-b border-surface-200 dark:border-dark-100 flex items-center gap-2">
-                <Receipt className="w-4 h-4 text-biovet-500" />
-                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Detalle de servicios</span>
+            <div className="bg-surface-50 dark:bg-dark-100 rounded-xl p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Receipt className="w-4 h-4 text-slate-400" />
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                  Servicios
+                </span>
               </div>
-              <div className="divide-y divide-surface-100 dark:divide-dark-50">
+              <div className="space-y-2">
                 {services.map((item, idx) => (
-                  <div key={idx} className="grid grid-cols-12 gap-2 px-4 py-3 text-sm hover:bg-surface-50 dark:hover:bg-dark-100/50">
-                    <div className="col-span-7 text-slate-700 dark:text-slate-200 font-medium">
+                  <div key={idx} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2 min-w-0">
                       {item.quantity > 1 && (
-                        <span className="inline-flex items-center justify-center min-w-5 h-5 rounded bg-surface-200 dark:bg-dark-50 text-[10px] font-bold text-slate-600 dark:text-slate-300 mr-2 px-1">x{item.quantity}</span>
+                        <span className="shrink-0 px-1.5 py-0.5 rounded bg-surface-200 dark:bg-dark-50 text-[10px] font-bold text-slate-600 dark:text-slate-400">
+                          x{item.quantity}
+                        </span>
                       )}
-                      <span className="truncate">{item.description}</span>
+                      <span className="text-slate-700 dark:text-slate-300 truncate">
+                        {item.description}
+                      </span>
                     </div>
-                    <div className="col-span-2 text-right text-slate-500 dark:text-slate-400 text-xs mt-0.5">${item.unitPrice.toFixed(2)}</div>
-                    <div className="col-span-3 text-right font-bold text-slate-800 dark:text-white">${item.total.toFixed(2)}</div>
+                    <span className="font-semibold text-slate-900 dark:text-white shrink-0 ml-2">
+                      ${item.total.toFixed(2)}
+                    </span>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Sección de Crédito - SOLO si es posible usarlo */}
+          {/* Sección de Crédito */}
           {canUseCredit && (
-            <div className={`rounded-xl border p-4 transition-all duration-300 ${
+            <div className={`rounded-xl border p-4 transition-all ${
               useCredit 
-                ? "border-emerald-500/50 bg-emerald-50 dark:bg-emerald-900/10 shadow-sm" 
-                : "border-surface-200 dark:border-dark-100 bg-white dark:bg-dark-200"
+                ? "border-success-300 dark:border-success-700 bg-success-50 dark:bg-success-950/30" 
+                : "border-surface-200 dark:border-slate-700 bg-white dark:bg-dark-100"
             }`}>
-              <label className="flex items-center justify-between cursor-pointer select-none">
+              <label className="flex items-center justify-between cursor-pointer">
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg transition-colors ${
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
                     useCredit 
-                      ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/30" 
-                      : "bg-surface-100 dark:bg-dark-100 text-slate-400"
+                      ? "bg-success-500 text-white" 
+                      : "bg-surface-100 dark:bg-dark-50 text-slate-400"
                   }`}>
-                    <Wallet className="w-5 h-5" />
+                    <Wallet className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className={`text-sm font-bold ${useCredit ? "text-emerald-700 dark:text-emerald-400" : "text-slate-700 dark:text-slate-200"}`}>
+                    <p className={`text-sm font-semibold ${
+                      useCredit 
+                        ? "text-success-700 dark:text-success-400" 
+                        : "text-slate-700 dark:text-slate-300"
+                    }`}>
                       Usar saldo a favor
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Disponible: <span className="font-bold text-emerald-600 dark:text-emerald-400">${creditBalance.toFixed(2)}</span>
+                      Disponible: <span className="font-semibold text-success-600 dark:text-success-400">${creditBalance.toFixed(2)}</span>
                     </p>
                   </div>
                 </div>
                 
-                <div className={`w-11 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out ${useCredit ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-dark-50'}`}>
-                  <input
-                    type="checkbox"
-                    className="hidden"
-                    checked={useCredit}
-                    disabled={!canUseCredit}
-                    onChange={(e) => {
-                      const checked = e.target.checked;
-                      setUseCredit(checked);
-                      if (checked) {
-                        // ✅ Inicializar con el máximo permitido
-                        setCreditAmount(maxCredit.toFixed(2));
-                      } else {
-                        setCreditAmount("");
-                      }
-                    }}
-                  />
-                  <div className={`bg-white w-4 h-4 rounded-full shadow-sm transform duration-200 ease-in-out ${useCredit ? 'translate-x-5' : 'translate-x-0'}`} />
+                {/* Switch */}
+                <div 
+                  className={`relative w-11 h-6 rounded-full transition-colors cursor-pointer ${
+                    useCredit ? 'bg-success-500' : 'bg-surface-300 dark:bg-slate-600'
+                  }`}
+                  onClick={() => {
+                    const newValue = !useCredit;
+                    setUseCredit(newValue);
+                    if (newValue) {
+                      setCreditAmount(maxCredit.toFixed(2));
+                    } else {
+                      setCreditAmount("");
+                    }
+                  }}
+                >
+                  <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                    useCredit ? 'translate-x-5' : 'translate-x-0'
+                  }`} />
                 </div>
               </label>
 
               {useCredit && (
-                <div className="mt-4 pt-3 border-t border-emerald-200 dark:border-emerald-800/30 flex items-center gap-3">
-                  <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">Monto a aplicar:</span>
+                <div className="mt-3 pt-3 border-t border-success-200 dark:border-success-800/50 flex items-center gap-2">
+                  <span className="text-sm text-success-700 dark:text-success-400 shrink-0">Aplicar:</span>
                   <div className="relative flex-1">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-600 dark:text-emerald-400 font-bold">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-success-600 font-medium">$</span>
                     <input
                       type="number"
                       step="0.01"
@@ -336,29 +356,30 @@ export function PaymentModal({
                       max={maxCredit}
                       value={creditAmount}
                       onChange={(e) => setCreditAmount(e.target.value)}
-                      className="w-full pl-6 pr-3 py-2 bg-white dark:bg-dark-100 border border-emerald-300 dark:border-emerald-800 rounded-lg text-sm font-bold text-emerald-700 dark:text-emerald-300 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500"
+                      className="input pl-7 text-sm border-success-300 dark:border-success-700 focus:border-success-500 focus:ring-success-200"
                     />
                   </div>
                   <button
                     onClick={() => setCreditAmount(maxCredit.toFixed(2))}
-                    className="px-3 py-2 text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors"
+                    className="px-3 py-2 text-xs font-semibold text-success-700 dark:text-success-400 bg-success-100 dark:bg-success-900/50 rounded-lg hover:bg-success-200 dark:hover:bg-success-900 transition-colors"
                   >
-                    Máximo
+                    Máx
                   </button>
                 </div>
               )}
             </div>
           )}
 
-          {/* Métodos de pago - Solo si hay monto a pagar */}
+          {/* Métodos de pago */}
           {!creditCoversAll && (
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-biovet-500" /> Método de pago
+                <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-biovet-500" />
+                  Método de pago
                 </p>
                 {allowPartial && (
-                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={isPartialPayment}
@@ -366,19 +387,19 @@ export function PaymentModal({
                         setIsPartialPayment(e.target.checked);
                         if (!e.target.checked) setCustomAmount("");
                       }}
-                      className="w-4 h-4 text-amber-500 bg-white dark:bg-dark-100 border-surface-300 dark:border-dark-50 rounded focus:ring-amber-500"
+                      className="w-4 h-4 text-warning-500 bg-white dark:bg-dark-100 border-surface-300 dark:border-slate-600 rounded focus:ring-warning-500"
                     />
-                    <span className="text-xs font-medium text-slate-600 dark:text-slate-300">Pago parcial</span>
+                    <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Pago parcial</span>
                   </label>
                 )}
               </div>
 
               {isLoadingMethods ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-6 h-6 text-biovet-500 animate-spin" />
+                <div className="flex items-center justify-center py-6">
+                  <Loader2 className="w-5 h-5 text-biovet-500 animate-spin" />
                 </div>
               ) : (
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {activePaymentMethods.map((method) => {
                     const isSelected = selectedMethodId === method._id;
                     const isBs = method.currency === "Bs" || method.currency === "VES";
@@ -386,22 +407,30 @@ export function PaymentModal({
                       <button
                         key={method._id}
                         onClick={() => setSelectedMethodId(isSelected ? "" : method._id)}
-                        className={`p-3 rounded-xl border-2 transition-all duration-200 flex flex-col items-center justify-center gap-2 ${
+                        className={`p-3 rounded-xl border-2 transition-all flex items-center gap-2 ${
                           isSelected
-                            ? "border-biovet-500 bg-biovet-50 dark:bg-biovet-950/30 shadow-md"
-                            : "border-surface-200 dark:border-dark-50 bg-white dark:bg-dark-200 hover:border-biovet-300 dark:hover:border-biovet-800"
+                            ? "border-biovet-500 bg-biovet-50 dark:bg-biovet-950/30"
+                            : "border-surface-200 dark:border-slate-700 bg-white dark:bg-dark-100 hover:border-biovet-300 dark:hover:border-biovet-700"
                         }`}
                       >
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
-                          isSelected ? "bg-biovet-500 text-white" : "bg-surface-100 dark:bg-dark-100 text-slate-400"
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                          isSelected 
+                            ? "bg-biovet-500 text-white" 
+                            : "bg-surface-100 dark:bg-dark-50 text-slate-400"
                         }`}>
                           {isBs ? <Banknote className="w-4 h-4" /> : <CreditCard className="w-4 h-4" />}
                         </div>
-                        <div className="text-center">
-                          <p className={`text-xs font-bold truncate w-full ${isSelected ? "text-biovet-700 dark:text-biovet-300" : "text-slate-700 dark:text-slate-300"}`}>
+                        <div className="text-left min-w-0">
+                          <p className={`text-xs font-semibold truncate ${
+                            isSelected 
+                              ? "text-biovet-700 dark:text-biovet-300" 
+                              : "text-slate-700 dark:text-slate-300"
+                          }`}>
                             {method.name}
                           </p>
-                          <p className="text-[10px] text-slate-400 font-medium">{isBs ? "Bolívares" : method.currency}</p>
+                          <p className="text-[10px] text-slate-400">
+                            {isBs ? "Bs" : method.currency}
+                          </p>
                         </div>
                       </button>
                     );
@@ -409,14 +438,15 @@ export function PaymentModal({
                 </div>
               )}
 
+              {/* Monto parcial */}
               {isPartialPayment && (
-                <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 rounded-xl p-4">
+                <div className="bg-warning-50 dark:bg-warning-950/30 border border-warning-200 dark:border-warning-800 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <TrendingDown className="w-4 h-4 text-amber-600 dark:text-amber-500" />
-                    <span className="text-sm font-bold text-amber-700 dark:text-amber-500">Monto a abonar</span>
+                    <TrendingDown className="w-4 h-4 text-warning-600 dark:text-warning-400" />
+                    <span className="text-sm font-semibold text-warning-700 dark:text-warning-400">Monto a abonar</span>
                   </div>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium">$</span>
                     <input
                       type="number"
                       step="0.01"
@@ -424,30 +454,31 @@ export function PaymentModal({
                       max={remainingAfterCredit}
                       value={customAmount}
                       onChange={(e) => setCustomAmount(e.target.value)}
-                      className={`w-full pl-7 pr-3 py-3 bg-white dark:bg-dark-100 border rounded-xl text-lg font-bold text-slate-800 dark:text-white focus:ring-2 outline-none ${
-                        invalidPartialAmount
-                          ? "border-red-300 focus:border-red-500 focus:ring-red-200"
-                          : "border-amber-300 dark:border-amber-800 focus:border-amber-500 focus:ring-amber-200 dark:focus:ring-amber-900/30"
-                      }`}
                       placeholder="0.00"
+                      className={`input pl-7 text-lg font-semibold ${
+                        invalidPartialAmount
+                          ? "border-danger-300 focus:border-danger-500 focus:ring-danger-200"
+                          : "border-warning-300 dark:border-warning-700 focus:border-warning-500 focus:ring-warning-200"
+                      }`}
                     />
                   </div>
-                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-2 font-medium">
-                    Máximo permitido: ${remainingAfterCredit.toFixed(2)}
+                  <p className="text-xs text-warning-600 dark:text-warning-400 mt-2">
+                    Máximo: ${remainingAfterCredit.toFixed(2)}
                   </p>
                 </div>
               )}
 
+              {/* Tasa de cambio para Bs */}
               {selectedMethodId && isBsMethod && (
-                <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800/30 rounded-xl p-4">
+                <div className="bg-biovet-50 dark:bg-biovet-950/30 border border-biovet-200 dark:border-biovet-800 rounded-xl p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-bold text-blue-700 dark:text-blue-400">Tasa de Cambio</span>
+                    <span className="text-sm font-semibold text-biovet-700 dark:text-biovet-400">Tasa de Cambio</span>
                     {isLoadingRate ? (
-                      <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
+                      <Loader2 className="w-4 h-4 text-biovet-500 animate-spin" />
                     ) : (
                       <button
                         onClick={() => setUseManualRate(!useManualRate)}
-                        className="text-[10px] font-bold text-blue-600 hover:text-blue-800 dark:hover:text-blue-300 underline"
+                        className="text-xs font-medium text-biovet-600 dark:text-biovet-400 hover:underline"
                       >
                         {useManualRate ? "Usar BCV" : "Tasa Manual"}
                       </button>
@@ -456,27 +487,27 @@ export function PaymentModal({
 
                   {useManualRate ? (
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-medium">Bs.</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">Bs.</span>
                       <input
                         type="number"
                         step="0.01"
                         value={manualRate}
                         onChange={(e) => setManualRate(e.target.value)}
-                        className="w-full pl-8 pr-3 py-2 bg-white dark:bg-dark-100 border border-blue-300 dark:border-blue-800 rounded-lg text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-200 outline-none"
                         placeholder="Ej: 45.50"
+                        className="input pl-9 text-sm"
                       />
                     </div>
                   ) : (
-                    <div className="flex justify-between items-center text-xs text-blue-600 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/30 px-3 py-2 rounded-lg">
-                      <span>Tasa BCV:</span>
-                      <span className="font-bold text-sm">Bs. {currentRate.toFixed(2)}</span>
+                    <div className="flex justify-between items-center text-sm bg-biovet-100 dark:bg-biovet-900/50 px-3 py-2 rounded-lg">
+                      <span className="text-biovet-600 dark:text-biovet-400">Tasa BCV:</span>
+                      <span className="font-bold text-biovet-700 dark:text-biovet-300">Bs. {currentRate.toFixed(2)}</span>
                     </div>
                   )}
 
                   {currentRate > 0 && paymentAmount > 0 && (
-                    <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-800/30">
-                      <p className="text-xs text-blue-600 dark:text-blue-400 mb-1">Monto a cobrar en Bolívares:</p>
-                      <p className="text-2xl font-black text-blue-700 dark:text-blue-300">
+                    <div className="mt-3 pt-3 border-t border-biovet-200 dark:border-biovet-800">
+                      <p className="text-xs text-biovet-600 dark:text-biovet-400 mb-1">Total en Bolívares:</p>
+                      <p className="text-xl font-bold text-biovet-700 dark:text-biovet-300 font-heading">
                         Bs. {totalBs.toLocaleString("es-VE", { minimumFractionDigits: 2 })}
                       </p>
                     </div>
@@ -484,99 +515,95 @@ export function PaymentModal({
                 </div>
               )}
 
+              {/* Referencia */}
               {selectedMethodId && (
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 ml-1">
-                    Referencia / Comprobante <span className="font-normal opacity-70">(Opcional)</span>
+                  <label className="label">
+                    Referencia <span className="font-normal text-slate-400">(Opcional)</span>
                   </label>
                   <input
                     type="text"
                     value={reference}
                     onChange={(e) => setReference(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-dark-200 border border-surface-300 dark:border-dark-50 rounded-xl text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-biovet-500/20 focus:border-biovet-500 outline-none transition-all placeholder:text-slate-400"
                     placeholder="Ej: 12345678"
+                    className="input text-sm"
                   />
                 </div>
               )}
             </div>
           )}
+        </div>
 
-          {/* Resumen Final */}
-          <div className="bg-white dark:bg-dark-200 rounded-xl p-4 border border-surface-200 dark:border-dark-100 shadow-sm mt-6">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-biovet-500" /> Resumen Final
-            </p>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between text-slate-600 dark:text-slate-400">
-                <span>Total Factura:</span>
-                <span className="font-medium text-slate-800 dark:text-white">${validAmountUSD.toFixed(2)}</span>
-              </div>
+        {/* ═══════════════════════════════════════
+            FOOTER - Resumen + Botones
+            ═══════════════════════════════════════ */}
+        <div className="shrink-0 border-t border-surface-200 dark:border-slate-700 bg-surface-50 dark:bg-dark-100 p-4 space-y-3">
+          {/* Resumen compacto */}
+          <div className="flex items-center justify-between text-sm">
+            <div className="space-y-1">
               {effectiveCredit > 0 && (
-                <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
-                  <span className="flex items-center gap-1"><Wallet className="w-3.5 h-3.5" /> Crédito aplicado:</span>
-                  <span className="font-bold">-${effectiveCredit.toFixed(2)}</span>
+                <div className="flex items-center gap-2 text-success-600 dark:text-success-400">
+                  <Wallet className="w-3.5 h-3.5" />
+                  <span>Crédito: -${effectiveCredit.toFixed(2)}</span>
                 </div>
               )}
               {paymentAmount > 0 && selectedMethodId && (
-                <div className="flex justify-between text-biovet-600 dark:text-biovet-400">
-                  <span>Pago {selectedMethod?.name}:</span>
-                  <span className="font-bold">
-                    {isBsMethod && currentRate > 0
+                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                  <CreditCard className="w-3.5 h-3.5" />
+                  <span>
+                    {selectedMethod?.name}: {isBsMethod && currentRate > 0
                       ? `Bs. ${totalBs.toLocaleString("es-VE", { minimumFractionDigits: 2 })}`
-                      : `$${paymentAmount.toFixed(2)}`}
+                      : `$${paymentAmount.toFixed(2)}`
+                    }
                   </span>
                 </div>
               )}
-              <div className="pt-3 mt-3 border-t border-dashed border-surface-200 dark:border-dark-50 flex justify-between items-center">
-                <span className="font-bold text-slate-800 dark:text-white">Total a pagar:</span>
-                <span className="text-xl font-black text-biovet-600 dark:text-biovet-400">
-                  ${(effectiveCredit + paymentAmount).toFixed(2)}
-                </span>
-              </div>
               {isPartialPayment && paymentAmount > 0 && (
-                <div className="flex justify-between text-amber-600 dark:text-amber-500 text-xs font-medium bg-amber-50 dark:bg-amber-900/10 px-2 py-1 rounded-lg">
-                  <span>Quedará pendiente:</span>
-                  <span>${(validAmountUSD - effectiveCredit - paymentAmount).toFixed(2)}</span>
+                <div className="text-xs text-warning-600 dark:text-warning-400">
+                  Pendiente: ${(validAmountUSD - effectiveCredit - paymentAmount).toFixed(2)}
                 </div>
               )}
             </div>
+            <div className="text-right">
+              <p className="text-[10px] text-slate-400 uppercase">Total a pagar</p>
+              <p className="text-2xl font-bold text-biovet-600 dark:text-biovet-400 font-heading">
+                ${(effectiveCredit + paymentAmount).toFixed(2)}
+              </p>
+            </div>
           </div>
-        </div>
 
-        {/* Footer */}
-        <div className="p-4 border-t border-surface-200 dark:border-dark-100 flex gap-3 shrink-0 bg-white dark:bg-dark-200">
-          <button
-            onClick={onClose}
-            disabled={isProcessing}
-            className="flex-1 py-3 px-4 rounded-xl border border-surface-300 dark:border-dark-50 text-slate-600 dark:text-slate-300 font-bold hover:bg-surface-50 dark:hover:bg-dark-100 transition-all duration-300 disabled:opacity-50"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={!canSubmit}
-            className={`flex-1 py-3 px-4 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-2 shadow-lg ${
-              canSubmit
-                ? "bg-linear-to-r from-biovet-500 to-biovet-600 hover:from-biovet-600 hover:to-biovet-700 text-white shadow-biovet-500/20 transform active:scale-95"
-                : "bg-surface-100 dark:bg-dark-100 text-slate-400 cursor-not-allowed shadow-none"
-            }`}
-          >
-            {isProcessing ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Procesando...
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="w-5 h-5" />
-                {creditCoversAll
-                  ? "Aplicar Crédito"
-                  : isPartialPayment
-                    ? "Registrar Abono"
-                    : "Pagar Total"}
-              </>
-            )}
-          </button>
+          {/* Botones */}
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              disabled={isProcessing}
+              className="btn-secondary flex-1"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={!canSubmit}
+              className="btn-primary flex-1"
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Procesando...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="w-4 h-4" />
+                  {creditCoversAll
+                    ? "Aplicar Crédito"
+                    : isPartialPayment
+                      ? "Registrar Abono"
+                      : "Confirmar Pago"
+                  }
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -1,27 +1,30 @@
 // src/views/grooming/GroomingServicesView.tsx
 
-import { useState, useMemo, type ReactElement } from "react";
-import { useQuery } from "@tanstack/react-query";
-import {
-  Scissors,
-  AlertCircle,
-  Plus,
-  Search,
-  ArrowLeft,
-  CheckCircle,
-  Clock,
-  AlertTriangle,
-  XCircle,
-  CirclePlus,
-} from "lucide-react";
-import { getAllGroomingServices } from "../../api/groomingAPI";
-import { getInvoices } from "../../api/invoiceAPI";
-import { Link } from "react-router-dom";
-import ServiceStatsCards from "../../components/grooming/ServiceStatsCards";
-import ServiceMobileCards from "../../components/grooming/ServiceMobileCards";
-import ServiceTable from "../../components/grooming/ServiceTable";
-import type { Invoice } from "../../types/invoice";
-import type { GroomingService } from "../../types/grooming";
+import { useState, useMemo } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import { Scissors, AlertCircle, Plus, RefreshCw } from "lucide-react";
+
+import { getAllGroomingServices } from "@/api/groomingAPI";
+import { getInvoices } from "@/api/invoiceAPI";
+import { createPayment } from "@/api/paymentAPI";
+
+import Spinner from "@/components/Spinner";
+import { GroomingListHeader } from "@/components/grooming/GroomingListHeader";
+import { GroomingStats } from "@/components/grooming/GroomingStats";
+import { GroomingFilters } from "@/components/grooming/GroomingFilters";
+import { GroomingTable } from "@/components/grooming/GroomingTable";
+import { GroomingMobileCard } from "@/components/grooming/GroomingMobileCard";
+import EditGroomingServiceModal from "@/components/grooming/EditGroomingServiceModal";
+import { PaymentModal } from "@/components/payment/PaymentModal";
+import { toast } from "@/components/Toast";
+
+import type { Invoice } from "@/types/invoice";
+import type { GroomingService } from "@/types/grooming";
+
+// ══════════════════════════════════════════
+// TIPOS
+// ══════════════════════════════════════════
 
 interface PaymentInfo {
   paymentStatus: string;
@@ -40,8 +43,35 @@ interface EnrichedGroomingService extends GroomingService {
 
 type PatientField = GroomingService["patientId"];
 
+interface IncomeStats {
+  totalUSD: number;
+  totalBs: number;
+  paidUSD: number;
+  paidBs: number;
+  pendingUSD: number;
+  pendingBs: number;
+  hasBsTransactions: boolean;
+  hasUSDTransactions: boolean;
+}
+
+// ══════════════════════════════════════════
+// COMPONENTE PRINCIPAL
+// ══════════════════════════════════════════
+
 export default function GroomingServicesView() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  
   const [searchTerm, setSearchTerm] = useState("");
+  const [editingService, setEditingService] = useState<EnrichedGroomingService | null>(null);
+  
+  // Estados para el modal de pago
+  const [paymentService, setPaymentService] = useState<EnrichedGroomingService | null>(null);
+  const [paymentInvoice, setPaymentInvoice] = useState<Invoice | null>(null);
+
+  // ══════════════════════════════════════════
+  // QUERIES
+  // ══════════════════════════════════════════
 
   const {
     data: services = [],
@@ -61,6 +91,28 @@ export default function GroomingServicesView() {
 
   const invoices = invoicesData?.invoices || [];
   const isLoading = isLoadingServices || isLoadingInvoices;
+
+  // ══════════════════════════════════════════
+  // MUTACIÓN DE PAGO
+  // ══════════════════════════════════════════
+
+  const paymentMutation = useMutation({
+    mutationFn: createPayment,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["groomingServices"] });
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      toast.success("Pago registrado", "El pago se procesó correctamente");
+      setPaymentService(null);
+      setPaymentInvoice(null);
+    },
+    onError: (err: Error) => {
+      toast.error("Error", err.message || "No se pudo registrar el pago");
+    },
+  });
+
+  // ══════════════════════════════════════════
+  // FUNCIONES HELPER - INVOICE
+  // ══════════════════════════════════════════
 
   const findInvoiceForService = (serviceId: string): Invoice | undefined => {
     return invoices.find((invoice) =>
@@ -121,15 +173,9 @@ export default function GroomingServicesView() {
     };
   };
 
-  const formatCurrency = (amount: number, currency: string): string => {
-    if (currency === "Bs") {
-      return `Bs. ${amount.toLocaleString("es-VE", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`;
-    }
-    return `$${amount.toFixed(2)}`;
-  };
+  // ══════════════════════════════════════════
+  // FUNCIONES HELPER - PACIENTE
+  // ══════════════════════════════════════════
 
   const getPatientName = (patientId: PatientField): string => {
     if (!patientId) return "—";
@@ -147,53 +193,31 @@ export default function GroomingServicesView() {
     return patientId.breed || "";
   };
 
-  const getServiceIcon = (serviceType: string): string => {
-    const icons: Record<string, string> = {
-      Corte: "✂️",
-      Baño: "🛁",
-      "Corte y Baño": "✨",
-    };
-    return icons[serviceType] || "🐾";
-  };
-
-  const getPaymentStatusBadge = (status: string): string => {
-    const styles: Record<string, string> = {
-      Pendiente: "badge badge-warning",
-      Pagado: "badge badge-success",
-      Parcial: "badge badge-biovet",
-      Cancelado: "badge badge-danger",
-      "Sin facturar": "badge badge-neutral",
-    };
-    return styles[status] || "badge badge-neutral";
-  };
-
-  const getPaymentStatusIcon = (status: string): ReactElement => {
-    switch (status) {
-      case "Pagado":
-        return (
-          <CheckCircle className="w-3 h-3 text-success-500 dark:text-success-400" />
-        );
-      case "Pendiente":
-        return (
-          <Clock className="w-3 h-3 text-warning-500 dark:text-warning-400" />
-        );
-      case "Parcial":
-        return (
-          <AlertTriangle className="w-3 h-3 text-biovet-500 dark:text-biovet-400" />
-        );
-      case "Cancelado":
-        return (
-          <XCircle className="w-3 h-3 text-danger-500 dark:text-danger-400" />
-        );
-      case "Sin facturar":
-        return (
-          <AlertCircle className="w-3 h-3 text-surface-500 dark:text-slate-400" />
-        );
-      default:
-        return (
-          <Clock className="w-3 h-3 text-surface-500 dark:text-slate-400" />
-        );
+  const getOwnerInfo = (patientId: PatientField): { name: string; phone?: string } => {
+    if (!patientId || typeof patientId === "string") {
+      return { name: "Propietario" };
     }
+    if (patientId.owner && typeof patientId.owner === "object") {
+      return {
+        name: patientId.owner.name || "Propietario",
+        phone: patientId.owner.contact,
+      };
+    }
+    return { name: "Propietario" };
+  };
+
+  // ══════════════════════════════════════════
+  // FUNCIONES HELPER - FORMATO
+  // ══════════════════════════════════════════
+
+  const formatCurrency = (amount: number, currency: string): string => {
+    if (currency === "Bs") {
+      return `Bs. ${amount.toLocaleString("es-VE", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`;
+    }
+    return `$${amount.toFixed(2)}`;
   };
 
   const formatDate = (dateString: string): string => {
@@ -204,6 +228,48 @@ export default function GroomingServicesView() {
       year: "numeric",
     }).format(date);
   };
+
+  // ══════════════════════════════════════════
+  // HANDLER DE PAGO
+  // ══════════════════════════════════════════
+
+  const handleOpenPayment = (service: EnrichedGroomingService) => {
+    const invoice = findInvoiceForService(service._id!);
+    if (!invoice) {
+      toast.warning("Sin factura", "Este servicio no tiene factura asociada");
+      return;
+    }
+    setPaymentService(service);
+    setPaymentInvoice(invoice);
+  };
+
+  const handleConfirmPayment = async (paymentData: {
+    paymentMethodId?: string;
+    reference?: string;
+    addAmountPaidUSD: number;
+    addAmountPaidBs: number;
+    exchangeRate: number;
+    isPartial: boolean;
+    creditAmountUsed?: number;
+  }) => {
+    if (!paymentInvoice) return;
+
+    const isBsPayment = paymentData.addAmountPaidBs > 0;
+    
+    await paymentMutation.mutateAsync({
+      invoiceId: paymentInvoice._id!,
+      paymentMethod: paymentData.paymentMethodId,
+      amount: isBsPayment ? paymentData.addAmountPaidBs : paymentData.addAmountPaidUSD,
+      currency: isBsPayment ? "Bs" : "USD",
+      exchangeRate: paymentData.exchangeRate,
+      reference: paymentData.reference,
+      creditAmountUsed: paymentData.creditAmountUsed,
+    });
+  };
+
+  // ══════════════════════════════════════════
+  // DATOS PROCESADOS
+  // ══════════════════════════════════════════
 
   const enrichedServices: EnrichedGroomingService[] = useMemo(() => {
     return services.map((service: GroomingService) => ({
@@ -243,7 +309,7 @@ export default function GroomingServicesView() {
     });
   }, [enrichedServices, searchTerm]);
 
-  const incomeStats = useMemo(() => {
+  const incomeStats: IncomeStats = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -296,227 +362,215 @@ export default function GroomingServicesView() {
     };
   }, [invoices, filteredServices]);
 
-  if (isLoading) return <LoadingState />;
-  if (isError) return <ErrorState error={error as Error} />;
+  // ══════════════════════════════════════════
+  // STATS CALCULADOS
+  // ══════════════════════════════════════════
 
-  return (
-    <>
-      <Header
-        totalsCount={filteredServices.length}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-      />
+  const completedServices = filteredServices.filter(
+    (s) => s.paymentInfo.paymentStatus === "Pagado"
+  ).length;
 
-      <div className="h-32 lg:h-28"></div>
+  const hasActiveFilters = searchTerm.length > 0;
 
-      <div className="px-4 mt-10 sm:px-6 lg:px-8 max-w-7xl mx-auto pb-12 transition-colors duration-300">
-        <ServiceStatsCards
-          filteredServices={filteredServices}
-          incomeStats={incomeStats}
-        />
+  const handleClearFilters = () => setSearchTerm("");
 
-        {filteredServices.length === 0 ? (
-          <EmptyState searchTerm={searchTerm} />
-        ) : (
-          <>
-            <ServiceMobileCards
-              filteredServices={filteredServices}
-              getPatientName={getPatientName}
-              getPatientSpecies={getPatientSpecies}
-              getPatientBreed={getPatientBreed}
-              formatDate={formatDate}
-              getServiceIcon={getServiceIcon}
-              getPaymentStatusBadge={getPaymentStatusBadge}
-              getPaymentStatusIcon={getPaymentStatusIcon}
-              formatCurrency={formatCurrency}
-            />
+  // ══════════════════════════════════════════
+  // LOADING STATE
+  // ══════════════════════════════════════════
 
-            <ServiceTable
-              filteredServices={filteredServices}
-              getPatientName={getPatientName}
-              getPatientSpecies={getPatientSpecies}
-              getPatientBreed={getPatientBreed}
-              formatDate={formatDate}
-              getServiceIcon={getServiceIcon}
-              getPaymentStatusBadge={getPaymentStatusBadge}
-              getPaymentStatusIcon={getPaymentStatusIcon}
-              formatCurrency={formatCurrency}
-            />
-          </>
-        )}
-      </div>
-    </>
-  );
-}
+  if (isLoading) return <Spinner fullScreen size="xl" />;
 
-// ==========================================
-// LoadingState
-// ==========================================
-function LoadingState() {
-  return (
-    <div className="w-full">
-      <div className="flex items-center justify-center h-[70vh]">
+  // ══════════════════════════════════════════
+  // ERROR STATE
+  // ══════════════════════════════════════════
+
+  if (isError) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-surface-100 dark:bg-dark-300">
         <div className="text-center">
-          <div className="w-12 h-12 mx-auto mb-4 border-4 border-biovet-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-surface-800 dark:text-slate-200 font-medium">
-            Cargando servicios...
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ==========================================
-// ErrorState
-// ==========================================
-function ErrorState({ error }: { error: Error }) {
-  return (
-    <div className="w-full">
-      <div className="flex items-center justify-center h-[70vh]">
-        <div
-          className="bg-white dark:bg-dark-100 
-                        p-8 rounded-2xl 
-                        border border-danger-200 dark:border-danger-800 
-                        text-center max-w-md mx-auto shadow-sm"
-        >
-          <AlertCircle className="w-16 h-16 mx-auto text-danger-500 dark:text-danger-400 mb-4" />
-          <h2 className="text-2xl font-bold text-surface-800 dark:text-white mb-3">
+          <div className="w-14 h-14 mx-auto mb-3 bg-danger-50 dark:bg-danger-950 rounded-full flex items-center justify-center border border-danger-200 dark:border-danger-800">
+            <AlertCircle className="w-7 h-7 text-danger-500" />
+          </div>
+          <p className="text-slate-700 dark:text-slate-200 font-semibold text-sm mb-1">
             Error al cargar servicios
-          </h2>
-          <p className="text-surface-500 dark:text-slate-400 mb-6">
-            {error.message || "Error desconocido"}
           </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="btn-primary"
-          >
-            Reintentar
+          <p className="text-slate-500 dark:text-slate-400 text-xs mb-3">
+            {(error as Error)?.message || "No se pudieron cargar los servicios"}
+          </p>
+          <button onClick={() => navigate(-1)} className="btn-primary">
+            Volver
           </button>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
-// ==========================================
-// EmptyState
-// ==========================================
-function EmptyState({ searchTerm }: { searchTerm: string }) {
-  return (
-    <div
-      className="bg-white dark:bg-dark-100 
-                    rounded-2xl p-12 text-center 
-                    border border-surface-300 dark:border-slate-700 
-                    shadow-sm"
-    >
-      <Scissors className="w-16 h-16 text-surface-400 dark:text-slate-600 mx-auto mb-4" />
-      <h3 className="text-2xl font-bold text-surface-800 dark:text-white mb-3">
-        {searchTerm ? "No hay resultados" : "No hay servicios hoy"}
-      </h3>
-      <p className="text-surface-500 dark:text-slate-400 mb-6">
-        {searchTerm
-          ? "Intenta con otros términos de búsqueda"
-          : "No se encontraron servicios programados para hoy"}
-      </p>
-      {!searchTerm && (
-        <Link to="/patients" className="btn-primary">
-          <Plus className="w-5 h-5" />
-          Crear Primer Servicio
-        </Link>
-      )}
-    </div>
-  );
-}
+  // ══════════════════════════════════════════
+  // DATOS PARA EL MODAL DE PAGO
+  // ══════════════════════════════════════════
 
-// ==========================================
-// Header
-// ==========================================
-function Header({
-  totalsCount,
-  searchTerm,
-  setSearchTerm,
-}: {
-  totalsCount: number;
-  searchTerm: string;
-  setSearchTerm: (value: string) => void;
-}) {
+  const paymentModalData = useMemo(() => {
+    if (!paymentService || !paymentInvoice) return null;
+
+    const remainingAmount = paymentInvoice.total - (paymentInvoice.amountPaid || 0);
+    const ownerInfo = getOwnerInfo(paymentService.patientId);
+
+    return {
+      amountUSD: remainingAmount,
+      services: [{
+        description: paymentService.service,
+        quantity: 1,
+        unitPrice: paymentService.cost,
+        total: paymentService.cost,
+      }],
+      patient: {
+        name: getPatientName(paymentService.patientId),
+      },
+      owner: ownerInfo,
+    };
+  }, [paymentService, paymentInvoice]);
+
+  // ══════════════════════════════════════════
+  // RENDER
+  // ══════════════════════════════════════════
+
+  const totalCountText = `${filteredServices.length} servicio${filteredServices.length !== 1 ? "s" : ""} hoy`;
+
   return (
-    <div
-      className="fixed top-15 left-0 right-0 lg:left-64 z-30 
-                    bg-white dark:bg-dark-100 
-                    border-b border-surface-300 dark:border-slate-700 
-                    shadow-sm transition-colors duration-300"
-    >
-      <div className="px-6 lg:px-8 py-4">
-        <div className="flex items-center justify-between gap-4 mb-4">
-          <div className="flex items-center gap-4 flex-1 min-w-0">
-            <Link
-              to="/"
-              className="flex items-center justify-center 
-                         w-9 h-9 rounded-lg 
-                         bg-surface-50 dark:bg-dark-200 
-                         hover:bg-surface-100 dark:hover:bg-dark-50 
-                         text-biovet-500 dark:text-biovet-400 
-                         transition-colors shrink-0 
-                         border border-surface-300 dark:border-slate-700"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3">
-                <div
-                  className="hidden sm:block p-2 
-                                bg-biovet-50 dark:bg-biovet-950 
-                                border border-biovet-200 dark:border-biovet-800 
-                                rounded-lg"
-                >
-                  <Scissors className="w-5 h-5 text-biovet-500 dark:text-biovet-400" />
+    <div className="flex flex-col h-full bg-surface-100 dark:bg-dark-300">
+      {/* ════════════════════════════════════
+          HEADER FIJO
+          ════════════════════════════════════ */}
+      <div className="shrink-0 px-4 sm:px-8 pt-4 sm:pt-6 pb-0 space-y-4 sm:space-y-5">
+        <GroomingListHeader
+          totalCount={totalCountText}
+          onBack={() => navigate(-1)}
+        />
+
+        <GroomingStats
+          totalServices={filteredServices.length}
+          completedServices={completedServices}
+          incomeStats={incomeStats}
+        />
+
+        <GroomingFilters
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          hasActiveFilters={hasActiveFilters}
+          onClearFilters={handleClearFilters}
+        />
+      </div>
+
+      {/* ════════════════════════════════════
+          CONTENIDO SCROLLEABLE
+          ════════════════════════════════════ */}
+      <div className="flex-1 overflow-hidden px-4 sm:px-8 pb-4 sm:pb-8 pt-4">
+        <div className="bg-white dark:bg-dark-100 rounded-xl border border-surface-300 dark:border-slate-700 shadow-sm h-full flex flex-col overflow-hidden">
+          {filteredServices.length === 0 ? (
+            /* ══════════════════════════════
+               EMPTY STATE
+               ══════════════════════════════ */
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-14 h-14 mx-auto mb-3 bg-surface-100 dark:bg-dark-200 rounded-full flex items-center justify-center border border-surface-300 dark:border-slate-700">
+                  <Scissors className="w-7 h-7 text-slate-400 dark:text-slate-500" />
                 </div>
-                <div>
-                  <h1 className="text-lg sm:text-xl font-bold text-surface-800 dark:text-white">
-                    Peluquería
-                  </h1>
-                  <p className="text-xs sm:text-sm text-surface-500 dark:text-slate-400">
-                    {totalsCount} servicios hoy
-                  </p>
-                </div>
+                <p className="text-slate-700 dark:text-slate-200 font-semibold text-sm mb-1">
+                  {hasActiveFilters ? "Sin resultados" : "No hay servicios hoy"}
+                </p>
+                <p className="text-slate-500 dark:text-slate-400 text-xs mb-3">
+                  {hasActiveFilters
+                    ? "Prueba con otros términos de búsqueda"
+                    : "No hay servicios programados para hoy"}
+                </p>
+                {hasActiveFilters ? (
+                  <button
+                    onClick={handleClearFilters}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-biovet-500 hover:bg-biovet-50 dark:hover:bg-biovet-950 rounded-lg transition-colors cursor-pointer"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    Limpiar filtros
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => navigate("/patients")}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-biovet-500 text-white text-sm font-semibold rounded-lg hover:bg-biovet-600 transition-colors cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Crear Primer Servicio
+                  </button>
+                )}
               </div>
             </div>
-          </div>
+          ) : (
+            <>
+              {/* ══════════════════════════════
+                  DESKTOP TABLE
+                  ══════════════════════════════ */}
+              <GroomingTable
+                services={filteredServices}
+                getPatientName={getPatientName}
+                getPatientSpecies={getPatientSpecies}
+                getPatientBreed={getPatientBreed}
+                formatDate={formatDate}
+                formatCurrency={formatCurrency}
+                onEdit={setEditingService}
+                onPayment={handleOpenPayment}
+              />
 
-          <div className="shrink-0">
-            {/* Mobile */}
-            <Link
-              to="/patients"
-              className="sm:hidden btn-primary w-10 h-10 p-0! rounded-lg!"
-            >
-              <Plus className="w-5 h-5" />
-            </Link>
-            {/* Desktop */}
-            <Link
-              to="/patients"
-              className="hidden sm:inline-flex btn-primary"
-            >
-              <CirclePlus className="w-4 h-4" />
-              <span>Agregar</span>
-            </Link>
-          </div>
-        </div>
-
-        <div className="max-w-md">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-500 dark:text-slate-400 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Buscar servicios..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="input pl-10 text-sm"
-            />
-          </div>
+              {/* ══════════════════════════════
+                  MOBILE CARDS
+                  ══════════════════════════════ */}
+              <div className="lg:hidden flex-1 overflow-auto custom-scrollbar divide-y divide-surface-200 dark:divide-slate-700/50">
+                {filteredServices.map((service) => (
+                  <GroomingMobileCard
+                    key={service._id}
+                    service={service}
+                    getPatientName={getPatientName}
+                    getPatientSpecies={getPatientSpecies}
+                    getPatientBreed={getPatientBreed}
+                    formatDate={formatDate}
+                    formatCurrency={formatCurrency}
+                    onEdit={() => setEditingService(service)}
+                    onPayment={() => handleOpenPayment(service)}
+                  />
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </div>
+
+      {/* ════════════════════════════════════
+          EDIT MODAL
+          ════════════════════════════════════ */}
+      {editingService && (
+        <EditGroomingServiceModal
+          isOpen={!!editingService}
+          onClose={() => setEditingService(null)}
+          service={editingService}
+        />
+      )}
+
+      {/* ════════════════════════════════════
+          PAYMENT MODAL
+          ════════════════════════════════════ */}
+      {paymentModalData && (
+        <PaymentModal
+          isOpen={!!paymentService}
+          onClose={() => {
+            setPaymentService(null);
+            setPaymentInvoice(null);
+          }}
+          onConfirm={handleConfirmPayment}
+          amountUSD={paymentModalData.amountUSD}
+          services={paymentModalData.services}
+          patient={paymentModalData.patient}
+          owner={paymentModalData.owner}
+          title="Cobrar Servicio"
+          allowPartial={true}
+        />
+      )}
     </div>
   );
 }

@@ -14,9 +14,9 @@ import {
   Layers,
   XCircle,
 } from "lucide-react";
-import Spinner from "../../components/Spinner";
-
-import { formatPrice } from "../../utils/productHelpers";
+import Spinner from "@/components/Spinner";
+import { StatCard } from "@/components/ui/StatCard";
+import { formatPrice } from "@/utils/productHelpers";
 import { useStockView } from "@/hooks/useStockView";
 import { StockRow } from "@/components/inventory/StockRow";
 import { StockMobileCard } from "@/components/inventory/StockMobileCard";
@@ -80,80 +80,58 @@ export default function StockView() {
         <div className="flex items-center gap-3 sm:gap-4">
           <button
             onClick={() => navigate(-1)}
-            className="text-surface-400 hover:text-surface-600 dark:text-slate-400 dark:hover:text-slate-200 transition-colors cursor-pointer"
+            className="p-2 rounded-lg bg-white dark:bg-dark-200 border border-surface-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-surface-50 dark:hover:bg-dark-100 transition-colors"
           >
             <ArrowLeft size={20} />
           </button>
-          <div>
-            <h1 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white leading-tight">
-              Stock Actual
-            </h1>
-            <p className="text-[13px] text-biovet-500 font-medium">
-              Inventario en tiempo real
-            </p>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 bg-linear-to-br from-biovet-500 to-biovet-600 rounded-xl flex items-center justify-center shadow-lg shadow-biovet-500/20">
+              <Package className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white font-heading">
+                Stock Actual
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                Inventario en tiempo real
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="border border-biovet-200/50 dark:border-biovet-800/30" />
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
-          {[
-            {
-              label: "Total Unidades",
-              value: stats.totalUnits.toString(),
-              icon: Layers,
-              color: "text-biovet-500",
-              bgIcon: "bg-biovet-500/10",
-            },
-            {
-              label: "Valor Inventario",
-              value: formatPrice(stats.totalValue),
-              icon: DollarSign,
-              color: "text-success-600 dark:text-success-400",
-              bgIcon: "bg-success-500/10",
-            },
-            {
-              label: "Stock Bajo",
-              value: stats.lowStock.toString(),
-              icon: AlertTriangle,
-              color: "text-warning-600 dark:text-warning-400",
-              bgIcon: "bg-warning-500/10",
-            },
-            {
-              label: "Agotados",
-              value: stats.outOfStock.toString(),
-              icon: XCircle,
-              color: "text-danger-600 dark:text-danger-400",
-              bgIcon: "bg-danger-500/10",
-            },
-          ].map((stat) => (
-            <div
-              key={stat.label}
-              className="bg-white dark:bg-dark-100 rounded-xl border border-surface-300 dark:border-slate-700 p-3 shadow-sm flex items-center gap-3"
-            >
-              <div className={`p-2 rounded-lg ${stat.bgIcon}`}>
-                <stat.icon className={`w-4 h-4 ${stat.color}`} />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[11px] text-surface-500 dark:text-slate-400 font-medium truncate">
-                  {stat.label}
-                </p>
-                <p
-                  className={`text-base sm:text-lg font-bold ${stat.color} truncate`}
-                >
-                  {stat.value}
-                </p>
-              </div>
-            </div>
-          ))}
+        {/* Stats con StatCard */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <StatCard
+            label="Total Unidades"
+            value={stats.totalUnits}
+            icon={Layers}
+            variant="primary"
+          />
+          <StatCard
+            label="Valor Inventario"
+            value={formatPrice(stats.totalValue)}
+            icon={DollarSign}
+            variant="success"
+          />
+          <StatCard
+            label="Stock Bajo"
+            value={stats.lowStock}
+            icon={AlertTriangle}
+            variant="warning"
+          />
+          <StatCard
+            label="Agotados"
+            value={stats.outOfStock}
+            icon={XCircle}
+            variant="danger"
+          />
         </div>
 
         {/* Filtros */}
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 sm:gap-3 pb-4 sm:pb-5">
           <div className="relative flex-1">
             <Search
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-400 dark:text-slate-500"
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
               size={18}
             />
             <input
@@ -161,21 +139,21 @@ export default function StockView() {
               placeholder="Buscar producto..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-11 pr-10 py-2.5 bg-white dark:bg-dark-200 border border-surface-300 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 placeholder:text-surface-400 dark:placeholder:text-slate-500 focus:ring-1 focus:ring-biovet-500 outline-none transition-all shadow-sm"
+              className="input pl-11 pr-10"
             />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 hover:bg-surface-200 dark:hover:bg-dark-50 rounded cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-surface-100 dark:hover:bg-dark-100 rounded transition-colors"
               >
-                <X className="w-4 h-4 text-surface-400 dark:text-slate-500" />
+                <X className="w-4 h-4 text-slate-400" />
               </button>
             )}
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center bg-white dark:bg-dark-200 border border-surface-300 dark:border-slate-700 rounded-lg overflow-hidden shadow-sm">
-              <div className="pl-3 text-surface-400 dark:text-slate-500">
+            <div className="flex items-center bg-white dark:bg-dark-200 border border-surface-200 dark:border-slate-700 rounded-lg overflow-hidden shadow-sm">
+              <div className="pl-3 text-slate-400">
                 <AlertTriangle size={16} />
               </div>
               <select
@@ -197,14 +175,14 @@ export default function StockView() {
             {hasActiveFilters && (
               <button
                 onClick={handleClearFilters}
-                className="flex items-center gap-1.5 px-3 py-2.5 bg-white dark:bg-dark-200 border border-surface-300 dark:border-slate-700 rounded-lg text-sm font-medium text-surface-500 dark:text-slate-400 hover:text-danger-500 hover:border-danger-300 dark:hover:border-danger-700 transition-all shadow-sm cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-2.5 bg-white dark:bg-dark-200 border border-surface-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-danger-500 hover:border-danger-300 dark:hover:border-danger-700 transition-all shadow-sm"
               >
                 <RefreshCw size={14} />
                 <span className="hidden sm:inline">Limpiar</span>
               </button>
             )}
 
-            <button className="flex items-center gap-1.5 px-3 py-2.5 bg-white dark:bg-dark-200 border border-surface-300 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-surface-50 dark:hover:bg-dark-50 transition-all shadow-sm cursor-pointer">
+            <button className="flex items-center gap-1.5 px-3 py-2.5 bg-white dark:bg-dark-200 border border-surface-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-surface-50 dark:hover:bg-dark-100 transition-all shadow-sm">
               <Download size={16} className="text-biovet-500" />
               <span className="hidden sm:inline">Exportar</span>
             </button>
@@ -214,17 +192,17 @@ export default function StockView() {
 
       {/* CONTENIDO SCROLLEABLE */}
       <div className="flex-1 overflow-hidden px-4 sm:px-8 pb-4 sm:pb-8">
-        <div className="bg-white dark:bg-dark-100 rounded-xl border border-surface-300 dark:border-slate-700 shadow-sm h-full flex flex-col overflow-hidden">
+        <div className="bg-white dark:bg-dark-100 rounded-xl border border-surface-200 dark:border-slate-700 shadow-sm h-full flex flex-col overflow-hidden">
           {currentProducts.length === 0 ? (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center">
-                <div className="w-14 h-14 mx-auto mb-3 bg-surface-100 dark:bg-dark-200 rounded-full flex items-center justify-center border border-surface-300 dark:border-slate-700">
-                  <Package className="w-7 h-7 text-surface-400 dark:text-slate-500" />
+                <div className="w-14 h-14 mx-auto mb-3 bg-surface-100 dark:bg-dark-200 rounded-full flex items-center justify-center border border-surface-200 dark:border-slate-700">
+                  <Package className="w-7 h-7 text-slate-400 dark:text-slate-500" />
                 </div>
                 <p className="text-slate-700 dark:text-slate-200 font-semibold text-sm mb-1">
                   {hasActiveFilters ? "Sin resultados" : "Sin inventario"}
                 </p>
-                <p className="text-surface-500 dark:text-slate-400 text-xs mb-3">
+                <p className="text-slate-500 dark:text-slate-400 text-xs mb-3">
                   {hasActiveFilters
                     ? "Prueba con otros filtros"
                     : "Registra productos para ver el stock"}
@@ -232,7 +210,7 @@ export default function StockView() {
                 {hasActiveFilters && (
                   <button
                     onClick={handleClearFilters}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-biovet-500 hover:bg-biovet-50 dark:hover:bg-biovet-950 rounded-lg transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-biovet-500 hover:bg-biovet-50 dark:hover:bg-biovet-950 rounded-lg transition-colors"
                   >
                     <RefreshCw className="w-3.5 h-3.5" />
                     Limpiar filtros
@@ -245,12 +223,12 @@ export default function StockView() {
               {/* Desktop */}
               <div className="hidden lg:block flex-1 overflow-auto custom-scrollbar relative">
                 <table className="w-full text-sm">
-                  <thead className="sticky top-0 bg-surface-50 dark:bg-dark-200 border-b border-surface-300 dark:border-slate-700 z-10">
+                  <thead className="sticky top-0 bg-surface-50 dark:bg-dark-200 border-b border-surface-200 dark:border-slate-700 z-10">
                     <tr>
                       {HEADERS.map((h) => (
                         <th
                           key={h.label}
-                          className={`px-4 py-3 text-[11px] font-semibold text-surface-500 dark:text-slate-400 uppercase tracking-wider ${h.align} ${h.hidden || ""}`}
+                          className={`px-4 py-3 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider ${h.align} ${h.hidden || ""}`}
                         >
                           {h.label}
                         </th>

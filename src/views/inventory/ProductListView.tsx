@@ -141,7 +141,7 @@ export default function ProductListView() {
               {/* Desktop */}
               <ProductTable
                 products={currentProducts}
-                onEdit={(p) => navigate(`/inventory/products/${p._id}`)}
+                onEdit={(p) => navigate(`/inventory/products/edit/${p._id}`)}
                 onDelete={handleDeleteClick}
               />
 
