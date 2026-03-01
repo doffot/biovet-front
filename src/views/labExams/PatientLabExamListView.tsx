@@ -16,7 +16,7 @@ import { toast } from "../../components/Toast";
 import LabExamDetailModal from "@/components/labexam/LabExamDetailModal";
 import ShareResultsModal from "@/components/labexam/ShareResultsModal";
 import ConfirmationModal from "@/components/ConfirmationModal";
-import TimelineLayout from "@/components/ui/TimelineLayout";
+import TimelineLayout from "@/components/ui/TimeLineLayout";
 import type { LabExam } from "../../types/labExam";
 import type { Patient } from "../../types/patient";
 
@@ -47,7 +47,9 @@ export default function PatientLabExamListView() {
     mutationFn: (id: string) => deleteLabExam(id),
     onSuccess: () => {
       toast.success("Eliminado", "Hemograma removido del historial");
-      queryClient.invalidateQueries({ queryKey: ["labExams", "patient", patient._id] });
+      queryClient.invalidateQueries({
+        queryKey: ["labExams", "patient", patient._id],
+      });
       setIsDeleteModalOpen(false);
       setExamToDelete(null);
     },
@@ -55,13 +57,16 @@ export default function PatientLabExamListView() {
   });
 
   const sortedExams = [...exams].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   );
 
   // ══════════════════════════════════════════
   // Handler para abrir detalle con posición
   // ══════════════════════════════════════════
-  const handleOpenDetail = (exam: LabExam, e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleOpenDetail = (
+    exam: LabExam,
+    e: React.MouseEvent<HTMLButtonElement>,
+  ) => {
     const rect = e.currentTarget.getBoundingClientRect();
     setTriggerRect(rect);
     setExamToView(exam);
@@ -88,12 +93,19 @@ export default function PatientLabExamListView() {
       {sortedExams.length === 0 ? (
         <div className="ml-8 text-center py-16 border-2 border-dashed border-emerald-200 dark:border-emerald-900 rounded-2xl">
           <FileSearch className="w-12 h-12 mx-auto text-emerald-300 dark:text-emerald-700 mb-3 opacity-50" />
-          <p className="text-slate-400 dark:text-slate-500 font-medium mb-1">Sin historial de laboratorio</p>
-          <p className="text-xs text-slate-300 dark:text-slate-600">Registra el primer hemograma</p>
+          <p className="text-slate-400 dark:text-slate-500 font-medium mb-1">
+            Sin historial de laboratorio
+          </p>
+          <p className="text-xs text-slate-300 dark:text-slate-600">
+            Registra el primer hemograma
+          </p>
         </div>
       ) : (
         sortedExams.map((exam) => (
-          <div key={exam._id} className="relative flex gap-6 md:gap-8 group animate-fade-in">
+          <div
+            key={exam._id}
+            className="relative flex gap-6 md:gap-8 group animate-fade-in"
+          >
             {/* Icono Timeline */}
             <div className="relative z-10 shrink-0 w-5 h-5 md:w-6 md:h-6 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center text-emerald-500 shadow-sm transition-transform group-hover:scale-110">
               <FlaskConical size={14} strokeWidth={2.5} />
@@ -141,20 +153,36 @@ export default function PatientLabExamListView() {
               {/* Valores principales */}
               <div className="mt-3 flex flex-wrap gap-2">
                 <div className="flex items-center gap-1.5 text-xs bg-emerald-50/50 dark:bg-emerald-950/20 px-2.5 py-1 rounded-lg border border-emerald-100 dark:border-emerald-900/50">
-                  <span className="text-emerald-600 dark:text-emerald-400">Hto:</span>
-                  <span className="font-bold text-slate-700 dark:text-slate-200">{exam.hematocrit}%</span>
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    Hto:
+                  </span>
+                  <span className="font-bold text-slate-700 dark:text-slate-200">
+                    {exam.hematocrit}%
+                  </span>
                 </div>
                 <div className="flex items-center gap-1.5 text-xs bg-emerald-50/50 dark:bg-emerald-950/20 px-2.5 py-1 rounded-lg border border-emerald-100 dark:border-emerald-900/50">
-                  <span className="text-emerald-600 dark:text-emerald-400">GB:</span>
-                  <span className="font-bold text-slate-700 dark:text-slate-200">{exam.whiteBloodCells}</span>
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    GB:
+                  </span>
+                  <span className="font-bold text-slate-700 dark:text-slate-200">
+                    {exam.whiteBloodCells}
+                  </span>
                 </div>
                 <div className="flex items-center gap-1.5 text-xs bg-emerald-50/50 dark:bg-emerald-950/20 px-2.5 py-1 rounded-lg border border-emerald-100 dark:border-emerald-900/50">
-                  <span className="text-emerald-600 dark:text-emerald-400">PT:</span>
-                  <span className="font-bold text-slate-700 dark:text-slate-200">{exam.totalProtein}</span>
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    PT:
+                  </span>
+                  <span className="font-bold text-slate-700 dark:text-slate-200">
+                    {exam.totalProtein}
+                  </span>
                 </div>
                 <div className="flex items-center gap-1.5 text-xs bg-emerald-50/50 dark:bg-emerald-950/20 px-2.5 py-1 rounded-lg border border-emerald-100 dark:border-emerald-900/50">
-                  <span className="text-emerald-600 dark:text-emerald-400">Plaq:</span>
-                  <span className="font-bold text-slate-700 dark:text-slate-200">{exam.platelets}</span>
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    Plaq:
+                  </span>
+                  <span className="font-bold text-slate-700 dark:text-slate-200">
+                    {exam.platelets}
+                  </span>
                 </div>
               </div>
 
@@ -203,10 +231,22 @@ export default function PatientLabExamListView() {
             species: String(patient?.species || ""),
             breed: String(patient?.breed || ""),
             owner: {
-              name: String(selectedExam?.ownerName || (typeof patient?.owner === 'object' ? (patient?.owner as any)?.name : '') || "Particular"),
-              contact: String(selectedExam?.ownerPhone || "")
+              name: String(
+                selectedExam?.ownerName ||
+                  (typeof patient?.owner === "object"
+                    ? (patient?.owner as any)?.name
+                    : "") ||
+                  "Particular",
+              ),
+              contact: String(selectedExam?.ownerPhone || ""),
             },
-            mainVet: String(selectedExam?.treatingVet || (typeof patient?.mainVet === 'object' ? (patient?.mainVet as any)?.name : '') || "Veterinario")
+            mainVet: String(
+              selectedExam?.treatingVet ||
+                (typeof patient?.mainVet === "object"
+                  ? (patient?.mainVet as any)?.name
+                  : "") ||
+                "Veterinario",
+            ),
           }}
         />
       )}

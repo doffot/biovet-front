@@ -15,7 +15,10 @@ import {
   CreditCard,
   ChevronRight,
 } from "lucide-react";
-import { getGroomingServicesByPatient, deleteGroomingService } from "@/api/groomingAPI";
+import {
+  getGroomingServicesByPatient,
+  deleteGroomingService,
+} from "@/api/groomingAPI";
 import { getInvoices } from "@/api/invoiceAPI";
 import type { GroomingService } from "@/types/grooming";
 import type { Patient } from "@/types/patient";
@@ -23,7 +26,7 @@ import { toast } from "@/components/Toast";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import EditGroomingServiceModal from "@/components/grooming/EditGroomingServiceModal";
 import GroomingServiceDetailModal from "@/components/grooming/GroomingServiceDetailModal";
-import TimelineLayout from "@/components/ui/TimelineLayout";
+import TimelineLayout from "@/components/ui/TimeLineLayout";
 
 export default function GroomingServiceListView() {
   const contextData = useOutletContext<any>();
@@ -31,13 +34,18 @@ export default function GroomingServiceListView() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
-  const [serviceToEdit, setServiceToEdit] = useState<GroomingService | null>(null);
-  const [serviceToDelete, setServiceToDelete] = useState<GroomingService | null>(null);
+  const [serviceToEdit, setServiceToEdit] = useState<GroomingService | null>(
+    null,
+  );
+  const [serviceToDelete, setServiceToDelete] =
+    useState<GroomingService | null>(null);
 
   // ══════════════════════════════════════════
   // Estados para el modal de detalle
   // ══════════════════════════════════════════
-  const [serviceToView, setServiceToView] = useState<GroomingService | null>(null);
+  const [serviceToView, setServiceToView] = useState<GroomingService | null>(
+    null,
+  );
   const [viewPaymentInfo, setViewPaymentInfo] = useState<{
     status: string;
     color: string;
@@ -61,7 +69,9 @@ export default function GroomingServiceListView() {
     mutationFn: deleteGroomingService,
     onSuccess: () => {
       toast.success("Eliminado", "Servicio removido correctamente");
-      queryClient.invalidateQueries({ queryKey: ["groomingServices", patient._id] });
+      queryClient.invalidateQueries({
+        queryKey: ["groomingServices", patient._id],
+      });
       setServiceToDelete(null);
     },
     onError: (error: Error) => toast.error("Error al eliminar", error.message),
@@ -72,7 +82,9 @@ export default function GroomingServiceListView() {
 
   const getPaymentInfo = (service: GroomingService) => {
     const invoice = invoices.find((inv) =>
-      inv.items.some((item) => item.type === "grooming" && item.resourceId === service._id)
+      inv.items.some(
+        (item) => item.type === "grooming" && item.resourceId === service._id,
+      ),
     );
 
     if (!invoice)
@@ -85,7 +97,8 @@ export default function GroomingServiceListView() {
     if (invoice.paymentStatus === "Pagado")
       return {
         status: "Pagado",
-        color: "text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400",
+        color:
+          "text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400",
         icon: CheckCircle2,
       };
     if (invoice.paymentStatus === "Pendiente")
@@ -97,7 +110,8 @@ export default function GroomingServiceListView() {
 
     return {
       status: "Parcial",
-      color: "text-amber-600 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400",
+      color:
+        "text-amber-600 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400",
       icon: Clock,
     };
   };
@@ -105,7 +119,10 @@ export default function GroomingServiceListView() {
   // ══════════════════════════════════════════
   // Handler para abrir detalle con posición
   // ══════════════════════════════════════════
-  const handleOpenDetail = (service: GroomingService, e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleOpenDetail = (
+    service: GroomingService,
+    e: React.MouseEvent<HTMLButtonElement>,
+  ) => {
     const rect = e.currentTarget.getBoundingClientRect();
     setTriggerRect(rect);
     setViewPaymentInfo(getPaymentInfo(service));
@@ -113,7 +130,7 @@ export default function GroomingServiceListView() {
   };
 
   const sortedServices = [...services].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   );
 
   if (isLoading) {
@@ -137,8 +154,12 @@ export default function GroomingServiceListView() {
       {sortedServices.length === 0 ? (
         <div className="ml-8 text-center py-16 border-2 border-dashed border-pink-200 dark:border-pink-900 rounded-2xl">
           <FileSearch className="w-12 h-12 mx-auto text-pink-300 dark:text-pink-700 mb-3 opacity-50" />
-          <p className="text-slate-400 dark:text-slate-500 font-medium mb-1">Sin historial de estética</p>
-          <p className="text-xs text-slate-300 dark:text-slate-600">Registra el primer servicio de peluquería</p>
+          <p className="text-slate-400 dark:text-slate-500 font-medium mb-1">
+            Sin historial de estética
+          </p>
+          <p className="text-xs text-slate-300 dark:text-slate-600">
+            Registra el primer servicio de peluquería
+          </p>
         </div>
       ) : (
         sortedServices.map((service) => {
@@ -146,7 +167,10 @@ export default function GroomingServiceListView() {
           const StatusIcon = payment.icon;
 
           return (
-            <div key={service._id} className="relative flex gap-6 md:gap-8 group animate-fade-in">
+            <div
+              key={service._id}
+              className="relative flex gap-6 md:gap-8 group animate-fade-in"
+            >
               {/* Icono Timeline */}
               <div className="relative z-10 shrink-0 w-5 h-5 md:w-6 md:h-6 rounded-lg border border-pink-200 dark:border-pink-800 bg-pink-50 dark:bg-pink-950/30 flex items-center justify-center text-pink-500 shadow-sm transition-transform group-hover:scale-110">
                 <Scissors size={14} strokeWidth={2.5} />
@@ -172,7 +196,9 @@ export default function GroomingServiceListView() {
                   {/* Acciones */}
                   <div className="flex items-center gap-1">
                     {/* Badge Estado Pago */}
-                    <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold uppercase ${payment.color}`}>
+                    <div
+                      className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold uppercase ${payment.color}`}
+                    >
                       <StatusIcon size={12} />
                       <span className="hidden sm:inline">{payment.status}</span>
                     </div>
@@ -241,7 +267,9 @@ export default function GroomingServiceListView() {
       <ConfirmationModal
         isOpen={!!serviceToDelete}
         onClose={() => setServiceToDelete(null)}
-        onConfirm={() => serviceToDelete?._id && removeService(serviceToDelete._id)}
+        onConfirm={() =>
+          serviceToDelete?._id && removeService(serviceToDelete._id)
+        }
         variant="danger"
         title="Eliminar Servicio"
         message="¿Eliminar este servicio de estética?"

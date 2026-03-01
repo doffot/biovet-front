@@ -3,12 +3,23 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useOutletContext, useNavigate } from "react-router-dom";
-import { getConsultationsByPatient, deleteConsultation } from "@/api/consultationAPI";
-import { Stethoscope, Trash2, Pencil, Loader2, Weight, ChevronRight, ClipboardList } from "lucide-react";
+import {
+  getConsultationsByPatient,
+  deleteConsultation,
+} from "@/api/consultationAPI";
+import {
+  Stethoscope,
+  Trash2,
+  Pencil,
+  Loader2,
+  Weight,
+  ChevronRight,
+  ClipboardList,
+} from "lucide-react";
 import type { Patient } from "@/types/patient";
 import { toast } from "@/components/Toast";
 import ConfirmationModal from "@/components/ConfirmationModal";
-import TimelineLayout from "@/components/ui/TimelineLayout";
+import TimelineLayout from "@/components/ui/TimeLineLayout";
 
 export default function ConsultationView() {
   const contextData = useOutletContext<any>();
@@ -27,7 +38,9 @@ export default function ConsultationView() {
     mutationFn: deleteConsultation,
     onSuccess: () => {
       toast.success("Eliminado", "Registro borrado");
-      queryClient.invalidateQueries({ queryKey: ["consultations", patient._id] });
+      queryClient.invalidateQueries({
+        queryKey: ["consultations", patient._id],
+      });
       setDeleteId(null);
     },
     onError: (error: Error) => toast.error("Error", error.message),
@@ -54,12 +67,19 @@ export default function ConsultationView() {
       {consultations.length === 0 ? (
         <div className="ml-8 text-center py-16 border-2 border-dashed border-purple-200 dark:border-purple-900 rounded-2xl">
           <Stethoscope className="w-12 h-12 mx-auto text-purple-300 dark:text-purple-700 mb-3 opacity-50" />
-          <p className="text-slate-400 dark:text-slate-500 font-medium mb-1">Sin consultas registradas</p>
-          <p className="text-xs text-slate-300 dark:text-slate-600">Registra la primera visita del paciente</p>
+          <p className="text-slate-400 dark:text-slate-500 font-medium mb-1">
+            Sin consultas registradas
+          </p>
+          <p className="text-xs text-slate-300 dark:text-slate-600">
+            Registra la primera visita del paciente
+          </p>
         </div>
       ) : (
         consultations.map((consultation) => (
-          <div key={consultation._id} className="relative flex gap-6 md:gap-8 group animate-fade-in">
+          <div
+            key={consultation._id}
+            className="relative flex gap-6 md:gap-8 group animate-fade-in"
+          >
             {/* Icono Timeline */}
             <div className="relative z-10 shrink-0 w-5 h-5 md:w-6 md:h-6 rounded-lg border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/30 flex items-center justify-center text-purple-500 shadow-sm transition-transform group-hover:scale-110">
               <Stethoscope size={14} strokeWidth={2.5} />
@@ -74,7 +94,9 @@ export default function ConsultationView() {
                   </h4>
                   <div className="flex flex-wrap items-center gap-x-4 text-xs text-slate-500">
                     <span className="font-bold text-slate-700 dark:text-slate-300">
-                      {new Date(consultation.consultationDate).toLocaleDateString()}
+                      {new Date(
+                        consultation.consultationDate,
+                      ).toLocaleDateString()}
                     </span>
                     {consultation.weight && (
                       <span className="flex items-center gap-1 opacity-70">
@@ -87,7 +109,11 @@ export default function ConsultationView() {
                 {/* Acciones */}
                 <div className="flex items-center gap-1">
                   <button
-                    onClick={() => navigate(`/patients/${patient._id}/consultations/${consultation._id}/edit`)}
+                    onClick={() =>
+                      navigate(
+                        `/patients/${patient._id}/consultations/${consultation._id}/edit`,
+                      )
+                    }
                     className="p-2 text-slate-400 hover:text-purple-500 transition-colors"
                   >
                     <Pencil size={18} />
@@ -116,7 +142,11 @@ export default function ConsultationView() {
               {/* Link a detalle */}
               <div className="mt-3 flex justify-end">
                 <button
-                  onClick={() => navigate(`/patients/${patient._id}/consultations/${consultation._id}`)}
+                  onClick={() =>
+                    navigate(
+                      `/patients/${patient._id}/consultations/${consultation._id}`,
+                    )
+                  }
                   className="text-purple-600 dark:text-purple-400 hover:text-purple-800 font-bold text-sm flex items-center gap-1 transition-colors"
                 >
                   Ver Detalles <ChevronRight size={16} />

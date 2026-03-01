@@ -20,7 +20,7 @@ import { toast } from "@/components/Toast";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import EditTreatmentModal from "@/components/treatments/EditTreatmentModal";
 import TreatmentDetailModal from "@/components/treatments/TreatmentDetailModal";
-import TimelineLayout from "@/components/ui/TimelineLayout";
+import TimelineLayout from "@/components/ui/TimeLineLayout";
 import type { Treatment } from "@/types/treatment";
 import type { Patient } from "@/types/patient";
 
@@ -31,9 +31,16 @@ export default function TreatmentListView() {
   const navigate = useNavigate();
 
   // Estados para modales
-  const [treatmentToDelete, setTreatmentToDelete] = useState<{ id: string; name: string } | null>(null);
-  const [treatmentToEdit, setTreatmentToEdit] = useState<Treatment | null>(null);
-  const [treatmentToView, setTreatmentToView] = useState<Treatment | null>(null);
+  const [treatmentToDelete, setTreatmentToDelete] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [treatmentToEdit, setTreatmentToEdit] = useState<Treatment | null>(
+    null,
+  );
+  const [treatmentToView, setTreatmentToView] = useState<Treatment | null>(
+    null,
+  );
   const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
 
   // Query
@@ -55,7 +62,10 @@ export default function TreatmentListView() {
   });
 
   // Handler para abrir detalle con posición
-  const handleOpenDetail = (treatment: Treatment, e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleOpenDetail = (
+    treatment: Treatment,
+    e: React.MouseEvent<HTMLButtonElement>,
+  ) => {
     const rect = e.currentTarget.getBoundingClientRect();
     setTriggerRect(rect);
     setTreatmentToView(treatment);
@@ -65,31 +75,35 @@ export default function TreatmentListView() {
   const getStatusConfig = (status: string) => {
     switch (status) {
       case "Activo":
-        return { 
-          color: "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800", 
-          icon: Activity 
+        return {
+          color:
+            "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800",
+          icon: Activity,
         };
       case "Completado":
-        return { 
-          color: "text-blue-600 bg-blue-50 dark:bg-blue-950/30 dark:text-blue-400 border-blue-200 dark:border-blue-800", 
-          icon: CheckCircle2 
+        return {
+          color:
+            "text-blue-600 bg-blue-50 dark:bg-blue-950/30 dark:text-blue-400 border-blue-200 dark:border-blue-800",
+          icon: CheckCircle2,
         };
       case "Suspendido":
-        return { 
-          color: "text-red-600 bg-red-50 dark:bg-red-950/30 dark:text-red-400 border-red-200 dark:border-red-800", 
-          icon: AlertCircle 
+        return {
+          color:
+            "text-red-600 bg-red-50 dark:bg-red-950/30 dark:text-red-400 border-red-200 dark:border-red-800",
+          icon: AlertCircle,
         };
       default:
-        return { 
-          color: "text-slate-600 bg-slate-50 dark:bg-slate-900/30 dark:text-slate-400 border-slate-200 dark:border-slate-800", 
-          icon: Clock 
+        return {
+          color:
+            "text-slate-600 bg-slate-50 dark:bg-slate-900/30 dark:text-slate-400 border-slate-200 dark:border-slate-800",
+          icon: Clock,
         };
     }
   };
 
   // Ordenar por fecha
   const sortedTreatments = [...treatments].sort(
-    (a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
+    (a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime(),
   );
 
   // Loading
@@ -114,8 +128,12 @@ export default function TreatmentListView() {
       {sortedTreatments.length === 0 ? (
         <div className="ml-8 text-center py-16 border-2 border-dashed border-blue-200 dark:border-blue-900 rounded-2xl">
           <FileSearch className="w-12 h-12 mx-auto text-blue-300 dark:text-blue-700 mb-3 opacity-50" />
-          <p className="text-slate-400 dark:text-slate-500 font-medium mb-1">Sin tratamientos registrados</p>
-          <p className="text-xs text-slate-300 dark:text-slate-600">Registra un nuevo tratamiento médico</p>
+          <p className="text-slate-400 dark:text-slate-500 font-medium mb-1">
+            Sin tratamientos registrados
+          </p>
+          <p className="text-xs text-slate-300 dark:text-slate-600">
+            Registra un nuevo tratamiento médico
+          </p>
         </div>
       ) : (
         sortedTreatments.map((treatment) => {
@@ -123,7 +141,10 @@ export default function TreatmentListView() {
           const StatusIcon = statusInfo.icon;
 
           return (
-            <div key={treatment._id} className="relative flex gap-6 md:gap-8 group animate-fade-in">
+            <div
+              key={treatment._id}
+              className="relative flex gap-6 md:gap-8 group animate-fade-in"
+            >
               {/* Icono Timeline */}
               <div className="relative z-10 shrink-0 w-5 h-5 md:w-6 md:h-6 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center text-blue-500 shadow-sm transition-transform group-hover:scale-110">
                 <Pill size={14} strokeWidth={2.5} />
@@ -141,7 +162,10 @@ export default function TreatmentListView() {
                         {new Date(treatment.startDate).toLocaleDateString()}
                       </span>
                       <span className="opacity-70">
-                        {treatment.treatmentType === "Otro" ? treatment.treatmentTypeOther : treatment.treatmentType} • {treatment.route}
+                        {treatment.treatmentType === "Otro"
+                          ? treatment.treatmentTypeOther
+                          : treatment.treatmentType}{" "}
+                        • {treatment.route}
                       </span>
                     </div>
                   </div>
@@ -155,7 +179,12 @@ export default function TreatmentListView() {
                       <Pencil size={18} />
                     </button>
                     <button
-                      onClick={() => setTreatmentToDelete({ id: treatment._id, name: treatment.productName })}
+                      onClick={() =>
+                        setTreatmentToDelete({
+                          id: treatment._id,
+                          name: treatment.productName,
+                        })
+                      }
                       className="p-2 text-slate-400 hover:text-danger-500 transition-colors"
                     >
                       <Trash2 size={18} />
@@ -165,7 +194,9 @@ export default function TreatmentListView() {
 
                 {/* Estado + Precio */}
                 <div className="mt-3 flex items-center justify-between">
-                  <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wide border ${statusInfo.color}`}>
+                  <div
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wide border ${statusInfo.color}`}
+                  >
                     <StatusIcon size={12} />
                     {treatment.status}
                   </div>
@@ -191,11 +222,11 @@ export default function TreatmentListView() {
 
       {/* Modal Ver Detalle - Con triggerRect */}
       <TreatmentDetailModal
-  isOpen={!!treatmentToView}
-  onClose={() => setTreatmentToView(null)}  // Solo esto, NO limpiar triggerRect
-  treatment={treatmentToView}
-  triggerRect={triggerRect}
-/>
+        isOpen={!!treatmentToView}
+        onClose={() => setTreatmentToView(null)} // Solo esto, NO limpiar triggerRect
+        treatment={treatmentToView}
+        triggerRect={triggerRect}
+      />
 
       {/* Modal Editar */}
       {treatmentToEdit && (
@@ -210,7 +241,9 @@ export default function TreatmentListView() {
       <ConfirmationModal
         isOpen={!!treatmentToDelete}
         onClose={() => setTreatmentToDelete(null)}
-        onConfirm={() => treatmentToDelete?.id && removeTreatment(treatmentToDelete.id)}
+        onConfirm={() =>
+          treatmentToDelete?.id && removeTreatment(treatmentToDelete.id)
+        }
         variant="danger"
         title="Eliminar Tratamiento"
         message={`¿Eliminar "${treatmentToDelete?.name}"?`}

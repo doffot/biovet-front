@@ -20,7 +20,7 @@ import type { Recipe } from "@/types/recipe";
 import type { Patient } from "@/types/patient";
 import EditRecipeModal from "@/components/recipes/EditRecipeModal";
 import { usePDFGenerator } from "@/hooks/usePDFGenerator";
-import TimelineLayout from "@/components/ui/TimelineLayout";
+import TimelineLayout from "@/components/ui/TimeLineLayout";
 
 export default function RecipeListView() {
   const contextData = useOutletContext<any>();
@@ -29,7 +29,9 @@ export default function RecipeListView() {
   const navigate = useNavigate();
 
   // Estados
-  const [recipeToDelete, setRecipeToDelete] = useState<{ id: string } | null>(null);
+  const [recipeToDelete, setRecipeToDelete] = useState<{ id: string } | null>(
+    null,
+  );
   const [recipeToEdit, setRecipeToEdit] = useState<Recipe | null>(null);
   const [recipeToView, setRecipeToView] = useState<Recipe | null>(null);
   const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
@@ -48,7 +50,10 @@ export default function RecipeListView() {
   const { mutate: removeRecipe, isPending: isDeleting } = useMutation({
     mutationFn: deleteRecipe,
     onSuccess: () => {
-      toast.success("Receta Eliminada", "El registro ha sido removido correctamente.");
+      toast.success(
+        "Receta Eliminada",
+        "El registro ha sido removido correctamente.",
+      );
       queryClient.invalidateQueries({ queryKey: ["recipes", patient._id] });
       setRecipeToDelete(null);
     },
@@ -56,10 +61,14 @@ export default function RecipeListView() {
   });
 
   const formatDate = (date: string) =>
-    new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "long", year: "numeric" }).format(new Date(date));
+    new Intl.DateTimeFormat("es-ES", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(new Date(date));
 
   const sortedRecipes = [...recipes].sort(
-    (a, b) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime()
+    (a, b) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime(),
   );
 
   // Handler para PDF desde la lista
@@ -72,10 +81,13 @@ export default function RecipeListView() {
     setGeneratingPdfId(recipe._id);
 
     const dateStr = new Date(recipe.issueDate).toLocaleDateString("es-ES");
-    const fullSpecies = patient.breed ? `${patient.species} - ${patient.breed}` : patient.species;
-    const ownerName = typeof patient.owner === "object" && patient.owner !== null
-      ? `${patient.owner.name}`
-      : "Propietario";
+    const fullSpecies = patient.breed
+      ? `${patient.species} - ${patient.breed}`
+      : patient.species;
+    const ownerName =
+      typeof patient.owner === "object" && patient.owner !== null
+        ? `${patient.owner.name}`
+        : "Propietario";
 
     generatePDF(
       {
@@ -100,7 +112,11 @@ export default function RecipeListView() {
 
           doc.setFont("helvetica", "bold");
           doc.setTextColor(colors.black.r, colors.black.g, colors.black.b);
-          doc.text(`${index + 1}. ${med.name} (${med.presentation})`, margin + 5, y);
+          doc.text(
+            `${index + 1}. ${med.name} (${med.presentation})`,
+            margin + 5,
+            y,
+          );
           y += 5;
 
           if (med.quantity) {
@@ -112,7 +128,10 @@ export default function RecipeListView() {
 
           doc.setFont("helvetica", "italic");
           doc.setFontSize(10);
-          const instructions = doc.splitTextToSize(`Indicaciones: ${med.instructions}`, width - margin * 2 - 10);
+          const instructions = doc.splitTextToSize(
+            `Indicaciones: ${med.instructions}`,
+            width - margin * 2 - 10,
+          );
           doc.text(instructions, margin + 5, y);
           y += instructions.length * 4 + 4;
         });
@@ -130,14 +149,17 @@ export default function RecipeListView() {
         }
 
         return y;
-      }
+      },
     );
 
     setGeneratingPdfId(null);
   };
 
   // Handler para abrir detalle con posición
-  const handleOpenDetail = (recipe: Recipe, e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleOpenDetail = (
+    recipe: Recipe,
+    e: React.MouseEvent<HTMLButtonElement>,
+  ) => {
     const rect = e.currentTarget.getBoundingClientRect();
     setTriggerRect(rect);
     setRecipeToView(recipe);
@@ -164,12 +186,19 @@ export default function RecipeListView() {
       {sortedRecipes.length === 0 ? (
         <div className="ml-8 text-center py-16 border-2 border-dashed border-rose-200 dark:border-rose-900 rounded-2xl">
           <FileText className="w-12 h-12 mx-auto text-rose-300 dark:text-rose-700 mb-3 opacity-50" />
-          <p className="text-slate-400 dark:text-slate-500 font-medium mb-1">Sin recetas registradas</p>
-          <p className="text-xs text-slate-300 dark:text-slate-600">Crea la primera prescripción médica</p>
+          <p className="text-slate-400 dark:text-slate-500 font-medium mb-1">
+            Sin recetas registradas
+          </p>
+          <p className="text-xs text-slate-300 dark:text-slate-600">
+            Crea la primera prescripción médica
+          </p>
         </div>
       ) : (
         sortedRecipes.map((recipe) => (
-          <div key={recipe._id} className="relative flex gap-6 md:gap-8 group animate-fade-in">
+          <div
+            key={recipe._id}
+            className="relative flex gap-6 md:gap-8 group animate-fade-in"
+          >
             {/* Icono Timeline */}
             <div className="relative z-10 shrink-0 w-5 h-5 md:w-6 md:h-6 rounded-lg border flex items-center justify-center shadow-sm transition-transform group-hover:scale-110 text-rose-500 bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800">
               <Pill size={14} strokeWidth={2.5} />
@@ -187,7 +216,8 @@ export default function RecipeListView() {
                       {formatDate(recipe.issueDate)}
                     </span>
                     <span className="flex items-center gap-1 opacity-70">
-                      <Pill size={14} /> {recipe.medications.length} medicamento(s)
+                      <Pill size={14} /> {recipe.medications.length}{" "}
+                      medicamento(s)
                     </span>
                   </div>
                 </div>

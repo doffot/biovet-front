@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useOutletContext, useNavigate } from "react-router-dom";
-import { getAppointmentsByPatient, deleteAppointment } from "@/api/appointmentAPI";
+import {
+  getAppointmentsByPatient,
+  deleteAppointment,
+} from "@/api/appointmentAPI";
 import {
   Calendar,
   Trash2,
@@ -20,28 +23,35 @@ import {
 import type { Patient } from "@/types/patient";
 import { toast } from "@/components/Toast";
 import ConfirmationModal from "@/components/ConfirmationModal";
-import TimelineLayout from "@/components/ui/TimelineLayout";
+import TimelineLayout from "@/components/ui/TimeLineLayout";
 
 /* ═══ CONFIG POR ESTADO ═══ */
-const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
+const statusConfig: Record<
+  string,
+  { label: string; color: string; icon: React.ReactNode }
+> = {
   Programada: {
     label: "Programada",
-    color: "text-orange-600 bg-orange-50 dark:bg-orange-950/30 dark:text-orange-400 border-orange-200 dark:border-orange-800",
+    color:
+      "text-orange-600 bg-orange-50 dark:bg-orange-950/30 dark:text-orange-400 border-orange-200 dark:border-orange-800",
     icon: <CircleDot size={12} />,
   },
   Completada: {
     label: "Completada",
-    color: "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800",
+    color:
+      "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800",
     icon: <CalendarCheck size={12} />,
   },
   Cancelada: {
     label: "Cancelada",
-    color: "text-red-600 bg-red-50 dark:bg-red-950/30 dark:text-red-400 border-red-200 dark:border-red-800",
+    color:
+      "text-red-600 bg-red-50 dark:bg-red-950/30 dark:text-red-400 border-red-200 dark:border-red-800",
     icon: <CalendarX size={12} />,
   },
   "No asistió": {
     label: "No asistió",
-    color: "text-amber-600 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400 border-amber-200 dark:border-amber-800",
+    color:
+      "text-amber-600 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400 border-amber-200 dark:border-amber-800",
     icon: <AlertTriangle size={12} />,
   },
 };
@@ -64,8 +74,12 @@ export default function AppointmentView() {
     mutationFn: deleteAppointment,
     onSuccess: () => {
       toast.success("Eliminada", "Cita eliminada correctamente");
-      queryClient.invalidateQueries({ queryKey: ["appointments", patient._id] });
-      queryClient.invalidateQueries({ queryKey: ["activeAppointments", patient._id] });
+      queryClient.invalidateQueries({
+        queryKey: ["appointments", patient._id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["activeAppointments", patient._id],
+      });
       setDeleteId(null);
     },
     onError: (error: Error) => {
@@ -91,7 +105,7 @@ export default function AppointmentView() {
   };
 
   const sortedAppointments = [...appointments].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   );
 
   if (isLoading) {
@@ -115,16 +129,27 @@ export default function AppointmentView() {
       {sortedAppointments.length === 0 ? (
         <div className="ml-8 text-center py-16 border-2 border-dashed border-orange-200 dark:border-orange-900 rounded-2xl">
           <CalendarDays className="w-12 h-12 mx-auto text-orange-300 dark:text-orange-700 mb-3 opacity-50" />
-          <p className="text-slate-400 dark:text-slate-500 font-medium mb-1">No hay citas registradas</p>
-          <p className="text-xs text-slate-300 dark:text-slate-600">Agenda la primera cita para este paciente</p>
+          <p className="text-slate-400 dark:text-slate-500 font-medium mb-1">
+            No hay citas registradas
+          </p>
+          <p className="text-xs text-slate-300 dark:text-slate-600">
+            Agenda la primera cita para este paciente
+          </p>
         </div>
       ) : (
         sortedAppointments.map((appointment) => {
-          const sConfig = statusConfig[appointment.status] || statusConfig["Programada"];
-          const isPast = appointment.status === "Completada" || appointment.status === "Cancelada" || appointment.status === "No asistió";
+          const sConfig =
+            statusConfig[appointment.status] || statusConfig["Programada"];
+          const isPast =
+            appointment.status === "Completada" ||
+            appointment.status === "Cancelada" ||
+            appointment.status === "No asistió";
 
           return (
-            <div key={appointment._id} className={`relative flex gap-6 md:gap-8 group animate-fade-in ${isPast ? "opacity-60 hover:opacity-100 transition-opacity" : ""}`}>
+            <div
+              key={appointment._id}
+              className={`relative flex gap-6 md:gap-8 group animate-fade-in ${isPast ? "opacity-60 hover:opacity-100 transition-opacity" : ""}`}
+            >
               {/* Icono Timeline */}
               <div className="relative z-10 shrink-0 w-5 h-5 md:w-6 md:h-6 rounded-lg border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/30 flex items-center justify-center text-orange-500 shadow-sm transition-transform group-hover:scale-110">
                 <Calendar size={14} strokeWidth={2.5} />
@@ -150,13 +175,19 @@ export default function AppointmentView() {
                   {/* Acciones */}
                   <div className="flex items-center gap-1">
                     {/* Badge Estado */}
-                    <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold uppercase border ${sConfig.color}`}>
+                    <div
+                      className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold uppercase border ${sConfig.color}`}
+                    >
                       {sConfig.icon}
                       <span className="hidden sm:inline">{sConfig.label}</span>
                     </div>
 
                     <button
-                      onClick={() => navigate(`/patients/${patient._id}/appointments/${appointment._id}/edit`)}
+                      onClick={() =>
+                        navigate(
+                          `/patients/${patient._id}/appointments/${appointment._id}/edit`,
+                        )
+                      }
                       className="p-2 text-slate-400 hover:text-orange-500 transition-colors"
                       title="Editar"
                     >
@@ -189,7 +220,11 @@ export default function AppointmentView() {
                 {/* Link detalle */}
                 <div className="mt-3 flex justify-end">
                   <button
-                    onClick={() => navigate(`/patients/${patient._id}/appointments/${appointment._id}`)}
+                    onClick={() =>
+                      navigate(
+                        `/patients/${patient._id}/appointments/${appointment._id}`,
+                      )
+                    }
                     className="text-orange-600 dark:text-orange-400 hover:text-orange-800 font-bold text-sm flex items-center gap-1 transition-colors"
                   >
                     Ver detalle <ChevronRight size={16} />

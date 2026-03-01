@@ -19,7 +19,7 @@ import CreateDewormingModal from "@/components/deworming/CreateDewormingModal";
 import DewormingDetailModal from "@/components/deworming/DewormingDetailModal";
 import { toast } from "@/components/Toast";
 import ConfirmationModal from "@/components/ConfirmationModal";
-import TimelineLayout from "@/components/ui/TimelineLayout";
+import TimelineLayout from "@/components/ui/TimeLineLayout";
 
 export default function DewormingView() {
   const contextData = useOutletContext<any>();
@@ -29,11 +29,13 @@ export default function DewormingView() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editItem, setEditItem] = useState<Deworming | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  
+
   // ══════════════════════════════════════════
   // NUEVO: Estados para el modal de detalle
   // ══════════════════════════════════════════
-  const [dewormingToView, setDewormingToView] = useState<Deworming | null>(null);
+  const [dewormingToView, setDewormingToView] = useState<Deworming | null>(
+    null,
+  );
   const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
 
   const { data: dewormings = [], isLoading } = useQuery({
@@ -56,20 +58,27 @@ export default function DewormingView() {
   });
 
   const sortedDewormings = [...dewormings].sort(
-    (a, b) => new Date(b.applicationDate).getTime() - new Date(a.applicationDate).getTime()
+    (a, b) =>
+      new Date(b.applicationDate).getTime() -
+      new Date(a.applicationDate).getTime(),
   );
 
   const getTypeStyle = (type: string) => {
     const t = type.toLowerCase();
-    if (t.includes("interna")) return "text-purple-600 bg-purple-50 dark:bg-purple-950/30 dark:text-purple-400";
-    if (t.includes("externa")) return "text-blue-600 bg-blue-50 dark:bg-blue-950/30 dark:text-blue-400";
+    if (t.includes("interna"))
+      return "text-purple-600 bg-purple-50 dark:bg-purple-950/30 dark:text-purple-400";
+    if (t.includes("externa"))
+      return "text-blue-600 bg-blue-50 dark:bg-blue-950/30 dark:text-blue-400";
     return "text-amber-600 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400";
   };
 
   // ══════════════════════════════════════════
   // NUEVO: Handler para abrir detalle con posición
   // ══════════════════════════════════════════
-  const handleOpenDetail = (deworming: Deworming, e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleOpenDetail = (
+    deworming: Deworming,
+    e: React.MouseEvent<HTMLButtonElement>,
+  ) => {
     const rect = e.currentTarget.getBoundingClientRect();
     setTriggerRect(rect);
     setDewormingToView(deworming);
@@ -90,21 +99,33 @@ export default function DewormingView() {
       headerIcon={Bug}
       count={dewormings.length}
       countLabel="registros"
-      onAdd={() => { setEditItem(null); setIsModalOpen(true); }}
+      onAdd={() => {
+        setEditItem(null);
+        setIsModalOpen(true);
+      }}
       variant="antiparasitarios"
     >
       {sortedDewormings.length === 0 ? (
         <div className="ml-8 text-center py-16 border-2 border-dashed border-amber-200 dark:border-amber-900 rounded-2xl">
           <Bug className="w-12 h-12 mx-auto text-amber-300 dark:text-amber-700 mb-3 opacity-50" />
-          <p className="text-slate-400 dark:text-slate-500 font-medium mb-1">Sin desparasitaciones registradas</p>
-          <p className="text-xs text-slate-300 dark:text-slate-600">Registra el primer antiparasitario</p>
+          <p className="text-slate-400 dark:text-slate-500 font-medium mb-1">
+            Sin desparasitaciones registradas
+          </p>
+          <p className="text-xs text-slate-300 dark:text-slate-600">
+            Registra el primer antiparasitario
+          </p>
         </div>
       ) : (
         sortedDewormings.map((item) => {
-          const isPending = item.nextApplicationDate && new Date(item.nextApplicationDate) > new Date();
+          const isPending =
+            item.nextApplicationDate &&
+            new Date(item.nextApplicationDate) > new Date();
 
           return (
-            <div key={item._id} className="relative flex gap-6 md:gap-8 group animate-fade-in">
+            <div
+              key={item._id}
+              className="relative flex gap-6 md:gap-8 group animate-fade-in"
+            >
               {/* Icono Timeline */}
               <div className="relative z-10 shrink-0 w-5 h-5 md:w-6 md:h-6 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center text-amber-500 shadow-sm transition-transform group-hover:scale-110">
                 <Bug size={14} strokeWidth={2.5} />
@@ -135,7 +156,10 @@ export default function DewormingView() {
                   {/* Acciones */}
                   <div className="flex items-center gap-1">
                     <button
-                      onClick={() => { setEditItem(item); setIsModalOpen(true); }}
+                      onClick={() => {
+                        setEditItem(item);
+                        setIsModalOpen(true);
+                      }}
                       className="p-2 text-slate-400 hover:text-amber-500 transition-colors"
                     >
                       <Pencil size={18} />
@@ -151,7 +175,9 @@ export default function DewormingView() {
 
                 {/* Tipo + Fuente */}
                 <div className="mt-3 flex items-center gap-2">
-                  <span className={`text-[11px] font-bold px-2.5 py-1 rounded-lg ${getTypeStyle(item.dewormingType)}`}>
+                  <span
+                    className={`text-[11px] font-bold px-2.5 py-1 rounded-lg ${getTypeStyle(item.dewormingType)}`}
+                  >
                     {item.dewormingType}
                   </span>
                   <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-dark-100 px-2.5 py-1 rounded-lg">
@@ -168,7 +194,9 @@ export default function DewormingView() {
                       <Check size={14} className="text-success-500" />
                     )}
                     Próxima:{" "}
-                    <span className={`font-bold ${isPending ? "text-warning-600" : "text-success-600"}`}>
+                    <span
+                      className={`font-bold ${isPending ? "text-warning-600" : "text-success-600"}`}
+                    >
                       {new Date(item.nextApplicationDate).toLocaleDateString()}
                     </span>
                   </div>

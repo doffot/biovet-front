@@ -11,11 +11,14 @@ import {
   FileSearch,
   ChevronRight,
 } from "lucide-react";
-import { getMedicalStudiesByPatient, deleteMedicalStudy } from "@/api/medicalStudyAPI";
+import {
+  getMedicalStudiesByPatient,
+  deleteMedicalStudy,
+} from "@/api/medicalStudyAPI";
 import { toast } from "@/components/Toast";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import MedicalStudyDetailModal from "@/components/medicalStudy/MedicalStudyDetailModal";
-import TimelineLayout from "@/components/ui/TimelineLayout";
+import TimelineLayout from "@/components/ui/TimeLineLayout";
 import type { MedicalStudy } from "@/types/medicalStudy";
 import type { Patient } from "@/types/patient";
 
@@ -25,7 +28,10 @@ export default function MedicalStudyListView() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
-  const [studyToDelete, setStudyToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [studyToDelete, setStudyToDelete] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   // ══════════════════════════════════════════
@@ -44,7 +50,9 @@ export default function MedicalStudyListView() {
     mutationFn: deleteMedicalStudy,
     onSuccess: () => {
       toast.success("Eliminado", "Estudio removido correctamente");
-      queryClient.invalidateQueries({ queryKey: ["medicalStudies", patient._id] });
+      queryClient.invalidateQueries({
+        queryKey: ["medicalStudies", patient._id],
+      });
       setStudyToDelete(null);
     },
     onError: (error: Error) => toast.error("Error al eliminar", error.message),
@@ -82,14 +90,17 @@ export default function MedicalStudyListView() {
   // ══════════════════════════════════════════
   // Handler para abrir detalle con posición
   // ══════════════════════════════════════════
-  const handleOpenDetail = (study: MedicalStudy, e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleOpenDetail = (
+    study: MedicalStudy,
+    e: React.MouseEvent<HTMLButtonElement>,
+  ) => {
     const rect = e.currentTarget.getBoundingClientRect();
     setTriggerRect(rect);
     setStudyToView(study);
   };
 
   const sortedStudies = [...studies].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   );
 
   if (isLoading) {
@@ -113,12 +124,19 @@ export default function MedicalStudyListView() {
       {sortedStudies.length === 0 ? (
         <div className="ml-8 text-center py-16 border-2 border-dashed border-cyan-200 dark:border-cyan-900 rounded-2xl">
           <FileSearch className="w-12 h-12 mx-auto text-cyan-300 dark:text-cyan-700 mb-3 opacity-50" />
-          <p className="text-slate-400 dark:text-slate-500 font-medium mb-1">Sin estudios médicos registrados</p>
-          <p className="text-xs text-slate-300 dark:text-slate-600">Sube el primer archivo de imagen</p>
+          <p className="text-slate-400 dark:text-slate-500 font-medium mb-1">
+            Sin estudios médicos registrados
+          </p>
+          <p className="text-xs text-slate-300 dark:text-slate-600">
+            Sube el primer archivo de imagen
+          </p>
         </div>
       ) : (
         sortedStudies.map((study) => (
-          <div key={study._id} className="relative flex gap-6 md:gap-8 group animate-fade-in">
+          <div
+            key={study._id}
+            className="relative flex gap-6 md:gap-8 group animate-fade-in"
+          >
             {/* Icono Timeline */}
             <div className="relative z-10 shrink-0 w-5 h-5 md:w-6 md:h-6 rounded-lg border border-cyan-200 dark:border-cyan-800 bg-cyan-50 dark:bg-cyan-950/30 flex items-center justify-center text-cyan-500 shadow-sm transition-transform group-hover:scale-110">
               <ScanLine size={14} strokeWidth={2.5} />
@@ -155,7 +173,12 @@ export default function MedicalStudyListView() {
                   </button>
 
                   <button
-                    onClick={() => setStudyToDelete({ id: study._id!, name: study.studyType })}
+                    onClick={() =>
+                      setStudyToDelete({
+                        id: study._id!,
+                        name: study.studyType,
+                      })
+                    }
                     className="p-2 text-slate-400 hover:text-danger-500 transition-colors"
                     title="Eliminar"
                   >

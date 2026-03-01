@@ -10,10 +10,13 @@ import {
   ChevronRight,
   Package,
 } from "lucide-react";
-import { getServicesByPatient, deleteVeterinaryService } from "@/api/veterinaryServiceAPI";
+import {
+  getServicesByPatient,
+  deleteVeterinaryService,
+} from "@/api/veterinaryServiceAPI";
 import { toast } from "@/components/Toast";
 import ConfirmationModal from "@/components/ConfirmationModal";
-import TimelineLayout from "@/components/ui/TimelineLayout";
+import TimelineLayout from "@/components/ui/TimeLineLayout";
 import type { Patient } from "@/types/patient";
 import type { VeterinaryService } from "@/types/veterinaryService";
 import ServiceDetailModal from "@/components/veterinary-services/ServiceDetailModal";
@@ -25,8 +28,13 @@ export default function VeterinaryServiceListView() {
   const navigate = useNavigate();
 
   // Estados para modales
-  const [serviceToDelete, setServiceToDelete] = useState<{ id: string; name: string } | null>(null);
-  const [serviceToView, setServiceToView] = useState<VeterinaryService | null>(null);
+  const [serviceToDelete, setServiceToDelete] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [serviceToView, setServiceToView] = useState<VeterinaryService | null>(
+    null,
+  );
   const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
 
   // Query
@@ -48,7 +56,10 @@ export default function VeterinaryServiceListView() {
   });
 
   // Handler para abrir detalle con posición
-  const handleOpenDetail = (service: VeterinaryService, e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleOpenDetail = (
+    service: VeterinaryService,
+    e: React.MouseEvent<HTMLButtonElement>,
+  ) => {
     const rect = e.currentTarget.getBoundingClientRect();
     setTriggerRect(rect);
     setServiceToView(service);
@@ -56,7 +67,8 @@ export default function VeterinaryServiceListView() {
 
   // Ordenar por fecha
   const sortedServices = [...services].sort(
-    (a, b) => new Date(b.serviceDate).getTime() - new Date(a.serviceDate).getTime()
+    (a, b) =>
+      new Date(b.serviceDate).getTime() - new Date(a.serviceDate).getTime(),
   );
 
   // Loading
@@ -81,12 +93,19 @@ export default function VeterinaryServiceListView() {
       {sortedServices.length === 0 ? (
         <div className="ml-8 text-center py-16 border-2 border-dashed border-indigo-200 dark:border-indigo-900 rounded-2xl">
           <BriefcaseMedical className="w-12 h-12 mx-auto text-indigo-300 dark:text-indigo-700 mb-3 opacity-50" />
-          <p className="text-slate-400 dark:text-slate-500 font-medium mb-1">Sin servicios registrados</p>
-          <p className="text-xs text-slate-300 dark:text-slate-600">Registra un nuevo procedimiento</p>
+          <p className="text-slate-400 dark:text-slate-500 font-medium mb-1">
+            Sin servicios registrados
+          </p>
+          <p className="text-xs text-slate-300 dark:text-slate-600">
+            Registra un nuevo procedimiento
+          </p>
         </div>
       ) : (
         sortedServices.map((service) => (
-          <div key={service._id} className="relative flex gap-6 md:gap-8 group animate-fade-in">
+          <div
+            key={service._id}
+            className="relative flex gap-6 md:gap-8 group animate-fade-in"
+          >
             {/* Icono Timeline */}
             <div className="relative z-10 shrink-0 w-5 h-5 md:w-6 md:h-6 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/30 flex items-center justify-center text-indigo-500 shadow-sm transition-transform group-hover:scale-110">
               <BriefcaseMedical size={14} strokeWidth={2.5} />
@@ -114,7 +133,12 @@ export default function VeterinaryServiceListView() {
                 {/* Acciones */}
                 <div className="flex items-center gap-1">
                   <button
-                    onClick={() => setServiceToDelete({ id: service._id, name: service.serviceName })}
+                    onClick={() =>
+                      setServiceToDelete({
+                        id: service._id,
+                        name: service.serviceName,
+                      })
+                    }
                     className="p-2 text-slate-400 hover:text-danger-500 transition-colors"
                   >
                     <Trash2 size={18} />
@@ -158,7 +182,9 @@ export default function VeterinaryServiceListView() {
       <ConfirmationModal
         isOpen={!!serviceToDelete}
         onClose={() => setServiceToDelete(null)}
-        onConfirm={() => serviceToDelete?.id && removeService(serviceToDelete.id)}
+        onConfirm={() =>
+          serviceToDelete?.id && removeService(serviceToDelete.id)
+        }
         variant="danger"
         title="Eliminar Servicio"
         message={`¿Eliminar "${serviceToDelete?.name}"?`}
