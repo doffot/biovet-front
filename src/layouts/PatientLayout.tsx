@@ -43,7 +43,6 @@ export default function PatientLayout() {
   const openEditModal = () => navigate("?editPatient=true", { replace: true });
   const handleCloseModal = () => navigate(location.pathname, { replace: true });
 
-  // 👇 Nueva función para abrir el modal de foto con posición
   const openPhotoModal = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     setPhotoTriggerRect(rect);
@@ -103,7 +102,6 @@ export default function PatientLayout() {
               </button>
               
               <div className="flex gap-5">
-                {/* 👇 Foto con onClick actualizado */}
                 <div 
                   onClick={openPhotoModal}
                   className="group relative w-24 h-24 rounded-2xl overflow-hidden bg-slate-200 dark:bg-slate-700 shadow-md cursor-pointer"
