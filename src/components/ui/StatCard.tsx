@@ -4,12 +4,25 @@ import { type LucideIcon } from "lucide-react";
 
 type StatVariant = "primary" | "success" | "warning" | "danger" | "neutral" | "info";
 
+interface CurrencyAmounts {
+  USD: number;
+  Bs: number;
+}
+
+interface RevenueAmounts extends CurrencyAmounts {
+  totalUSD: number;
+  bsInUSD: number;
+}
+
 interface StatCardProps {
   label: string;
   value: number | string;
   icon: LucideIcon;
   variant?: StatVariant;
   subtitle?: string;
+  onClick?: () => void;
+  // Para dual currency
+  amounts?: CurrencyAmounts | RevenueAmounts;
 }
 
 const variantStyles: Record<StatVariant, {
@@ -49,24 +62,58 @@ const variantStyles: Record<StatVariant, {
   },
 };
 
+function isRevenueAmounts(
+  amounts: CurrencyAmounts | RevenueAmounts
+): amounts is RevenueAmounts {
+  return "totalUSD" in amounts;
+}
+
 export function StatCard({ 
   label, 
   value, 
   icon: Icon, 
   variant = "primary",
-  subtitle 
+  subtitle,
+  onClick,
+  amounts
 }: StatCardProps) {
   const styles = variantStyles[variant];
 
+  const formatUSD = (amount: number) => `$${amount.toFixed(2)}`;
+  const formatBs = (amount: number) =>
+    `Bs. ${amount.toLocaleString("es-VE", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+
+  // Determinar si es dual currency
+  const isDualCurrency = !!amounts;
+  const hasTotal = amounts && isRevenueAmounts(amounts);
+  const hasBs = amounts && amounts.Bs > 0;
+
   return (
     <div
-      className="
+      onClick={onClick}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onClick?.();
+              }
+            }
+          : undefined
+      }
+      className={`
         group relative overflow-hidden
         bg-white dark:bg-dark-200 
         rounded-xl border border-surface-200 dark:border-slate-700
         p-4 shadow-sm 
         hover:shadow-md transition-all duration-300
-      "
+        ${onClick ? 'cursor-pointer active:scale-[0.98]' : ''}
+      `}
     >
       {/* Icono marca de agua */}
       <Icon
@@ -83,20 +130,65 @@ export function StatCard({
 
       {/* Contenido */}
       <div className="relative z-10">
-        <div className="flex items-center gap-2 mb-1">
+        {/* Header con dot y título */}
+        <div className="flex items-center gap-2 mb-2">
           <div className={`w-2 h-2 rounded-full ${styles.dotColor}`} />
           <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wide">
             {label}
           </p>
         </div>
 
-        <p className={`text-2xl sm:text-3xl font-bold font-heading ${styles.valueColor}`}>
-          {typeof value === "number" ? value.toLocaleString() : value}
-        </p>
+        {/* Contenido según tipo */}
+        {isDualCurrency && amounts ? (
+          // Modo Dual Currency
+          <>
+            {hasTotal ? (
+              // Con totalUSD (RevenueAmounts)
+              <>
+                <p className={`text-2xl sm:text-3xl font-bold font-heading ${styles.valueColor}`}>
+                  {formatUSD(amounts.totalUSD)}
+                </p>
+                <div className="text-xs text-slate-500 dark:text-slate-400 space-y-0.5 mt-1">
+                  <p className="font-medium">{formatUSD(amounts.USD)} USD directo</p>
+                  {hasBs && (
+                    <p className="font-medium">
+                      {formatUSD(amounts.bsInUSD)}{" "}
+                      <span className="opacity-70">
+                        ({formatBs(amounts.Bs)})
+                      </span>
+                    </p>
+                  )}
+                </div>
+              </>
+            ) : (
+              // Sin totalUSD (CurrencyAmounts normal)
+              <>
+                <p className={`text-2xl sm:text-3xl font-bold font-heading ${styles.valueColor}`}>
+                  {formatUSD(amounts.USD)}
+                </p>
+                <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 mt-0.5">
+                  {formatBs(amounts.Bs)}
+                </p>
+              </>
+            )}
+          </>
+        ) : (
+          // Modo simple (valor único)
+          <p className={`text-2xl sm:text-3xl font-bold font-heading ${styles.valueColor}`}>
+            {typeof value === "number" ? value.toLocaleString() : value}
+          </p>
+        )}
 
+        {/* Subtitle */}
         {subtitle && (
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2 flex items-center gap-1.5">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-600"></span>
             {subtitle}
+            {onClick && (
+              <span className="text-biovet-500 dark:text-biovet-400 opacity-0 group-hover:opacity-100 transition-opacity ml-1">
+                → Ver
+              </span>
+            )}
           </p>
         )}
       </div>

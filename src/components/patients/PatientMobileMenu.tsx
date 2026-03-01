@@ -1,3 +1,5 @@
+// src/components/patients/PatientMobileMenu.tsx
+
 import { NavLink } from "react-router-dom";
 import {
   X, Info, Stethoscope, Bandage, BriefcaseMedical, FileText,
@@ -10,8 +12,8 @@ interface PatientMobileMenuProps {
   isOpen: boolean;
   onClose: () => void;
   patient: Patient;
-  onEditClick?: () => void;  // Nueva prop para editar
-  onPhotoClick?: () => void; // Nueva prop para foto
+  onEditClick?: () => void;
+  onPhotoClick?: (e: React.MouseEvent<HTMLDivElement>) => void; // 👈 Actualizado
 }
 
 export function PatientMobileMenu({
@@ -35,6 +37,15 @@ export function PatientMobileMenu({
     { to: "appointments", label: "Citas", icon: CalendarClock },
   ];
 
+  // 👇 Handler para el click en foto
+  const handlePhotoClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    onClose();
+    // Pequeño delay para que el menú cierre antes de abrir el modal
+    setTimeout(() => {
+      onPhotoClick?.(e);
+    }, 100);
+  };
+
   return (
     <>
       <div
@@ -54,13 +65,19 @@ export function PatientMobileMenu({
           <button onClick={onClose} className="absolute top-4 right-4 p-1 rounded-full hover:bg-white/20">
             <X size={20} />
           </button>
-          <div className="w-16 h-16 rounded-full border-2 border-white bg-white/20 backdrop-blur-sm overflow-hidden mb-3 z-10">
+          
+          {/* 👇 Foto clickeable para efecto zoom */}
+          <div 
+            onClick={handlePhotoClick}
+            className="w-16 h-16 rounded-full border-2 border-white bg-white/20 backdrop-blur-sm overflow-hidden mb-3 z-10 cursor-pointer active:scale-95 transition-transform"
+          >
             {patient.photo ? (
               <img src={patient.photo} alt={patient.name} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center font-bold text-2xl">{patient.name[0]}</div>
             )}
           </div>
+          
           <div className="z-10">
             <h2 className="text-xl font-bold leading-tight">{patient.name}</h2>
             <p className="text-biovet-100 text-xs font-medium opacity-90">{patient.breed || "Mestizo"}</p>
@@ -79,16 +96,14 @@ export function PatientMobileMenu({
             <span className="text-[10px] font-black uppercase tracking-tighter">Editar Ficha</span>
           </button>
 
-          <button
-            onClick={() => {
-              onClose();
-              onPhotoClick?.();
-            }}
-            className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-400 border border-slate-100 dark:border-white/10 active:scale-95 transition-all"
+          {/* 👇 Botón también actualizado */}
+          <div
+            onClick={handlePhotoClick}
+            className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-400 border border-slate-100 dark:border-white/10 active:scale-95 transition-all cursor-pointer"
           >
             <Camera size={20} />
             <span className="text-[10px] font-black uppercase tracking-tighter">Cambiar Foto</span>
-          </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto py-2">
@@ -100,7 +115,7 @@ export function PatientMobileMenu({
               onClick={onClose}
               className={({ isActive }) => `
                 flex items-center gap-4 px-6 py-3.5 text-sm font-medium transition-all
-                ${isActive ? "text-biovet-600 bg-biovet-50 dark:bg-biovet-900/20 border-r-4 border-biovet-500" : "text-slate-700 dark:text-slate-300 hover:bg-slate-50"}
+                ${isActive ? "text-biovet-600 bg-biovet-50 dark:bg-biovet-900/20 border-r-4 border-biovet-500" : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-dark-100"}
               `}
             >
               <item.icon size={22} className="shrink-0" />

@@ -1,64 +1,67 @@
+// src/views/grooming/GroomingServiceListView.tsx
+
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Scissors,
-  PlusCircle,
-  Calendar,
-  Eye,
   Trash2,
   Pencil,
   Loader2,
   FileSearch,
-  ChevronRight,
-  CreditCard,
   CheckCircle2,
   Clock,
   AlertCircle,
+  CreditCard,
+  ChevronRight,
 } from "lucide-react";
-import {
-  getGroomingServicesByPatient,
-  deleteGroomingService,
-} from "@/api/groomingAPI";
+import { getGroomingServicesByPatient, deleteGroomingService } from "@/api/groomingAPI";
 import { getInvoices } from "@/api/invoiceAPI";
 import type { GroomingService } from "@/types/grooming";
+import type { Patient } from "@/types/patient";
 import { toast } from "@/components/Toast";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import EditGroomingServiceModal from "@/components/grooming/EditGroomingServiceModal";
+import GroomingServiceDetailModal from "@/components/grooming/GroomingServiceDetailModal";
+import TimelineLayout from "@/components/ui/TimelineLayout";
 
 export default function GroomingServiceListView() {
-  const { patientId } = useParams<{ patientId: string }>();
+  const contextData = useOutletContext<any>();
+  const patient: Patient = contextData.patient || contextData;
   const queryClient = useQueryClient();
-  // const [mounted, setMounted] = useState(false);
+  const navigate = useNavigate();
 
-  // Estados para modales
-  const [serviceToEdit, setServiceToEdit] = useState<GroomingService | null>(
-    null
-  );
-  const [serviceToDelete, setServiceToDelete] =
-    useState<GroomingService | null>(null);
+  const [serviceToEdit, setServiceToEdit] = useState<GroomingService | null>(null);
+  const [serviceToDelete, setServiceToDelete] = useState<GroomingService | null>(null);
 
-  // Queries
+  // ══════════════════════════════════════════
+  // Estados para el modal de detalle
+  // ══════════════════════════════════════════
+  const [serviceToView, setServiceToView] = useState<GroomingService | null>(null);
+  const [viewPaymentInfo, setViewPaymentInfo] = useState<{
+    status: string;
+    color: string;
+    icon: React.ComponentType<{ size?: number }>;
+  } | null>(null);
+  const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
+
   const { data: services = [], isLoading: isLoadingServices } = useQuery({
-    queryKey: ["groomingServices", patientId],
-    queryFn: () => getGroomingServicesByPatient(patientId!),
-    enabled: !!patientId,
+    queryKey: ["groomingServices", patient._id],
+    queryFn: () => getGroomingServicesByPatient(patient._id),
+    enabled: !!patient._id,
   });
 
   const { data: invoicesData, isLoading: isLoadingInvoices } = useQuery({
-    queryKey: ["invoices", { patientId }],
-    queryFn: () => getInvoices({ patientId }),
-    enabled: !!patientId,
+    queryKey: ["invoices", { patientId: patient._id }],
+    queryFn: () => getInvoices({ patientId: patient._id }),
+    enabled: !!patient._id,
   });
 
-  // Mutación para eliminar
   const { mutate: removeService, isPending: isDeleting } = useMutation({
     mutationFn: deleteGroomingService,
     onSuccess: () => {
-      toast.success("Servicio eliminado correctamente");
-      queryClient.invalidateQueries({
-        queryKey: ["groomingServices", patientId],
-      });
+      toast.success("Eliminado", "Servicio removido correctamente");
+      queryClient.invalidateQueries({ queryKey: ["groomingServices", patient._id] });
       setServiceToDelete(null);
     },
     onError: (error: Error) => toast.error("Error al eliminar", error.message),
@@ -69,9 +72,7 @@ export default function GroomingServiceListView() {
 
   const getPaymentInfo = (service: GroomingService) => {
     const invoice = invoices.find((inv) =>
-      inv.items.some(
-        (item) => item.type === "grooming" && item.resourceId === service._id
-      )
+      inv.items.some((item) => item.type === "grooming" && item.resourceId === service._id)
     );
 
     if (!invoice)
@@ -84,182 +85,150 @@ export default function GroomingServiceListView() {
     if (invoice.paymentStatus === "Pagado")
       return {
         status: "Pagado",
-        color:
-          "text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400",
+        color: "text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400",
         icon: CheckCircle2,
       };
     if (invoice.paymentStatus === "Pendiente")
       return {
         status: "Pendiente",
-        color:
-          "text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400",
+        color: "text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400",
         icon: CreditCard,
       };
 
     return {
       status: "Parcial",
-      color:
-        "text-amber-600 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400",
+      color: "text-amber-600 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400",
       icon: Clock,
     };
   };
 
-  const formatDate = (date: string) =>
-    new Intl.DateTimeFormat("es-ES", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    }).format(new Date(date));
+  // ══════════════════════════════════════════
+  // Handler para abrir detalle con posición
+  // ══════════════════════════════════════════
+  const handleOpenDetail = (service: GroomingService, e: React.MouseEvent<HTMLButtonElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setTriggerRect(rect);
+    setViewPaymentInfo(getPaymentInfo(service));
+    setServiceToView(service);
+  };
 
   const sortedServices = [...services].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
-  if (isLoading)
+  if (isLoading) {
     return (
       <div className="h-64 flex items-center justify-center">
-        <Loader2 className="animate-spin text-biovet-500 w-8 h-8" />
+        <Loader2 className="animate-spin text-pink-500 w-8 h-8" />
       </div>
     );
+  }
 
   return (
-    <>
-      <div className="flex flex-col bg-surface-50 dark:bg-dark-300 min-h-screen lg:min-h-0 lg:h-[calc(100vh-14rem)] lg:rounded-2xl lg:border lg:border-surface-200 lg:dark:border-dark-100 lg:overflow-hidden">
-        {/* Header */}
-        <div className="sticky top-0 lg:static z-40 bg-pink-50 dark:bg-dark-200 border-b border-surface-200 dark:border-dark-100 px-4 py-3 shrink-0">
-          <div className="flex items-center justify-between w-full max-w-4xl mx-auto">
-            <div className="flex items-center gap-3">
-              <h1 className="text-xl font-bold font-heading text-slate-800 dark:text-white">
-                Estética y Baño
-              </h1>
-              {services.length > 0 && (
-                <span className="badge badge-neutral">{services.length}</span>
-              )}
-            </div>
-            <Link
-              to="create"
-              className="btn-primary bg-pink-500 hover:bg-pink-600 border-pink-600 shadow-lg active:scale-95 transition-transform xs:rounded-full w-10 h-10 lg:w-auto lg:h-auto p-0 lg:px-4 lg:py-2.5 flex items-center justify-center gap-2"
-            >
-              <PlusCircle size={20} />
-              <span className="hidden lg:inline font-semibold">
-                Nuevo Servicio
-              </span>
-            </Link>
-          </div>
+    <TimelineLayout
+      title="Estética"
+      subtitle={`Historial de ${patient?.name}`}
+      headerIcon={Scissors}
+      count={services.length}
+      countLabel="servicios"
+      onAdd={() => navigate("create")}
+      variant="estetica"
+    >
+      {sortedServices.length === 0 ? (
+        <div className="ml-8 text-center py-16 border-2 border-dashed border-pink-200 dark:border-pink-900 rounded-2xl">
+          <FileSearch className="w-12 h-12 mx-auto text-pink-300 dark:text-pink-700 mb-3 opacity-50" />
+          <p className="text-slate-400 dark:text-slate-500 font-medium mb-1">Sin historial de estética</p>
+          <p className="text-xs text-slate-300 dark:text-slate-600">Registra el primer servicio de peluquería</p>
         </div>
+      ) : (
+        sortedServices.map((service) => {
+          const payment = getPaymentInfo(service);
+          const StatusIcon = payment.icon;
 
-        {/* Contenido */}
-        <div className="flex-1 lg:overflow-y-auto custom-scrollbar p-4 pb-24">
-          <div className="max-w-4xl mx-auto relative pl-4 lg:pl-0">
-            {sortedServices.length > 0 && (
-              <div className="absolute left-5 top-4 bottom-4 w-0.5 bg-slate-200 dark:bg-dark-100 z-0" />
-            )}
+          return (
+            <div key={service._id} className="relative flex gap-6 md:gap-8 group animate-fade-in">
+              {/* Icono Timeline */}
+              <div className="relative z-10 shrink-0 w-5 h-5 md:w-6 md:h-6 rounded-lg border border-pink-200 dark:border-pink-800 bg-pink-50 dark:bg-pink-950/30 flex items-center justify-center text-pink-500 shadow-sm transition-transform group-hover:scale-110">
+                <Scissors size={14} strokeWidth={2.5} />
+              </div>
 
-            <div className="space-y-6 relative">
-              {sortedServices.length === 0 ? (
-                <div className="text-center py-20 ml-10 border-2 border-dashed border-slate-200 dark:border-dark-100 rounded-2xl">
-                  <FileSearch className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3 opacity-50" />
-                  <p className="text-slate-400 dark:text-slate-500 font-medium mb-1">
-                    Sin historial de estética
-                  </p>
-                  <p className="text-xs text-slate-300 dark:text-slate-600">
-                    Registra el primer servicio de peluquería
-                  </p>
-                </div>
-              ) : (
-                sortedServices.map((service) => {
-                  const payment = getPaymentInfo(service);
-                  const StatusIcon = payment.icon;
-
-                  return (
-                    <div
-                      key={service._id}
-                      className="relative flex items-start gap-5 group"
-                    >
-                      <div className="shrink-0 relative z-10 w-10 h-10 rounded-full flex items-center justify-center border-4 border-surface-50 dark:border-dark-300 shadow-sm bg-white dark:bg-dark-200 text-pink-500">
-                        <Scissors size={18} />
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="bg-white dark:bg-dark-200 p-5 rounded-2xl rounded-tl-sm shadow-sm border border-surface-200 dark:border-dark-100 hover:shadow-md transition-all duration-200 relative">
-                          {/* Acciones */}
-                          <div className="absolute top-4 right-4 flex gap-1.5">
-                            {/* Badge Pago */}
-                            <div
-                              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide mr-2 ${payment.color}`}
-                            >
-                              <StatusIcon size={12} />
-                              {payment.status}
-                            </div>
-
-                            {/* Botones */}
-                            <Link
-  to={`${service._id}`} // <--- Esto navega a la ruta de detalle
-  className="p-1.5 rounded-lg text-surface-400 hover:text-biovet-500 hover:bg-biovet-50 dark:hover:bg-biovet-900/30 transition-colors"
-  title="Ver Detalle"
->
-  <Eye size={15} />
-</Link>
-                            <button
-                              onClick={() => setServiceToEdit(service)}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-biovet-500 hover:bg-biovet-50 dark:hover:bg-biovet-900/30 transition-colors"
-                              title="Editar"
-                            >
-                              <Pencil size={15} />
-                            </button>
-                            <button
-                              onClick={() => setServiceToDelete(service)}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/30 transition-colors"
-                              title="Eliminar"
-                            >
-                              <Trash2 size={15} />
-                            </button>
-                          </div>
-
-                          {/* Info Principal */}
-                          <div className="mb-3 pr-32">
-                            <div className="flex items-center gap-2 text-pink-600 dark:text-pink-400 mb-1">
-                              <Calendar size={14} />
-                              <span className="text-sm font-bold uppercase tracking-wider">
-                                {formatDate(service.date)}
-                              </span>
-                            </div>
-                            <h3 className="text-lg font-bold text-slate-700 dark:text-white leading-tight">
-                              {service.service}
-                            </h3>
-                          </div>
-
-                          {service.specifications && (
-                            <div className="bg-surface-50 dark:bg-dark-300/50 p-2.5 rounded-xl border border-surface-200 dark:border-dark-100 mb-3">
-                              <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
-                                {service.specifications}
-                              </p>
-                            </div>
-                          )}
-
-                          <div className="flex items-center justify-between pt-3 border-t border-dashed border-surface-100 dark:border-dark-100">
-                            <span className="text-sm font-bold text-slate-800 dark:text-white">
-                              ${service.cost.toFixed(2)}
-                            </span>
-                            <Link
-                              to={`${service._id}`}
-                              className="text-pink-600 dark:text-pink-400 hover:text-pink-800 dark:hover:text-pink-300 font-bold text-sm flex items-center gap-1 transition-colors"
-                            >
-                              Ver detalle <ChevronRight size={16} />
-                            </Link>
-                          </div>
-                        </div>
-                      </div>
+              {/* Contenido */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <h4 className="text-base md:text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tight">
+                      {service.service}
+                    </h4>
+                    <div className="flex flex-wrap items-center gap-x-4 text-xs text-slate-500">
+                      <span className="font-bold text-slate-700 dark:text-slate-300">
+                        {new Date(service.date).toLocaleDateString()}
+                      </span>
+                      <span className="font-bold text-pink-600 dark:text-pink-400">
+                        ${service.cost.toFixed(2)}
+                      </span>
                     </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+                  </div>
 
-      {/* Modales */}
+                  {/* Acciones */}
+                  <div className="flex items-center gap-1">
+                    {/* Badge Estado Pago */}
+                    <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold uppercase ${payment.color}`}>
+                      <StatusIcon size={12} />
+                      <span className="hidden sm:inline">{payment.status}</span>
+                    </div>
+
+                    <button
+                      onClick={() => setServiceToEdit(service)}
+                      className="p-2 text-slate-400 hover:text-pink-500 transition-colors"
+                      title="Editar"
+                    >
+                      <Pencil size={18} />
+                    </button>
+                    <button
+                      onClick={() => setServiceToDelete(service)}
+                      className="p-2 text-slate-400 hover:text-danger-500 transition-colors"
+                      title="Eliminar"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Especificaciones */}
+                {service.specifications && (
+                  <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 italic line-clamp-2">
+                    "{service.specifications}"
+                  </p>
+                )}
+
+                {/* Botón Ver Detalle */}
+                <div className="mt-3 flex justify-end">
+                  <button
+                    onClick={(e) => handleOpenDetail(service, e)}
+                    className="text-pink-600 dark:text-pink-400 hover:text-pink-800 dark:hover:text-pink-300 font-bold text-sm flex items-center gap-1 transition-colors"
+                  >
+                    Ver Detalle <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })
+      )}
+
+      {/* Modal Ver Detalle */}
+      <GroomingServiceDetailModal
+        isOpen={!!serviceToView}
+        onClose={() => {
+          setServiceToView(null);
+          setViewPaymentInfo(null);
+        }}
+        service={serviceToView}
+        paymentInfo={viewPaymentInfo || undefined}
+        triggerRect={triggerRect}
+      />
+
+      {/* Modal Editar */}
       {serviceToEdit && (
         <EditGroomingServiceModal
           isOpen={!!serviceToEdit}
@@ -268,18 +237,17 @@ export default function GroomingServiceListView() {
         />
       )}
 
+      {/* Modal Eliminar */}
       <ConfirmationModal
         isOpen={!!serviceToDelete}
         onClose={() => setServiceToDelete(null)}
-        onConfirm={() =>
-          serviceToDelete?._id && removeService(serviceToDelete._id)
-        }
+        onConfirm={() => serviceToDelete?._id && removeService(serviceToDelete._id)}
         variant="danger"
         title="Eliminar Servicio"
-        message="¿Estás seguro de eliminar este servicio de estética? Esta acción no se puede deshacer."
+        message="¿Eliminar este servicio de estética?"
         confirmText="Eliminar"
         isLoading={isDeleting}
       />
-    </>
+    </TimelineLayout>
   );
 }

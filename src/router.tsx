@@ -43,16 +43,13 @@ import CreateGroomingServiceView from "./views/grooming/CreateGroomingServiceVie
 import GroomingServiceDetailView from "./views/grooming/GroomingServiceDetailView";
 import TreatmentListView from "./views/treatments/TreatmentListView";
 import CreateTreatmentView from "./views/treatments/CreateTreatmentView";
-import TreatmentDetailView from "./views/treatments/TreatmentDetailView";
 import CreateVeterinaryServiceView from "./views/veterinary-services/CreateVeterinaryServiceView";
-import VeterinaryServiceDetailView from "./views/veterinary-services/VeterinaryServiceDetailView";
 import VeterinaryServiceListView from "./views/veterinary-services/VeterinaryServiceListView";
 import RecipeListView from "./views/recipes/RecipeListView";
 import CreateRecipeView from "./views/recipes/CreateRecipeView";
 import RecipeDetailView from "./views/recipes/RecipeDetailView";
 import MedicalStudyListView from "./views/medical-studies/MedicalStudyListView";
 import CreateMedicalStudyView from "./views/medical-studies/CreateMedicalStudyView";
-import MedicalStudyDetailView from "./views/medical-studies/medical-studies/MedicalStudyDetailView";
 import MedicalOrderListView from "./views/medical-order/MedicalOrderListView";
 import CreateMedicalOrderView from "./views/medical-order/CreateMedicalOrderView";
 import MedicalOrderDetailView from "./views/medical-order/MedicalOrderDetailView";
@@ -141,10 +138,9 @@ export default function Router() {
                                 <Route path="appointments/:appointmentId/edit" element={<EditAppointmentView />} />
                                 <Route path="services" element={<VeterinaryServiceListView />} />
                                 <Route path="services/create" element={<CreateVeterinaryServiceView />} />
-                                <Route path="services/:serviceId" element={<VeterinaryServiceDetailView />} />
                                 <Route path="studies" element={<MedicalStudyListView />} />
                                 <Route path="studies/create" element={<CreateMedicalStudyView />} />
-                                <Route path="studies/:studyId" element={<MedicalStudyDetailView />} />
+                                
                                 <Route path="prescriptions" element={<RecipeListView />} />
                                 <Route path="prescriptions/create" element={<CreateRecipeView />} />
                                 <Route path="prescriptions/:recipeId" element={<RecipeDetailView />} />
@@ -164,7 +160,6 @@ export default function Router() {
                                 <Route path="grooming/:serviceId" element={<GroomingServiceDetailView />} />
                                 <Route path="treatments" element={<TreatmentListView />} />
                                 <Route path="treatments/create" element={<CreateTreatmentView />} />
-                                <Route path="treatments/:treatmentId" element={<TreatmentDetailView />} />
                             </Route>
                         </Route>
 

@@ -1,3 +1,5 @@
+// src/layouts/PatientLayout.tsx
+
 import { Outlet, NavLink, useParams, Navigate, useNavigate, useLocation, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getPatientById } from "@/api/patientAPI";
@@ -23,24 +25,30 @@ import {
 import { useState } from "react";
 import { PatientBottomTabs } from "./PatientBottomTabs";
 import { PatientMobileMenu } from "@/components/patients/PatientMobileMenu";
-import PhotoModal from "@/components/patients/PhotoModal";
 import { EditPatientModal } from "@/components/patients/EditPatientModal";
+import PhotoViewerModal from "@/components/ui/PhotoViewerModal";
 
 export default function PatientLayout() {
   const { patientId } = useParams<{ patientId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [photoTriggerRect, setPhotoTriggerRect] = useState<DOMRect | null>(null); // 👈 Nuevo estado
 
-  // --- LÓGICA DE MODALES POR URL (Sincroniza PC y Móvil) ---
+  // --- LÓGICA DE MODALES POR URL ---
   const queryParams = new URLSearchParams(location.search);
   const isEditModalOpen = queryParams.get("editPatient") === "true";
   const isPhotoModalOpen = queryParams.get("updatePhoto") === "true";
 
-  // Funciones para abrir/cerrar limpiando la URL
   const openEditModal = () => navigate("?editPatient=true", { replace: true });
-  const openPhotoModal = () => navigate("?updatePhoto=true", { replace: true });
   const handleCloseModal = () => navigate(location.pathname, { replace: true });
+
+  // 👇 Nueva función para abrir el modal de foto con posición
+  const openPhotoModal = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setPhotoTriggerRect(rect);
+    navigate("?updatePhoto=true", { replace: true });
+  };
 
   const { data: patient, isLoading, isError } = useQuery({
     queryKey: ["patient", patientId],
@@ -95,14 +103,17 @@ export default function PatientLayout() {
               </button>
               
               <div className="flex gap-5">
+                {/* 👇 Foto con onClick actualizado */}
                 <div 
-                  onClick={openPhotoModal} // Uso de URL
-                  className="group relative w-24 h-24 rounded-2xl overflow-hidden bg-slate-200 shadow-md cursor-pointer"
+                  onClick={openPhotoModal}
+                  className="group relative w-24 h-24 rounded-2xl overflow-hidden bg-slate-200 dark:bg-slate-700 shadow-md cursor-pointer"
                 >
                   {patient.photo ? (
                     <img src={patient.photo} className="w-full h-full object-cover" alt={patient.name} />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center font-bold text-3xl">{patient.name[0]}</div>
+                    <div className="w-full h-full flex items-center justify-center font-bold text-3xl text-slate-400 dark:text-slate-500 bg-linear-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-800">
+                      {patient.name[0]}
+                    </div>
                   )}
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <Camera size={20} className="text-white" />
@@ -122,8 +133,8 @@ export default function PatientLayout() {
                     <span>{calculateAge(patient.birthDate)}</span>
                   </div>
                   <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs">
-                    <div className="flex items-center gap-2"><Weight size={14} /> {patient.weight} kg</div>
-                    <div className="flex items-center gap-2"><User size={14} /> <Link to={`/owners/${ownerId}`} className="text-biovet-600 font-semibold">{ownerName}</Link></div>
+                    <div className="flex items-center gap-2 text-slate-500"><Weight size={14} /> {patient.weight} kg</div>
+                    <div className="flex items-center gap-2"><User size={14} className="text-slate-500" /> <Link to={`/owners/${ownerId}`} className="text-biovet-600 font-semibold">{ownerName}</Link></div>
                   </div>
                 </div>
               </div>
@@ -134,7 +145,7 @@ export default function PatientLayout() {
             {navItems.map(item => (
               <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => `
                 flex items-center gap-1 px-3 py-3 text-[12px] font-medium border-b-2 transition-all
-                ${isActive ? 'border-biovet-add text-biovet-add bg-biovet-add/5' : 'border-transparent text-slate-500 hover:bg-slate-50'}
+                ${isActive ? 'border-biovet-add text-biovet-add bg-biovet-add/5' : 'border-transparent text-slate-500 hover:bg-slate-50 dark:hover:bg-dark-100'}
               `}>
                 <item.icon size={16} /> {item.label}
               </NavLink>
@@ -149,11 +160,26 @@ export default function PatientLayout() {
 
       {/* MOBILE Layout */}
       <div className="lg:hidden flex flex-col min-h-screen">
-        <div className="sticky top-0 z-40 bg-white dark:bg-dark-200 border-b border-surface-200">
+        <div className="sticky top-0 z-40 bg-white dark:bg-dark-200 border-b border-surface-200 dark:border-dark-100">
           <div className="px-4 py-3 flex items-center gap-3">
-            <button onClick={() => navigate(-1)} className="p-2 -ml-2"><ArrowLeft size={24} /></button>
+            <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-slate-500"><ArrowLeft size={24} /></button>
+            
+          
+            <div 
+              onClick={openPhotoModal}
+              className="w-10 h-10 rounded-xl overflow-hidden bg-slate-200 dark:bg-slate-700 cursor-pointer"
+            >
+              {patient.photo ? (
+                <img src={patient.photo} className="w-full h-full object-cover" alt={patient.name} />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center font-bold text-slate-400">
+                  {patient.name[0]}
+                </div>
+              )}
+            </div>
+            
             <div className="flex-1 min-w-0">
-              <h1 className="text-lg font-bold truncate">{patient.name}</h1>
+              <h1 className="text-lg font-bold truncate text-slate-900 dark:text-white">{patient.name}</h1>
               <p className="text-xs text-slate-500">{patient.breed} • {patient.sex}</p>
             </div>
             <button onClick={() => setMobileMenuOpen(true)} className="p-1 text-slate-400"><MoreVertical size={20} /></button>
@@ -166,13 +192,15 @@ export default function PatientLayout() {
 
         <PatientBottomTabs />
 
-        {/* MENÚ MÓVIL  */}
         <PatientMobileMenu 
           isOpen={mobileMenuOpen} 
           onClose={() => setMobileMenuOpen(false)} 
           patient={patient} 
           onEditClick={openEditModal} 
-          onPhotoClick={openPhotoModal} 
+          onPhotoClick={(e) => {
+            setMobileMenuOpen(false);
+            openPhotoModal(e);
+          }} 
         />
       </div>
 
@@ -182,10 +210,12 @@ export default function PatientLayout() {
         patient={patient} 
       />
       
-      <PhotoModal 
+      {/* 👇 Nuevo modal con efecto zoom */}
+      <PhotoViewerModal 
         isOpen={isPhotoModalOpen} 
         onClose={handleCloseModal} 
-        patient={patient} 
+        patient={patient}
+        triggerRect={photoTriggerRect}
       />
 
     </div>

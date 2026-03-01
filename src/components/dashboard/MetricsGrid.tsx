@@ -1,9 +1,11 @@
+// src/components/dashboard/MetricsGrid.tsx
+
 import {
   DollarSign,
   CreditCard,
   TrendingUp,
 } from "lucide-react";
-import { DualCurrencyCard } from "./DualCurrencyCard";
+import { StatCard } from "@/components/ui/StatCard";
 import type { CurrencyAmounts } from "../../constants/dashboardConstants";
 import type { RevenueAmounts } from "../../hooks/useDashboardData";
 
@@ -29,36 +31,30 @@ export function MetricsGrid({
 }: MetricsGridProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {/* Ingresos Hoy - Verde esmeralda */}
-      <DualCurrencyCard
-        title="Ingresos Hoy"
+      <StatCard
+        label="Ingresos Hoy"
+        value={0}
         amounts={todayRevenue}
         icon={DollarSign}
-        iconBgColor="bg-emerald-500/10"
-        color="text-emerald-500"
-        bgColor="bg-card border-emerald-500/20 hover:border-emerald-500/50 shadow-soft hover:shadow-emerald-500/10"
+        variant="success"
       />
       
-      {/* Por Cobrar - Ámbar con alerta */}
-      <DualCurrencyCard
-        title="Por Cobrar"
+      <StatCard
+        label="Por Cobrar"
+        value={0}
         amounts={pendingDebt}
-        subtitle={`${pendingInvoicesCount} facturas pendientes`}
         icon={CreditCard}
-        iconBgColor="bg-amber-500/10"
-        color="text-amber-500"
-        bgColor="bg-card border-amber-500/20 hover:border-amber-500/50 shadow-soft hover:shadow-amber-500/10"
+        variant={(pendingDebt.Bs > 0 || pendingDebt.USD > 0) ? "warning" : "success"}
+        subtitle={`${pendingInvoicesCount} facturas pendientes`}
         onClick={onPendingDebtClick}
       />
       
-      {/* Ingresos del Mes - Azul vet neón */}
-      <DualCurrencyCard
-        title="Ingresos del Mes"
+      <StatCard
+        label="Ingresos del Mes"
+        value={0}
         amounts={monthRevenue}
         icon={TrendingUp}
-        iconBgColor="bg-vet-primary/10"
-        color="text-vet-accent"
-        bgColor="bg-card border-vet-accent/20 hover:border-vet-accent/50 shadow-soft hover:shadow-vet-accent/10"
+        variant="primary"
       />
     </div>
   );

@@ -1,4 +1,5 @@
 // src/components/ui/ConfirmationModal.tsx
+
 import { X, AlertTriangle, AlertCircle, Info, CheckCircle, type LucideIcon } from "lucide-react";
 import { createPortal } from "react-dom";
 import { useEffect, useState, type ReactNode } from "react";
@@ -80,7 +81,7 @@ export default function ConfirmationModal({
       });
     } else {
       setIsVisible(false);
-      const timer = setTimeout(() => setIsAnimating(false), 200);
+      const timer = setTimeout(() => setIsAnimating(false), 300);
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
@@ -102,103 +103,103 @@ export default function ConfirmationModal({
   const VariantIcon = styles.Icon;
 
   const modalContent = (
-    <div className="fixed inset-0 z-9999 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div
-        className={`
-          absolute inset-0 bg-black/40 backdrop-blur-sm
-          transition-opacity duration-200
-          ${isVisible ? "opacity-100" : "opacity-0"}
-        `}
-        onClick={!isLoading ? onClose : undefined}
-      />
-
+    <div
+      className={`
+        fixed inset-0 z-9999 flex items-center justify-center p-4
+        transition-all duration-300 ease-out
+        ${isVisible ? "bg-black/50 backdrop-blur-sm" : "bg-transparent"}
+      `}
+      onClick={!isLoading ? onClose : undefined}
+    >
       {/* Modal */}
       <div
         className={`
-          relative w-full max-w-sm
-          transition-all duration-200 ease-out
+          w-full max-w-sm
+          bg-white dark:bg-dark-200 rounded-2xl shadow-2xl overflow-hidden 
+          border border-surface-200 dark:border-slate-800
+          transition-all duration-300
           ${isVisible 
             ? "opacity-100 scale-100 translate-y-0" 
-            : "opacity-0 scale-95 translate-y-4"
+            : "opacity-0 scale-90 translate-y-4"
           }
+          ${isLoading ? "pointer-events-none" : ""}
         `}
+        style={{ transitionTimingFunction: "cubic-bezier(0.32, 0.72, 0, 1)" }}
+        onClick={(e) => e.stopPropagation()}
       >
-        <div className="bg-white dark:bg-dark-200 rounded-2xl shadow-xl overflow-hidden border border-surface-200 dark:border-slate-800">
-          {/* Header con botón cerrar */}
-          <div className="flex justify-end p-3 pb-0">
+        {/* Header con botón cerrar */}
+        <div className="flex justify-end p-3 pb-0">
+          <button
+            onClick={onClose}
+            disabled={isLoading}
+            className="
+              p-1.5 rounded-lg transition-colors
+              text-slate-400 hover:text-slate-600 hover:bg-surface-100
+              dark:text-slate-500 dark:hover:text-slate-300 dark:hover:bg-dark-100
+              disabled:opacity-50 disabled:cursor-not-allowed
+            "
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Contenido centrado */}
+        <div className="px-6 pb-6 text-center">
+          {/* Icono */}
+          <div
+            className={`
+              w-14 h-14 mx-auto mb-4 rounded-xl
+              flex items-center justify-center
+              ${styles.iconBg}
+            `}
+          >
+            <VariantIcon className={`w-7 h-7 ${styles.iconColor}`} />
+          </div>
+
+          {/* Título */}
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2 font-heading">
+            {title}
+          </h3>
+
+          {/* Mensaje */}
+          <div className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+            {typeof message === "string" ? <p>{message}</p> : message}
+          </div>
+
+          {/* Botones */}
+          <div className="flex gap-3">
             <button
               onClick={onClose}
               disabled={isLoading}
-              className="
-                p-1.5 rounded-lg transition-colors
-                text-slate-400 hover:text-slate-600 hover:bg-surface-100
-                dark:text-slate-500 dark:hover:text-slate-300 dark:hover:bg-dark-100
-                disabled:opacity-50 disabled:cursor-not-allowed
-              "
+              className="flex-1 btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <X className="w-4 h-4" />
+              {cancelText}
             </button>
-          </div>
 
-          {/* Contenido centrado */}
-          <div className="px-6 pb-6 text-center">
-            {/* Icono */}
-            <div
+            <button
+              onClick={onConfirm}
+              disabled={isLoading}
               className={`
-                w-14 h-14 mx-auto mb-4 rounded-xl
-                flex items-center justify-center
-                ${styles.iconBg}
+                flex-1 inline-flex items-center justify-center gap-2
+                px-5 py-2.5 text-sm font-semibold rounded-lg
+                transition-all duration-200
+                disabled:opacity-50 disabled:cursor-not-allowed
+                active:scale-[0.98]
+                ${styles.buttonClass}
               `}
             >
-              <VariantIcon className={`w-7 h-7 ${styles.iconColor}`} />
-            </div>
-
-            {/* Título */}
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2 font-heading">
-              {title}
-            </h3>
-
-            {/* Mensaje */}
-            <div className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-              {typeof message === "string" ? <p>{message}</p> : message}
-            </div>
-
-            {/* Botones */}
-            <div className="flex gap-3">
-              <button
-                onClick={onClose}
-                disabled={isLoading}
-                className="flex-1 btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {cancelText}
-              </button>
-
-              <button
-                onClick={onConfirm}
-                disabled={isLoading}
-                className={`
-                  flex-1 inline-flex items-center justify-center gap-2
-                  px-5 py-2.5 text-sm font-semibold rounded-lg
-                  transition-all duration-200
-                  disabled:opacity-50 disabled:cursor-not-allowed
-                  active:scale-[0.98]
-                  ${styles.buttonClass}
-                `}
-              >
-                {isLoading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>{loadingText}</span>
-                  </>
-                ) : (
-                  <>
-                    {ConfirmIcon && <ConfirmIcon className="w-4 h-4" />}
-                    <span>{confirmText}</span>
-                  </>
-                )}
-              </button>
-            </div>
+              {isLoading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>{loadingText}</span>
+                </>
+              ) : (
+                <>
+                  {ConfirmIcon && <ConfirmIcon className="w-4 h-4" />}
+                  <span>{confirmText}</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
       </div>

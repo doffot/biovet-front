@@ -1,64 +1,76 @@
+// src/views/medicalStudy/MedicalStudyListView.tsx
+
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ScanLine,
-  PlusCircle,
   Trash2,
   Loader2,
   Download,
-  Eye
+  FileSearch,
+  ChevronRight,
 } from "lucide-react";
 import { getMedicalStudiesByPatient, deleteMedicalStudy } from "@/api/medicalStudyAPI";
 import { toast } from "@/components/Toast";
 import ConfirmationModal from "@/components/ConfirmationModal";
+import MedicalStudyDetailModal from "@/components/medicalStudy/MedicalStudyDetailModal";
+import TimelineLayout from "@/components/ui/TimelineLayout";
 import type { MedicalStudy } from "@/types/medicalStudy";
+import type { Patient } from "@/types/patient";
 
 export default function MedicalStudyListView() {
-  const { patientId } = useParams<{ patientId: string }>();
+  const contextData = useOutletContext<any>();
+  const patient: Patient = contextData.patient || contextData;
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
   const [studyToDelete, setStudyToDelete] = useState<{ id: string; name: string } | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
+  // ══════════════════════════════════════════
+  // Estados para el modal de detalle
+  // ══════════════════════════════════════════
+  const [studyToView, setStudyToView] = useState<MedicalStudy | null>(null);
+  const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
+
   const { data: studies = [], isLoading } = useQuery({
-    queryKey: ["medicalStudies", patientId],
-    queryFn: () => getMedicalStudiesByPatient(patientId!),
-    enabled: !!patientId,
+    queryKey: ["medicalStudies", patient._id],
+    queryFn: () => getMedicalStudiesByPatient(patient._id),
+    enabled: !!patient._id,
   });
 
   const { mutate: removeStudy, isPending: isDeleting } = useMutation({
     mutationFn: deleteMedicalStudy,
     onSuccess: () => {
-      toast.success("Estudio Eliminado", "El registro ha sido removido correctamente.");
-      queryClient.invalidateQueries({ queryKey: ["medicalStudies", patientId] });
+      toast.success("Eliminado", "Estudio removido correctamente");
+      queryClient.invalidateQueries({ queryKey: ["medicalStudies", patient._id] });
       setStudyToDelete(null);
     },
     onError: (error: Error) => toast.error("Error al eliminar", error.message),
   });
 
-  // Lógica de descarga inteligente (reutilizada)
   const handleDownload = async (study: MedicalStudy) => {
     setDownloadingId(study._id!);
     try {
       const response = await fetch(study.pdfFile);
       if (!response.ok) throw new Error("Error de red");
-      
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      
-      // Nombre amigable: Tipo_Fecha.pdf
+
       const dateStr = new Date(study.date).toISOString().split("T")[0];
       const typeSafe = study.studyType.replace(/\s+/g, "_");
       link.download = `${typeSafe}_${dateStr}.pdf`;
-      
+
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
-      toast.success("Descarga iniciada", "El archivo se ha guardado correctamente.");
+
+      toast.success("Descarga iniciada", "Archivo guardado correctamente");
     } catch (error) {
       console.warn("Descarga fallida, abriendo pestaña...", error);
       window.open(study.pdfFile, "_blank");
@@ -67,119 +79,142 @@ export default function MedicalStudyListView() {
     }
   };
 
-  const formatDate = (date: string) =>
-    new Intl.DateTimeFormat("es-ES", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(date));
+  // ══════════════════════════════════════════
+  // Handler para abrir detalle con posición
+  // ══════════════════════════════════════════
+  const handleOpenDetail = (study: MedicalStudy, e: React.MouseEvent<HTMLButtonElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setTriggerRect(rect);
+    setStudyToView(study);
+  };
 
   const sortedStudies = [...studies].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
-  if (isLoading) return <div className="h-64 flex items-center justify-center"><Loader2 className="animate-spin text-biovet-500 w-8 h-8" /></div>;
+  if (isLoading) {
+    return (
+      <div className="h-64 flex items-center justify-center">
+        <Loader2 className="animate-spin text-cyan-500 w-8 h-8" />
+      </div>
+    );
+  }
 
   return (
-    <>
-      <div className="flex flex-col bg-surface-50 dark:bg-dark-300 min-h-screen lg:min-h-0 lg:h-[calc(100vh-14rem)] lg:rounded-2xl lg:border lg:border-surface-200 lg:dark:border-dark-100 lg:overflow-hidden">
-        
-        {/* Header Compacto */}
-        <div className="sticky top-0 lg:static z-40 bg-indigo-50 dark:bg-dark-200 border-b border-surface-200 dark:border-dark-100 px-4 py-3 shrink-0">
-          <div className="flex items-center justify-between w-full max-w-4xl mx-auto">
-            <div className="flex items-center gap-3">
-              <h1 className="text-lg font-bold font-heading text-slate-800 dark:text-white">Estudios Médicos</h1>
-              {studies.length > 0 && <span className="badge badge-neutral text-xs">{studies.length}</span>}
-            </div>
-            <Link to="create" className="btn-primary bg-indigo-500 hover:bg-indigo-600 border-indigo-600 shadow-sm active:scale-95 transition-transform xs:rounded-full w-9 h-9 lg:w-auto lg:h-auto p-0 lg:px-3 lg:py-2 flex items-center justify-center gap-2">
-              <PlusCircle size={18} />
-              <span className="hidden lg:inline font-semibold text-xs">Subir</span>
-            </Link>
-          </div>
+    <TimelineLayout
+      title="Estudios"
+      subtitle={`Historial de ${patient?.name}`}
+      headerIcon={ScanLine}
+      count={studies.length}
+      countLabel="estudios"
+      onAdd={() => navigate("create")}
+      variant="estudios"
+    >
+      {sortedStudies.length === 0 ? (
+        <div className="ml-8 text-center py-16 border-2 border-dashed border-cyan-200 dark:border-cyan-900 rounded-2xl">
+          <FileSearch className="w-12 h-12 mx-auto text-cyan-300 dark:text-cyan-700 mb-3 opacity-50" />
+          <p className="text-slate-400 dark:text-slate-500 font-medium mb-1">Sin estudios médicos registrados</p>
+          <p className="text-xs text-slate-300 dark:text-slate-600">Sube el primer archivo de imagen</p>
         </div>
+      ) : (
+        sortedStudies.map((study) => (
+          <div key={study._id} className="relative flex gap-6 md:gap-8 group animate-fade-in">
+            {/* Icono Timeline */}
+            <div className="relative z-10 shrink-0 w-5 h-5 md:w-6 md:h-6 rounded-lg border border-cyan-200 dark:border-cyan-800 bg-cyan-50 dark:bg-cyan-950/30 flex items-center justify-center text-cyan-500 shadow-sm transition-transform group-hover:scale-110">
+              <ScanLine size={14} strokeWidth={2.5} />
+            </div>
 
-        {/* Contenido */}
-        <div className="flex-1 lg:overflow-y-auto custom-scrollbar p-3 pb-24">
-          <div className="max-w-4xl mx-auto relative pl-3 lg:pl-0">
-            {sortedStudies.length > 0 && <div className="absolute left-4 top-4 bottom-4 w-0.5 bg-slate-200 dark:bg-dark-100 z-0" />}
-
-            <div className="space-y-3 relative">
-              {sortedStudies.length === 0 ? (
-                <div className="text-center py-16 ml-8 border-2 border-dashed border-slate-200 dark:border-dark-100 rounded-xl">
-                  <ScanLine className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-2 opacity-50" />
-                  <p className="text-slate-400 dark:text-slate-500 font-medium text-sm">Sin estudios registrados</p>
-                </div>
-              ) : (
-                sortedStudies.map((study) => (
-                  <div key={study._id} className="relative flex items-center gap-4 group">
-                    {/* Dot Timeline */}
-                    <div className="shrink-0 relative z-10 w-8 h-8 rounded-full flex items-center justify-center border-2 border-surface-50 dark:border-dark-300 shadow-sm bg-white dark:bg-dark-200 text-indigo-500">
-                      <ScanLine size={14} />
-                    </div>
-
-                    {/* Card Compacta */}
-                    <div className="flex-1 min-w-0">
-                      <div className="bg-white dark:bg-dark-200 p-3 rounded-xl border border-surface-200 dark:border-dark-100 hover:shadow-sm transition-all duration-200 relative flex items-center justify-between gap-3">
-                        
-                        {/* Info Izquierda */}
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <h3 className="text-sm font-bold text-slate-700 dark:text-white truncate">{study.studyType}</h3>
-                            <span className="text-[10px] bg-slate-100 dark:bg-dark-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200 dark:border-dark-50 whitespace-nowrap">
-                              {formatDate(study.date)}
-                            </span>
-                          </div>
-                          <p className="text-xs text-slate-500 truncate">{study.professional}</p>
-                        </div>
-
-                        {/* Acciones Derecha */}
-                        <div className="flex items-center gap-1 shrink-0">
-                          <button 
-                            onClick={() => handleDownload(study)}
-                            disabled={downloadingId === study._id}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors disabled:opacity-50"
-                            title="Descargar PDF"
-                          >
-                            {downloadingId === study._id ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-                          </button>
-                          
-                          <Link 
-                            to={`${study._id}`} 
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-biovet-600 hover:bg-biovet-50 dark:hover:bg-biovet-900/30 transition-colors"
-                            title="Ver Detalle"
-                          >
-                            <Eye size={16} />
-                          </Link>
-
-                          <button 
-                            onClick={() => setStudyToDelete({ id: study._id!, name: study.studyType })} 
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/30 transition-colors"
-                            title="Eliminar"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-
-                      </div>
-                    </div>
+            {/* Contenido */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <h4 className="text-base md:text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tight">
+                    {study.studyType}
+                  </h4>
+                  <div className="flex flex-wrap items-center gap-x-4 text-xs text-slate-500">
+                    <span className="font-bold text-slate-700 dark:text-slate-300">
+                      {new Date(study.date).toLocaleDateString()}
+                    </span>
+                    <span className="opacity-70">{study.professional}</span>
                   </div>
-                ))
+                </div>
+
+                {/* Acciones */}
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleDownload(study)}
+                    disabled={downloadingId === study._id}
+                    className="p-2 text-slate-400 hover:text-cyan-500 transition-colors disabled:opacity-50"
+                    title="Descargar PDF"
+                  >
+                    {downloadingId === study._id ? (
+                      <Loader2 size={18} className="animate-spin" />
+                    ) : (
+                      <Download size={18} />
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => setStudyToDelete({ id: study._id!, name: study.studyType })}
+                    className="p-2 text-slate-400 hover:text-danger-500 transition-colors"
+                    title="Eliminar"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Diagnóstico presuntivo */}
+              {study.presumptiveDiagnosis && (
+                <div className="mt-3 bg-purple-50/50 dark:bg-purple-950/20 p-2.5 rounded-xl border border-purple-100 dark:border-purple-900/30">
+                  <p className="text-xs text-purple-700 dark:text-purple-400 line-clamp-1 italic">
+                    {study.presumptiveDiagnosis}
+                  </p>
+                </div>
               )}
+
+              {/* Notas (si no hay diagnóstico) */}
+              {!study.presumptiveDiagnosis && study.notes && (
+                <div className="mt-3 bg-warning-50/50 dark:bg-warning-950/20 p-2.5 rounded-xl border border-warning-100 dark:border-warning-900/30">
+                  <p className="text-xs text-warning-700 dark:text-warning-400 line-clamp-1 italic">
+                    {study.notes}
+                  </p>
+                </div>
+              )}
+
+              {/* Botón Ver Detalle */}
+              <div className="mt-3 flex justify-end">
+                <button
+                  onClick={(e) => handleOpenDetail(study, e)}
+                  className="text-cyan-600 dark:text-cyan-400 hover:text-cyan-800 dark:hover:text-cyan-300 font-bold text-sm flex items-center gap-1 transition-colors"
+                >
+                  Ver Detalle <ChevronRight size={16} />
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        ))
+      )}
 
+      {/* Modal Ver Detalle */}
+      <MedicalStudyDetailModal
+        isOpen={!!studyToView}
+        onClose={() => setStudyToView(null)}
+        study={studyToView}
+        triggerRect={triggerRect}
+      />
+
+      {/* Modal Eliminar */}
       <ConfirmationModal
         isOpen={!!studyToDelete}
         onClose={() => setStudyToDelete(null)}
         onConfirm={() => studyToDelete?.id && removeStudy(studyToDelete.id)}
         variant="danger"
         title="Eliminar Estudio"
-        message={
-          <span>
-            ¿Eliminar <strong>{studyToDelete?.name}</strong>? Esta acción es irreversible.
-          </span>
-        }
+        message={`¿Eliminar "${studyToDelete?.name}"?`}
         confirmText="Eliminar"
         isLoading={isDeleting}
       />
-    </>
+    </TimelineLayout>
   );
 }
