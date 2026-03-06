@@ -114,7 +114,7 @@ export async function updatePasswordWithToken({
   }
 }
 
-export async function getUser(): Promise<User> { // <-- Agregamos el retorno explícito
+export async function getUser(): Promise<User> { 
   try {
     const { data } = await api.get("/auth/user");
     const response = userSchema.safeParse(data);
@@ -123,7 +123,6 @@ export async function getUser(): Promise<User> { // <-- Agregamos el retorno exp
       return response.data;
     }
     
-    // Si safeParse falla, lanzamos error para que useQuery sepa que falló
     throw new Error("Formato de usuario inválido");
   } catch (error) {
     if (isAxiosError(error) && error.response) {
@@ -133,13 +132,7 @@ export async function getUser(): Promise<User> { // <-- Agregamos el retorno exp
   }
 }
 
-// =====================================================
-// ✅ NUEVAS FUNCIONES PARA PERFIL
-// =====================================================
 
-/**
- * Obtener perfil completo del veterinario
- */
 export async function getProfile(): Promise<UserProfile> {
   try {
     const { data } = await api.get("/auth/profile");
@@ -156,9 +149,7 @@ export async function getProfile(): Promise<UserProfile> {
   }
 }
 
-/**
- * Actualizar datos del perfil
- */
+
 export async function updateProfile(
   formData: UpdateProfileForm
 ): Promise<UserProfile> {

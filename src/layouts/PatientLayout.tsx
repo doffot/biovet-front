@@ -33,9 +33,8 @@ export default function PatientLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [photoTriggerRect, setPhotoTriggerRect] = useState<DOMRect | null>(null); // 👈 Nuevo estado
+  const [photoTriggerRect, setPhotoTriggerRect] = useState<DOMRect | null>(null); // 
 
-  // --- LÓGICA DE MODALES POR URL ---
   const queryParams = new URLSearchParams(location.search);
   const isEditModalOpen = queryParams.get("editPatient") === "true";
   const isPhotoModalOpen = queryParams.get("updatePhoto") === "true";
@@ -208,7 +207,7 @@ export default function PatientLayout() {
         patient={patient} 
       />
       
-      {/* 👇 Nuevo modal con efecto zoom */}
+     
       <PhotoViewerModal 
         isOpen={isPhotoModalOpen} 
         onClose={handleCloseModal} 

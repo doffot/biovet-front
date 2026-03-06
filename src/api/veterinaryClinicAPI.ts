@@ -37,9 +37,7 @@ console.log(data);
   }
 }
 
-/* ══════════════════════════════════════════
-   OBTENER MI CLÍNICA
-   ══════════════════════════════════════════ */
+
 export async function getMyClinic(): Promise<VeterinaryClinic | null> {
   try {
     const { data } = await api.get<ApiResponse>("/veterinary-clinic/my-clinic");
@@ -62,9 +60,7 @@ export async function getMyClinic(): Promise<VeterinaryClinic | null> {
   }
 }
 
-/* ══════════════════════════════════════════
-   OBTENER CLÍNICA POR ID
-   ══════════════════════════════════════════ */
+
 export async function getClinicById(id: string): Promise<VeterinaryClinic> {
   try {
     const { data } = await api.get<ApiResponse>(`/veterinary-clinic/${id}`);
@@ -84,9 +80,7 @@ export async function getClinicById(id: string): Promise<VeterinaryClinic> {
   }
 }
 
-/* ══════════════════════════════════════════
-   ACTUALIZAR CLÍNICA
-   ══════════════════════════════════════════ */
+
 export async function updateVeterinaryClinic(
   formData: FormData
 ): Promise<VeterinaryClinic> {
@@ -110,9 +104,7 @@ export async function updateVeterinaryClinic(
   }
 }
 
-/* ══════════════════════════════════════════
-   ELIMINAR CLÍNICA
-   ══════════════════════════════════════════ */
+
 export async function deleteVeterinaryClinic(): Promise<{ msg: string }> {
   try {
     const { data } = await api.delete<{ msg: string }>("/veterinary-clinic");
@@ -125,9 +117,7 @@ export async function deleteVeterinaryClinic(): Promise<{ msg: string }> {
   }
 }
 
-/* ══════════════════════════════════════════
-   ELIMINAR SOLO LOGO
-   ══════════════════════════════════════════ */
+
 export async function deleteClinicLogo(): Promise<{ msg: string }> {
   try {
     const { data } = await api.delete<{ msg: string }>("/veterinary-clinic/logo");

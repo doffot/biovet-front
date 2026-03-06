@@ -18,7 +18,8 @@
       "@/utils/*": ["utils/*"],
       "@/hooks/*": ["hooks/*"],
       "@/data/*": ["data/*"],
-      "@/store/*": ["store/*"]
+      "@/store/*": ["store/*"],
+      "@/constants/*": ["constants/*"]
     },
 
     /* Bundler mode */

@@ -20,12 +20,16 @@ type GetProductsWithInventoryResponse = { products: ProductWithInventory[] };
 
 export async function createProduct(data: ProductFormData): Promise<Product> {
   try {
+    console.log('entro a create');
     const { data: response } = await api.post<CreateProductResponse>("/products", data);
+    
     const parsed = productSchema.safeParse(response.product);
+    console.log(parsed);
     if (!parsed.success) throw new Error("Datos del producto inválidos");
     return parsed.data;
   } catch (error) {
     if (error instanceof AxiosError && error.response) {
+      console.log(error.response);
       throw new Error(error.response.data.msg || "Error al crear producto");
     }
     throw new Error("Error de red");

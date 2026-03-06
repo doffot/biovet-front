@@ -5,7 +5,7 @@ export const productSchema = z.object({
   _id: z.string().optional(),
   name: z.string().min(1, "El nombre es obligatorio").max(100, "Máximo 100 caracteres"),
   description: z.string().max(200, "Máximo 200 caracteres").optional(),
-  category: z.enum(["vacuna", "desparasitante", "medicamento", "alimento", "accesorio", "otro"]),
+  category: z.enum(["vacuna", "desparasitante", "medicamento","test", "alimento", "accesorio", "otro"]),
   
   // Precios
   salePrice: z.number().min(0, "El precio de venta debe ser positivo"),

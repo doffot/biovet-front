@@ -18,6 +18,7 @@ interface PDFColors {
   black: { r: number; g: number; b: number };
   gray: { r: number; g: number; b: number };
   danger: { r: number; g: number; b: number };
+  
 }
 
 interface PDFConfig {

@@ -5,7 +5,17 @@ import jsPDF from "jspdf";
 import { toast } from "../Toast";
 import ConfirmationModal from "../ConfirmationModal";
 import { usePDFGenerator } from "@/hooks/usePDFGenerator";
-import type { LabExam } from "@/types/labExam";
+import {
+  LAB_PDF_COLORS,
+  drawWatermark,
+  drawClinicHeader,
+  drawTitle,
+  drawPatientInfo,
+  drawSignatureFooter,
+  drawSocialFooter,
+  getVetName,
+} from "@/utils/pdfLabExamBuilder";
+import type { LabExam, DifferentialCount } from "@/types/labExam";
 
 interface ShareResultsModalProps {
   isOpen: boolean;
@@ -21,6 +31,17 @@ interface ShareResultsModalProps {
   };
 }
 
+const DEFAULT_DIFFERENTIAL: DifferentialCount = {
+  segmentedNeutrophils: 0,
+  bandNeutrophils: 0,
+  lymphocytes: 0,
+  monocytes: 0,
+  eosinophils: 0,
+  basophils: 0,
+  reticulocytes: 0,
+  nrbc: 0,
+};
+
 export default function ShareResultsModal({
   isOpen,
   onClose,
@@ -29,58 +50,29 @@ export default function ShareResultsModal({
 }: ShareResultsModalProps) {
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Hook de PDF
   const {
     vetProfile,
     clinic,
     signatureBase64,
     clinicLogoBase64,
-    getVetCredentials,
-    getVetName,
-    extractSocialUsername,
     isReady,
   } = usePDFGenerator();
 
-  const cells = examData.differentialCount;
+  // Valores con fallbacks seguros
+  const totalCells = examData.totalCells ?? 0;
+  const whiteBloodCells = examData.whiteBloodCells ?? 0;
+  const hematocrit = examData.hematocrit ?? 0;
+  const platelets = examData.platelets ?? 0;
+  const totalProtein = examData.totalProtein ?? 0;
+  const cells = examData.differentialCount ?? DEFAULT_DIFFERENTIAL;
 
   const calculatePercentage = (count: number) =>
-    examData.totalCells > 0
-      ? ((count / examData.totalCells) * 100).toFixed(1)
-      : "0.0";
+    totalCells > 0 ? ((count / totalCells) * 100).toFixed(1) : "0.0";
 
   const calculateAbsolute = (percentage: string) =>
-    ((parseFloat(percentage) / 100) * examData.whiteBloodCells).toFixed(0);
+    ((parseFloat(percentage) / 100) * whiteBloodCells).toFixed(0);
 
   const formatNumber = (num: number) => num.toLocaleString("es-ES");
-
-  // ══════════════════════════════════════════
-  // DIBUJAR MARCA DE AGUA
-  // ══════════════════════════════════════════
-  const drawWatermark = (doc: any, width: number, height: number) => {
-    if (clinicLogoBase64 && clinicLogoBase64.startsWith("data:image")) {
-      try {
-        const gState = doc.GState({ opacity: 0.06 });
-        doc.setGState(gState);
-
-        const watermarkSize = 120;
-        const watermarkX = (width - watermarkSize) / 2;
-        const watermarkY = (height - watermarkSize) / 2;
-
-        doc.addImage(
-          clinicLogoBase64,
-          "PNG",
-          watermarkX,
-          watermarkY,
-          watermarkSize,
-          watermarkSize
-        );
-
-        doc.setGState(doc.GState({ opacity: 1 }));
-      } catch (e) {
-        console.warn("No se pudo agregar marca de agua", e);
-      }
-    }
-  };
 
   const handlePrintPDF = () => {
     if (!isReady) {
@@ -91,372 +83,64 @@ export default function ShareResultsModal({
     setIsGenerating(true);
 
     try {
-      const doc: any = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
       const marginLeft = 15;
       const marginRight = 15;
       const contentWidth = pageWidth - marginLeft - marginRight;
-      let y = 12;
-
-      // === COLORES ===
-      const primary = { r: 10, g: 126, b: 164 };
-      const dark = { r: 30, g: 41, b: 59 };
-      const gray = { r: 100, g: 116, b: 139 };
-      const lightBg = { r: 224, g: 244, b: 248 };
-      const white = { r: 255, g: 255, b: 255 };
-      const tableBorder = { r: 226, g: 232, b: 240 };
-      const labelBg = { r: 248, g: 250, b: 252 };
+      const colors = LAB_PDF_COLORS;
 
       // === MARCA DE AGUA ===
-      drawWatermark(doc, pageWidth, pageHeight);
+      drawWatermark(doc, clinicLogoBase64, pageWidth, pageHeight);
 
-      // === HEADER CON LOGO DE CLÍNICA ===
-      if (clinicLogoBase64 && clinicLogoBase64.startsWith("data:image")) {
-        try {
-          doc.addImage(clinicLogoBase64, "PNG", marginLeft, y, 25, 25);
-
-          const headerStartX = marginLeft + 30;
-
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(14);
-          doc.setTextColor(primary.r, primary.g, primary.b);
-          doc.text(clinic?.name || "Clínica Veterinaria", headerStartX, y + 7);
-
-          doc.setFont("helvetica", "normal");
-          doc.setFontSize(8);
-          doc.setTextColor(gray.r, gray.g, gray.b);
-
-          let infoY = y + 13;
-
-          if (clinic?.phone || clinic?.whatsapp) {
-            doc.text(
-              `Tel: ${clinic?.phone || ""} ${clinic?.whatsapp ? `| WhatsApp: ${clinic.whatsapp}` : ""}`,
-              headerStartX,
-              infoY
-            );
-            infoY += 4;
-          }
-
-          if (clinic?.email) {
-            doc.text(clinic.email, headerStartX, infoY);
-            infoY += 4;
-          }
-
-          if (clinic?.address) {
-            const addressLines = doc.splitTextToSize(
-              clinic.address,
-              pageWidth - headerStartX - marginRight
-            );
-            doc.text(addressLines[0], headerStartX, infoY);
-          }
-
-          y += 30;
-        } catch (e) {
-          console.warn("No se pudo agregar logo", e);
-          // Header sin logo
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(14);
-          doc.setTextColor(primary.r, primary.g, primary.b);
-          doc.text(clinic?.name || "LABORATORIO VETERINARIO", pageWidth / 2, y + 5, { align: "center" });
-          y += 15;
-        }
-      } else {
-        // Header sin logo
-        if (clinic?.name) {
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(14);
-          doc.setTextColor(primary.r, primary.g, primary.b);
-          doc.text(clinic.name, pageWidth / 2, y + 5, { align: "center" });
-          y += 10;
-        }
-      }
+      // === HEADER ===
+      let y = drawClinicHeader(
+        doc,
+        clinic,
+        clinicLogoBase64,
+        colors,
+        pageWidth,
+        marginLeft,
+        marginRight,
+        12
+      );
 
       // === TÍTULO ===
-      doc.setFontSize(18);
-      doc.setTextColor(primary.r, primary.g, primary.b);
-      doc.setFont("helvetica", "bold");
-      doc.text("RESULTADOS DE HEMATOLOGÍA", pageWidth / 2, y, { align: "center" });
-      y += 6;
-
-      doc.setFontSize(10);
-      doc.setTextColor(gray.r, gray.g, gray.b);
-      doc.setFont("helvetica", "normal");
-      doc.text("ANÁLISIS HEMATOLÓGICO COMPLETO", pageWidth / 2, y, { align: "center" });
-      y += 10;
+      y = drawTitle(
+        doc,
+        "RESULTADOS DE HEMATOLOGÍA",
+        "ANÁLISIS HEMATOLÓGICO COMPLETO",
+        colors,
+        pageWidth,
+        y
+      );
 
       // === INFO PACIENTE ===
-      const infoHeight = 22;
-      doc.setFillColor(lightBg.r, lightBg.g, lightBg.b);
-      doc.rect(marginLeft, y, contentWidth, infoHeight, "F");
-
-      doc.setFontSize(9);
-      doc.setTextColor(dark.r, dark.g, dark.b);
-
-      const col1 = marginLeft + 5;
-      const col2 = marginLeft + contentWidth / 3 + 5;
-      const col3 = marginLeft + (contentWidth / 3) * 2 + 5;
-      const row1 = y + 7;
-      const row2 = y + 15;
-
-      // Fila 1
-      doc.setFont("helvetica", "bold");
-      doc.text("Fecha: ", col1, row1);
-      doc.setFont("helvetica", "normal");
-      doc.text(new Date(examData.date).toLocaleDateString("es-ES"), col1 + 14, row1);
-
-      doc.setFont("helvetica", "bold");
-      doc.text("Paciente: ", col2, row1);
-      doc.setFont("helvetica", "normal");
-      doc.text(patientData.name, col2 + 20, row1);
-
-      doc.setFont("helvetica", "bold");
-      doc.text("Especie: ", col3, row1);
-      doc.setFont("helvetica", "normal");
-      doc.text(patientData.species, col3 + 18, row1);
-
-      // Fila 2
-      doc.setFont("helvetica", "bold");
-      doc.text("Raza: ", col1, row2);
-      doc.setFont("helvetica", "normal");
-      doc.text(patientData.breed || "—", col1 + 13, row2);
-
-      doc.setFont("helvetica", "bold");
-      doc.text("Propietario: ", col2, row2);
-      doc.setFont("helvetica", "normal");
-      doc.text(patientData.owner.name || "—", col2 + 25, row2);
-
-      doc.setFont("helvetica", "bold");
-      doc.text("Médico: ", col3, row2);
-      doc.setFont("helvetica", "normal");
-      doc.text(getVetName(), col3 + 16, row2);
-
-      y += infoHeight + 10;
-
-      // === FUNCIÓN PARA DIBUJAR TABLAS ===
-      const drawTableHeader = (title: string, startY: number): number => {
-        doc.setFillColor(primary.r, primary.g, primary.b);
-        doc.rect(marginLeft, startY, contentWidth, 8, "F");
-        doc.setFontSize(10);
-        doc.setTextColor(white.r, white.g, white.b);
-        doc.setFont("helvetica", "bold");
-        doc.text(title, pageWidth / 2, startY + 5.5, { align: "center" });
-        return startY + 8;
-      };
-
-      const drawRow = (
-        cols: { text: string; x: number; width: number; align?: "left" | "center" | "right"; bold?: boolean }[],
-        rowY: number,
-        rowHeight: number,
-        isHeader: boolean,
-        isLabel?: boolean
-      ) => {
-        if (isHeader) {
-          doc.setFillColor(primary.r, primary.g, primary.b);
-        } else if (isLabel) {
-          doc.setFillColor(labelBg.r, labelBg.g, labelBg.b);
-        } else {
-          doc.setFillColor(white.r, white.g, white.b);
-        }
-
-        let xPos = marginLeft;
-        cols.forEach((col) => {
-          doc.rect(xPos, rowY, col.width, rowHeight, "FD");
-          xPos += col.width;
-        });
-
-        doc.setDrawColor(tableBorder.r, tableBorder.g, tableBorder.b);
-        xPos = marginLeft;
-        cols.forEach((col) => {
-          doc.rect(xPos, rowY, col.width, rowHeight, "S");
-          xPos += col.width;
-        });
-
-        doc.setFontSize(isHeader ? 8 : 9);
-        if (isHeader) {
-          doc.setTextColor(white.r, white.g, white.b);
-          doc.setFont("helvetica", "bold");
-        } else {
-          doc.setTextColor(dark.r, dark.g, dark.b);
-        }
-
-        cols.forEach((col) => {
-          if (!isHeader) {
-            doc.setFont("helvetica", col.bold ? "bold" : "normal");
-          }
-          const textX =
-            col.align === "center"
-              ? col.x + col.width / 2
-              : col.align === "right"
-              ? col.x + col.width - 3
-              : col.x + 3;
-          doc.text(col.text, textX, rowY + rowHeight / 2 + 1, {
-            align: col.align || "left",
-          });
-        });
-      };
+      y = drawPatientInfo(
+        doc,
+        patientData,
+        examData.date,
+        getVetName(vetProfile),
+        colors,
+        contentWidth,
+        marginLeft,
+        y
+      );
 
       // === TABLA HEMOGRAMA ===
-      y = drawTableHeader("VALORES DEL HEMOGRAMA", y);
-
-      const colWidths1 = [
-        contentWidth * 0.28,
-        contentWidth * 0.18,
-        contentWidth * 0.18,
-        contentWidth * 0.18,
-        contentWidth * 0.18,
-      ];
-      const rowH = 8;
-
-      const headerCols1 = [
-        { text: "PARÁMETRO", x: marginLeft, width: colWidths1[0], align: "center" as const },
-        { text: "RESULTADO", x: marginLeft + colWidths1[0], width: colWidths1[1], align: "center" as const },
-        { text: "UNIDAD", x: marginLeft + colWidths1[0] + colWidths1[1], width: colWidths1[2], align: "center" as const },
-        { text: "REF. CANINO", x: marginLeft + colWidths1[0] + colWidths1[1] + colWidths1[2], width: colWidths1[3], align: "center" as const },
-        { text: "REF. FELINO", x: marginLeft + colWidths1[0] + colWidths1[1] + colWidths1[2] + colWidths1[3], width: colWidths1[4], align: "center" as const },
-      ];
-      drawRow(headerCols1, y, rowH, true);
-      y += rowH;
-
-      const hemogramaRows = [
-        { param: "Hematocrito", value: String(examData.hematocrit), unit: "%", refC: "37 - 55", refF: "30 - 45" },
-        { param: "Glóbulos Blancos", value: formatNumber(examData.whiteBloodCells), unit: "células/µL", refC: "6.000 - 17.000", refF: "5.000 - 19.500" },
-        { param: "Plaquetas", value: formatNumber(examData.platelets), unit: "células/µL", refC: "200.000 - 500.000", refF: "300.000 - 800.000" },
-        { param: "Proteínas Totales", value: String(examData.totalProtein), unit: "g/dL", refC: "5.4 - 7.8", refF: "5.7 - 8.9" },
-      ];
-
-      hemogramaRows.forEach((row) => {
-        let xPos = marginLeft;
-        const cols = [
-          { text: row.param, x: xPos, width: colWidths1[0], align: "left" as const, bold: true },
-          { text: row.value, x: (xPos += colWidths1[0]), width: colWidths1[1], align: "center" as const, bold: true },
-          { text: row.unit, x: (xPos += colWidths1[1]), width: colWidths1[2], align: "center" as const },
-          { text: row.refC, x: (xPos += colWidths1[2]), width: colWidths1[3], align: "center" as const },
-          { text: row.refF, x: (xPos += colWidths1[3]), width: colWidths1[4], align: "center" as const },
-        ];
-        drawRow(cols, y, rowH, false, true);
-        y += rowH;
-      });
+      y = drawHemogramaTable(doc, y, marginLeft, contentWidth, pageWidth, colors);
 
       y += 10;
 
       // === TABLA FÓRMULA LEUCOCITARIA ===
-      y = drawTableHeader("FÓRMULA LEUCOCITARIA", y);
+      y = drawLeucocitariaTable(doc, y, marginLeft, contentWidth, pageWidth, colors);
 
-      const headerCols2 = [
-        { text: "TIPO CELULAR", x: marginLeft, width: colWidths1[0], align: "center" as const },
-        { text: "%", x: marginLeft + colWidths1[0], width: colWidths1[1], align: "center" as const },
-        { text: "ABSOLUTO (CÉL/ML)", x: marginLeft + colWidths1[0] + colWidths1[1], width: colWidths1[2], align: "center" as const },
-        { text: "REF. CANINO (%)", x: marginLeft + colWidths1[0] + colWidths1[1] + colWidths1[2], width: colWidths1[3], align: "center" as const },
-        { text: "REF. FELINO (%)", x: marginLeft + colWidths1[0] + colWidths1[1] + colWidths1[2] + colWidths1[3], width: colWidths1[4], align: "center" as const },
-      ];
-      drawRow(headerCols2, y, rowH, true);
-      y += rowH;
+      // === FIRMA ===
+      y = drawSignatureFooter(doc, vetProfile, signatureBase64, colors, pageWidth, y);
 
-      const leucoRows = [
-        { label: "Neutrófilos Segmentados", val: cells.segmentedNeutrophils, refC: "60 - 77", refF: "35 - 75" },
-        { label: "Neutrófilos en Banda", val: cells.bandNeutrophils, refC: "0 - 3", refF: "0 - 3" },
-        { label: "Linfocitos", val: cells.lymphocytes, refC: "12 - 30", refF: "20 - 55" },
-        { label: "Monocitos", val: cells.monocytes, refC: "3 - 10", refF: "1 - 4" },
-        { label: "Eosinófilos", val: cells.eosinophils, refC: "2 - 10", refF: "2 - 12" },
-        { label: "Basófilos", val: cells.basophils, refC: "Raros", refF: "Raros" },
-      ];
-
-      leucoRows.forEach((row) => {
-        const per = calculatePercentage(row.val || 0);
-        const abs = calculateAbsolute(per);
-        let xPos = marginLeft;
-        const cols = [
-          { text: row.label, x: xPos, width: colWidths1[0], align: "left" as const, bold: true },
-          { text: `${per}%`, x: (xPos += colWidths1[0]), width: colWidths1[1], align: "center" as const, bold: true },
-          { text: abs, x: (xPos += colWidths1[1]), width: colWidths1[2], align: "center" as const },
-          { text: row.refC, x: (xPos += colWidths1[2]), width: colWidths1[3], align: "center" as const },
-          { text: row.refF, x: (xPos += colWidths1[3]), width: colWidths1[4], align: "center" as const },
-        ];
-        drawRow(cols, y, rowH, false, true);
-        y += rowH;
-      });
-
-      // === PIE DE PÁGINA ===
-      y += 20;
-
-      // Firma
-      if (signatureBase64 && signatureBase64.startsWith("data:image")) {
-        try {
-          doc.addImage(signatureBase64, "PNG", pageWidth / 2 - 25, y, 50, 20);
-          y += 22;
-        } catch (e) {
-          console.warn("No se pudo agregar firma:", e);
-          y += 5;
-        }
-      } else {
-        y += 10;
-      }
-
-      // Línea separadora
-      doc.setDrawColor(tableBorder.r, tableBorder.g, tableBorder.b);
-      doc.line(pageWidth / 2 - 40, y, pageWidth / 2 + 40, y);
-      y += 6;
-
-      // Nombre del doctor
-      doc.setFontSize(12);
-      doc.setTextColor(primary.r, primary.g, primary.b);
-      doc.setFont("helvetica", "bold");
-      doc.text(getVetName(), pageWidth / 2, y, { align: "center" });
-      y += 5;
-
-      // CI y CMVZ
-      doc.setFontSize(9);
-      doc.setTextColor(gray.r, gray.g, gray.b);
-      doc.setFont("helvetica", "normal");
-      doc.text(
-        `C.I: V-${vetProfile?.ci || "—"} | CMVZ: ${vetProfile?.cmv || "—"}`,
-        pageWidth / 2,
-        y,
-        { align: "center" }
-      );
-      y += 5;
-
-      // Credenciales adicionales
-      const credenciales = getVetCredentials();
-      if (credenciales.length > 0) {
-        doc.setFontSize(8);
-        doc.text(credenciales.join(" | "), pageWidth / 2, y, { align: "center" });
-        y += 5;
-      }
-
-      // Estado
-      doc.setFontSize(8);
-      doc.text(`${vetProfile?.estado || "—"}, Venezuela`, pageWidth / 2, y, {
-        align: "center",
-      });
-      y += 4;
-
-      doc.text("Médico Veterinario", pageWidth / 2, y, { align: "center" });
-
-      // === FOOTER CON REDES SOCIALES ===
-      if (clinic?.whatsapp || clinic?.socialMedia?.length) {
-        y += 8;
-        doc.setFontSize(7);
-        doc.setTextColor(gray.r, gray.g, gray.b);
-
-        const socialText: string[] = [];
-
-        if (clinic?.whatsapp) {
-          socialText.push(`WhatsApp: ${clinic.whatsapp}`);
-        }
-
-        if (clinic?.socialMedia?.length) {
-          clinic.socialMedia.slice(0, 2).forEach((s) => {
-            const username = extractSocialUsername(s.url, s.platform);
-            socialText.push(`${s.platform}: ${username}`);
-          });
-        }
-
-        if (socialText.length > 0) {
-          doc.text(socialText.join(" | "), pageWidth / 2, y, { align: "center" });
-        }
-      }
+      // === FOOTER REDES ===
+      drawSocialFooter(doc, clinic, colors, pageWidth, y);
 
       // === GUARDAR ===
       const dateStr = new Date(examData.date).toLocaleDateString("es-ES").replace(/\//g, "-");
@@ -471,6 +155,167 @@ export default function ShareResultsModal({
       setIsGenerating(false);
     }
   };
+
+  // ═══════════════════════════════════════════════════════════
+  // TABLA HEMOGRAMA
+  // ═══════════════════════════════════════════════════════════
+  function drawHemogramaTable(
+    doc: jsPDF,
+    startY: number,
+    marginLeft: number,
+    contentWidth: number,
+    pageWidth: number,
+    colors: typeof LAB_PDF_COLORS
+  ): number {
+    let y = startY;
+
+    // Header de tabla
+    doc.setFillColor(colors.primary.r, colors.primary.g, colors.primary.b);
+    doc.rect(marginLeft, y, contentWidth, 8, "F");
+    doc.setFontSize(10);
+    doc.setTextColor(colors.white.r, colors.white.g, colors.white.b);
+    doc.setFont("helvetica", "bold");
+    doc.text("VALORES DEL HEMOGRAMA", pageWidth / 2, y + 5.5, { align: "center" });
+    y += 8;
+
+    const colWidths = [
+      contentWidth * 0.28,
+      contentWidth * 0.18,
+      contentWidth * 0.18,
+      contentWidth * 0.18,
+      contentWidth * 0.18,
+    ];
+    const rowH = 8;
+
+    // Header de columnas
+    const headers = ["PARÁMETRO", "RESULTADO", "UNIDAD", "REF. CANINO", "REF. FELINO"];
+    drawTableRow(doc, headers, y, rowH, marginLeft, colWidths, colors, true);
+    y += rowH;
+
+    // Filas de datos
+    const rows = [
+      ["Hematocrito", String(hematocrit), "%", "37 - 55", "30 - 45"],
+      ["Glóbulos Blancos", formatNumber(whiteBloodCells), "células/µL", "6.000 - 17.000", "5.000 - 19.500"],
+      ["Plaquetas", formatNumber(platelets), "células/µL", "200.000 - 500.000", "300.000 - 800.000"],
+      ["Proteínas Totales", String(totalProtein), "g/dL", "5.4 - 7.8", "5.7 - 8.9"],
+    ];
+
+    rows.forEach((row) => {
+      drawTableRow(doc, row, y, rowH, marginLeft, colWidths, colors, false);
+      y += rowH;
+    });
+
+    return y;
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // TABLA FÓRMULA LEUCOCITARIA
+  // ═══════════════════════════════════════════════════════════
+  function drawLeucocitariaTable(
+    doc: jsPDF,
+    startY: number,
+    marginLeft: number,
+    contentWidth: number,
+    pageWidth: number,
+    colors: typeof LAB_PDF_COLORS
+  ): number {
+    let y = startY;
+
+    // Header de tabla
+    doc.setFillColor(colors.primary.r, colors.primary.g, colors.primary.b);
+    doc.rect(marginLeft, y, contentWidth, 8, "F");
+    doc.setFontSize(10);
+    doc.setTextColor(colors.white.r, colors.white.g, colors.white.b);
+    doc.setFont("helvetica", "bold");
+    doc.text("FÓRMULA LEUCOCITARIA", pageWidth / 2, y + 5.5, { align: "center" });
+    y += 8;
+
+    const colWidths = [
+      contentWidth * 0.28,
+      contentWidth * 0.18,
+      contentWidth * 0.18,
+      contentWidth * 0.18,
+      contentWidth * 0.18,
+    ];
+    const rowH = 8;
+
+    // Header de columnas
+    const headers = ["TIPO CELULAR", "%", "ABSOLUTO (CÉL/ML)", "REF. CANINO (%)", "REF. FELINO (%)"];
+    drawTableRow(doc, headers, y, rowH, marginLeft, colWidths, colors, true);
+    y += rowH;
+
+    // Filas de datos
+    const leucoData = [
+      { label: "Neutrófilos Segmentados", val: cells.segmentedNeutrophils ?? 0, refC: "60 - 77", refF: "35 - 75" },
+      { label: "Neutrófilos en Banda", val: cells.bandNeutrophils ?? 0, refC: "0 - 3", refF: "0 - 3" },
+      { label: "Linfocitos", val: cells.lymphocytes ?? 0, refC: "12 - 30", refF: "20 - 55" },
+      { label: "Monocitos", val: cells.monocytes ?? 0, refC: "3 - 10", refF: "1 - 4" },
+      { label: "Eosinófilos", val: cells.eosinophils ?? 0, refC: "2 - 10", refF: "2 - 12" },
+      { label: "Basófilos", val: cells.basophils ?? 0, refC: "Raros", refF: "Raros" },
+    ];
+
+    leucoData.forEach((row) => {
+      const per = calculatePercentage(row.val);
+      const abs = calculateAbsolute(per);
+      const rowData = [row.label, `${per}%`, abs, row.refC, row.refF];
+      drawTableRow(doc, rowData, y, rowH, marginLeft, colWidths, colors, false);
+      y += rowH;
+    });
+
+    return y;
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // HELPER: DIBUJAR FILA DE TABLA
+  // ═══════════════════════════════════════════════════════════
+  function drawTableRow(
+    doc: jsPDF,
+    data: string[],
+    rowY: number,
+    rowHeight: number,
+    marginLeft: number,
+    colWidths: number[],
+    colors: typeof LAB_PDF_COLORS,
+    isHeader: boolean
+  ): void {
+    if (isHeader) {
+      doc.setFillColor(colors.primary.r, colors.primary.g, colors.primary.b);
+    } else {
+      doc.setFillColor(colors.labelBg.r, colors.labelBg.g, colors.labelBg.b);
+    }
+
+    let xPos = marginLeft;
+    colWidths.forEach((width) => {
+      doc.rect(xPos, rowY, width, rowHeight, "FD");
+      xPos += width;
+    });
+
+    doc.setDrawColor(colors.tableBorder.r, colors.tableBorder.g, colors.tableBorder.b);
+    xPos = marginLeft;
+    colWidths.forEach((width) => {
+      doc.rect(xPos, rowY, width, rowHeight, "S");
+      xPos += width;
+    });
+
+    doc.setFontSize(isHeader ? 8 : 9);
+    if (isHeader) {
+      doc.setTextColor(colors.white.r, colors.white.g, colors.white.b);
+      doc.setFont("helvetica", "bold");
+    } else {
+      doc.setTextColor(colors.dark.r, colors.dark.g, colors.dark.b);
+    }
+
+    xPos = marginLeft;
+    data.forEach((text, index) => {
+      if (!isHeader) {
+        doc.setFont("helvetica", index <= 1 ? "bold" : "normal");
+      }
+      const align = index === 0 ? "left" : "center";
+      const textX = index === 0 ? xPos + 3 : xPos + colWidths[index] / 2;
+      doc.text(text, textX, rowY + rowHeight / 2 + 1, { align });
+      xPos += colWidths[index];
+    });
+  }
 
   return (
     <ConfirmationModal

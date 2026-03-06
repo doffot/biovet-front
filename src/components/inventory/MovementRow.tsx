@@ -30,7 +30,7 @@ export function MovementRow({ movement }: MovementRowProps) {
 
       {/* Producto */}
       <td className="px-4 py-3">
-        <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate max-w-[200px]">
+        <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate max-w-50">
           {movement.product.name}
         </p>
       </td>
@@ -59,7 +59,7 @@ export function MovementRow({ movement }: MovementRowProps) {
             movement.quantityUnits,
             movement.quantityDoses,
             movement.product.unit,
-            movement.product.doseUnit
+            movement.product.doseUnit,
           )}
         </p>
       </td>
@@ -69,7 +69,10 @@ export function MovementRow({ movement }: MovementRowProps) {
         <p className="text-xs text-surface-500 dark:text-slate-400">
           {movement.stockAfterUnits} {movement.product.unit}
           {movement.stockAfterDoses > 0 && (
-            <span> + {movement.stockAfterDoses} {movement.product.doseUnit}</span>
+            <span>
+              {" "}
+              + {movement.stockAfterDoses} {movement.product.doseUnit}
+            </span>
           )}
         </p>
       </td>

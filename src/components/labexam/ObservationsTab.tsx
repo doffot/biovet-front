@@ -24,7 +24,7 @@ export function ObservationsTab({
       {/* Header minimalista */}
       <div className="flex items-center justify-between pb-3 border-b border-surface-200 dark:border-dark-100">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-linear-to-br from-biovet-500 to-biovet-600 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-biovet-500 to-biovet-600 flex items-center justify-center">
             <FileText className="w-4 h-4 text-white" />
           </div>
           <div>

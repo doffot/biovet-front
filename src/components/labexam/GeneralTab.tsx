@@ -40,6 +40,8 @@ const normalValues = {
   },
 };
 
+type HemogramFieldName = "hematocrit" | "whiteBloodCells" | "totalProtein" | "platelets";
+
 export function GeneralTab({
   species,
   register,
@@ -48,43 +50,52 @@ export function GeneralTab({
 }: GeneralTabProps) {
   const currentNormalValues = normalValues[species];
 
-  const hemogramFields = [
+  const hemogramFields: {
+    name: HemogramFieldName;
+    label: string;
+    unit: string;
+    step: string;
+    rangeKey: keyof typeof normalValues.canino;
+    icon: typeof Droplets;
+    color: string;
+    bgColor: string;
+  }[] = [
     {
-      name: "hematocrit" as const,
+      name: "hematocrit",
       label: "Hematocrito",
       unit: "%",
       step: "0.1",
-      rangeKey: "hematocrit" as const,
+      rangeKey: "hematocrit",
       icon: Droplets,
       color: "text-danger-500",
       bgColor: "bg-danger-50 dark:bg-danger-950",
     },
     {
-      name: "whiteBloodCells" as const,
+      name: "whiteBloodCells",
       label: "Glóbulos Blancos",
       unit: "cél/µL",
       step: "1",
-      rangeKey: "whiteBloodCells" as const,
+      rangeKey: "whiteBloodCells",
       icon: Activity,
       color: "text-biovet-500",
       bgColor: "bg-biovet-50 dark:bg-biovet-950",
     },
     {
-      name: "totalProtein" as const,
+      name: "totalProtein",
       label: "Proteína Total",
       unit: "g/dL",
       step: "0.1",
-      rangeKey: "totalProtein" as const,
+      rangeKey: "totalProtein",
       icon: Beaker,
       color: "text-purple-500",
       bgColor: "bg-purple-50 dark:bg-purple-950",
     },
     {
-      name: "platelets" as const,
+      name: "platelets",
       label: "Plaquetas",
       unit: "cél/µL",
       step: "1",
-      rangeKey: "platelets" as const,
+      rangeKey: "platelets",
       icon: CircleDot,
       color: "text-warning-500",
       bgColor: "bg-warning-50 dark:bg-warning-950",
@@ -102,8 +113,8 @@ export function GeneralTab({
     return "normal";
   };
 
-  const cost = watch("cost") || 0;
-  const discount = watch("discount") || 0;
+  const cost = watch("cost") ?? 0;
+  const discount = watch("discount") ?? 0;
   const totalCost = Math.max(0, cost - discount);
 
   return (
@@ -218,7 +229,7 @@ export function GeneralTab({
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {hemogramFields.map((field) => {
             const Icon = field.icon;
-            const value = watch(field.name);
+            const value = watch(field.name) as number | undefined;
             const status = getValueStatus(value, field.rangeKey);
             const range = currentNormalValues[field.rangeKey];
             const hasError = errors[field.name];

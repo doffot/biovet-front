@@ -1,12 +1,15 @@
 // src/components/labexam/DifferentialControls.tsx
 import { useState } from "react";
 import { RotateCcw } from "lucide-react";
-import type { LabExamFormData } from "@/types/labExam";
+import type { DifferentialCount } from "@/types/labExam";
 import ConfirmationModal from "../ConfirmationModal";
+
+// Tipo seguro para las keys del diferencial
+type DifferentialKey = keyof NonNullable<DifferentialCount>;
 
 interface DifferentialControlsProps {
   totalCells: number;
-  lastAction: { field: keyof LabExamFormData["differentialCount"] } | null;
+  lastAction: { field: DifferentialKey } | null;
   onUndo: () => void;
   onReset: () => void;
 }

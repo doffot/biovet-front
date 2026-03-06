@@ -37,7 +37,6 @@ import AppointmentView from "./views/appointment/PatientAppointmentsView";
 import AppointmentDetailView from "./views/appointment/AppointmentDetailView";
 import EditAppointmentView from "./views/appointment/EditAppointmentView";
 import PatientLabExamListView from "./views/labExams/PatientLabExamListView";
-import CreateLabExamView from "./views/labExams/CreateLabExamView";
 import GroomingServiceListView from "./views/grooming/GroomingServiceListView";
 import CreateGroomingServiceView from "./views/grooming/CreateGroomingServiceView";
 import GroomingServiceDetailView from "./views/grooming/GroomingServiceDetailView";
@@ -63,6 +62,14 @@ import EditLabExamView from "./views/labExams/EditLabExamView";
 import CreateSaleView from "./views/sales/CreateSaleView";
 import SalesHistoryView from "./views/sales/SalesHistoryView";
 
+// Lab Exams
+import CreateLabExamView from "./views/labExams/CreateLabExamView";
+import CreateHematologyView from "./views/labExams/CreateHematologyView";
+import CreateCytologyView from "./views/labExams/CreateCytologyView";
+import CreateUrinalysisView from "./views/labExams/CreateUrinalysisView";
+import CreateQuickTestView from "./views/labExams/CreateQuickTestView";
+import CreateSkinScrapingView from "./views/labExams/CreateSkinScrapingView";
+
 // Inventario y Configuración
 import ProductListView from "./views/inventory/ProductListView";
 import CreateProductView from "./views/inventory/CreateProductView";
@@ -79,8 +86,10 @@ import CreatePaymentMethodView from "./views/payment-methods/CreatePaymentMethod
 import ClinicSettingsView from "./views/settings/ClinicSettingsView";
 import InvoiceDetailView from "./views/invoices/InvoiceDetailView";
 import EditProductView from "./views/inventory/EditProductView";
+import CreateTrichogramView from "./views/labExams/CreateTrichogramView";
 
-/** * COMPONENTES DE PROTECCIÓN DE RUTA
+/**
+ * COMPONENTES DE PROTECCIÓN DE RUTA
  */
 const PrivateRoute = () => {
     const token = localStorage.getItem("AUTH_TOKEN");
@@ -89,7 +98,6 @@ const PrivateRoute = () => {
 
 const PublicRoute = () => {
     const token = localStorage.getItem("AUTH_TOKEN");
-    // Si hay token, no puede ver Landing ni Login, va al Dashboard
     return !token ? <Outlet /> : <Navigate to="/dashboard" replace />;
 };
 
@@ -149,8 +157,17 @@ export default function Router() {
                                 <Route path="medical-orders/:orderId" element={<MedicalOrderDetailView />} />
                                 <Route path="vaccines" element={<VaccinationView />} />
                                 <Route path="deworming" element={<DewormingView />} />
+                                
+                                {/* EXÁMENES DE LABORATORIO (Paciente) */}
                                 <Route path="exams" element={<PatientLabExamListView />} />
                                 <Route path="exams/create" element={<CreateLabExamView />} />
+                                <Route path="exams/create/hematology" element={<CreateHematologyView />} />
+                                <Route path="exams/create/cytology" element={<CreateCytologyView />} />
+                                <Route path="exams/create/urinalysis" element={<CreateUrinalysisView />} />
+                                <Route path="exams/create/test" element={<CreateQuickTestView />} />
+                                <Route path="exams/create/skinScraping" element={<CreateSkinScrapingView />} />
+                                <Route path="exams/create/trichogram" element={<CreateTrichogramView />} />
+                                
                                 <Route path="consultations" element={<ConsultationView />} />
                                 <Route path="consultations/new" element={<CreateConsultationView />} />
                                 <Route path="consultations/:consultationId" element={<ConsultationDetailView />} />
@@ -179,11 +196,24 @@ export default function Router() {
 
                         <Route path="/grooming" element={<GroomingServicesView />} />
 
+                        {/* LABORATORIO (Principal) */}
                         <Route path="/lab">
                             <Route index element={<LabExamListView />} />
                             <Route path="create" element={<CreateLabExamView />} />
+                            <Route path="create/hematology" element={<CreateHematologyView />} />
+                            <Route path="create/hematology/:patientId" element={<CreateHematologyView />} />
+                            <Route path="create/cytology" element={<CreateCytologyView />} />
+                            <Route path="create/cytology/:patientId" element={<CreateCytologyView />} />
+                            <Route path="create/urinalysis" element={<CreateUrinalysisView />} />
+                            <Route path="create/urinalysis/:patientId" element={<CreateUrinalysisView />} />
+                            <Route path="create/test" element={<CreateQuickTestView />} />
+                            <Route path="create/test/:patientId" element={<CreateQuickTestView />} />
+                            <Route path="create/skinScraping" element={<CreateSkinScrapingView />} />
+                            <Route path="create/skinScraping/:patientId" element={<CreateSkinScrapingView />} />
                             <Route path=":id/edit" element={<EditLabExamView />} />
                         </Route>
+                        <Route path="create/trichogram" element={<CreateTrichogramView />} />
+<Route path="create/trichogram/:patientId" element={<CreateTrichogramView />} />
 
                         {/* Inventario */}
                         <Route path="/inventory">

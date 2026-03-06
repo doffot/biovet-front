@@ -226,7 +226,7 @@ export function PatientSelectionTab({
         </div>
         <div>
           <label className="label">Especie *</label>
-          <select value={species} onChange={(e) => setSpecies(e.target.value as any)} className="input">
+          <select value={species} onChange={(e) => setSpecies(e.target.value as "canino" | "felino")} className="input">
             <option value="canino">Canino</option>
             <option value="felino">Felino</option>
           </select>
