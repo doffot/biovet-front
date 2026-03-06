@@ -13,6 +13,7 @@ export function useLabExamList() {
   // ==================== STATE ====================
   const [searchTerm, setSearchTerm] = useState("");
   const [speciesFilter, setSpeciesFilter] = useState("all");
+  const [examTypeFilter, setExamTypeFilter] = useState("all"); // ✅ NUEVO
   const [currentPage, setCurrentPage] = useState(1);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [examToDelete, setExamToDelete] = useState<{
@@ -51,12 +52,19 @@ export function useLabExamList() {
       const matchesSearch =
         exam.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         exam.breed?.toLowerCase().includes(searchTerm.toLowerCase());
+      
       const matchesSpecies =
         speciesFilter === "all" ||
         exam.species.toLowerCase() === speciesFilter.toLowerCase();
-      return matchesSearch && matchesSpecies;
+      
+      // ✅ NUEVO: Filtro por tipo de examen
+      const matchesExamType =
+        examTypeFilter === "all" ||
+        (exam.examType || "hematology") === examTypeFilter;
+
+      return matchesSearch && matchesSpecies && matchesExamType;
     });
-  }, [labExams, searchTerm, speciesFilter]);
+  }, [labExams, searchTerm, speciesFilter, examTypeFilter]); // ✅ Agregado examTypeFilter
 
   // ==================== STATS ====================
   const stats = useMemo(() => {
@@ -74,7 +82,15 @@ export function useLabExamList() {
         d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
       );
     }).length;
-    return { total, caninos, felinos, thisMonth };
+
+    // ✅ NUEVO: Conteo por tipo de examen
+    const byType = labExams.reduce((acc: Record<string, number>, exam) => {
+      const type = exam.examType || "hematology";
+      acc[type] = (acc[type] || 0) + 1;
+      return acc;
+    }, {});
+
+    return { total, caninos, felinos, thisMonth, byType };
   }, [labExams]);
 
   // ==================== PAGINACIÓN ====================
@@ -95,7 +111,7 @@ export function useLabExamList() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, speciesFilter]);
+  }, [searchTerm, speciesFilter, examTypeFilter]); // ✅ Agregado examTypeFilter
 
   // ==================== HANDLERS ====================
   const handleDeleteClick = useCallback(
@@ -118,10 +134,16 @@ export function useLabExamList() {
   const handleClearFilters = useCallback(() => {
     setSearchTerm("");
     setSpeciesFilter("all");
+    setExamTypeFilter("all"); // ✅ NUEVO
     setCurrentPage(1);
   }, []);
 
-  const hasActiveFilters = !!(searchTerm || speciesFilter !== "all");
+  // ✅ ACTUALIZADO: Incluye examTypeFilter
+  const hasActiveFilters = !!(
+    searchTerm || 
+    speciesFilter !== "all" || 
+    examTypeFilter !== "all"
+  );
 
   return {
     // State
@@ -129,6 +151,8 @@ export function useLabExamList() {
     setSearchTerm,
     speciesFilter,
     setSpeciesFilter,
+    examTypeFilter,       // ✅ NUEVO
+    setExamTypeFilter,    // ✅ NUEVO
     currentPage,
     setCurrentPage,
     isDeleteModalOpen,

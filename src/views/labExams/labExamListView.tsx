@@ -3,46 +3,149 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FlaskConical,
+  Microscope,
+  Droplets,
+  Beaker,
+  Scissors,
+  TestTube,
   AlertCircle,
   Plus,
   RefreshCw,
   Trash2,
+  Printer,
+  FileSearch,
+  Eye,  // ✅ NUEVO
 } from "lucide-react";
-import jsPDF from "jspdf";
 import Spinner from "../../components/Spinner";
 import ConfirmationModal from "../../components/ConfirmationModal";
-import { useLabExamList } from "@/hooks/useLabExamList";
-import { LabExamListHeader } from "@/components/labexam/LabExamListHeader";
-import { LabExamStats } from "@/components/labexam/LabExamStats";
-import { LabExamFilters } from "@/components/labexam/LabExamFilters";
-import { LabExamTable } from "@/components/labexam/LabExamTable";
-import { LabExamMobileCard } from "@/components/labexam/LabExamMobileCard";
-import { LabExamPagination } from "@/components/labexam/LabExamPagination";
-import { usePDFGenerator } from "@/hooks/usePDFGenerator";
 import { toast } from "@/components/Toast";
 import type { LabExam } from "@/types/labExam";
 
+import { useLabExamList } from "@/hooks/useLabExamList";
+
+// Modales de PDF
+import ShareResultsModal from "@/components/labexam/ShareResultsModal";
+import ShareCytologyResultsModal from "@/components/labexam/ShareCytologyResultsModal";
+import ShareUrinalysisResultsModal from "@/components/labexam/ShareUrinalysisResultsModal";
+import ShareQuickTestResultsModal from "@/components/labexam/ShareQuickTestResultsModal";
+import ShareSkinScrapingResultsModal from "@/components/labexam/ShareSkinScrapingResultsModal";
+import ShareTrichogramResultsModal from "@/components/labexam/ShareTrichogramResultsModal";
+
+// ✅ NUEVO: Modales de Detalle
+import LabExamDetailModal from "@/components/labexam/LabExamDetailModal";
+import CytologyDetailModal from "@/components/labexam/modals/CytologyDetailModal";
+import UrinalysisDetailModal from "@/components/labexam/modals/UrinalysisDetailModal";
+import QuickTestDetailModal from "@/components/labexam/modals/QuickTestDetailModal";
+import SkinScrapingDetailModal from "@/components/labexam/modals/SkinScrapingDetailModal";
+import TrichogramDetailModal from "@/components/labexam/modals/TrichogramDetailModal";
+
+import { LabExamStats } from "@/components/labexam/LabExamStats";
+import { LabExamFilters } from "@/components/labexam/LabExamFilters";
+import { LabExamPagination } from "@/components/labexam/LabExamPagination";
+import { LabExamListHeader } from "@/components/labexam/LabExamListHeader";
+
+// =============================================
+// CONFIGURACIÓN POR TIPO DE EXAMEN
+// =============================================
+const EXAM_TYPE_CONFIG: Record<
+  string,
+  {
+    name: string;
+    icon: typeof FlaskConical;
+    color: string;
+    bgColor: string;
+    borderColor: string;
+    textColor: string;
+  }
+> = {
+  hematology: {
+    name: "Hemograma",
+    icon: FlaskConical,
+    color: "text-emerald-500",
+    bgColor: "bg-emerald-50 dark:bg-emerald-950/30",
+    borderColor: "border-emerald-200 dark:border-emerald-800",
+    textColor: "text-emerald-600 dark:text-emerald-400",
+  },
+  cytology: {
+    name: "Citología",
+    icon: Microscope,
+    color: "text-purple-500",
+    bgColor: "bg-purple-50 dark:bg-purple-950/30",
+    borderColor: "border-purple-200 dark:border-purple-800",
+    textColor: "text-purple-600 dark:text-purple-400",
+  },
+  urinalysis: {
+    name: "Uroanálisis",
+    icon: Droplets,
+    color: "text-blue-500",
+    bgColor: "bg-blue-50 dark:bg-blue-950/30",
+    borderColor: "border-blue-200 dark:border-blue-800",
+    textColor: "text-blue-600 dark:text-blue-400",
+  },
+  test: {
+    name: "Test Rápido",
+    icon: Beaker,
+    color: "text-cyan-500",
+    bgColor: "bg-cyan-50 dark:bg-cyan-950/30",
+    borderColor: "border-cyan-200 dark:border-cyan-800",
+    textColor: "text-cyan-600 dark:text-cyan-400",
+  },
+  skin_scraping: {
+    name: "Raspado Cutáneo",
+    icon: Scissors,
+    color: "text-amber-500",
+    bgColor: "bg-amber-50 dark:bg-amber-950/30",
+    borderColor: "border-amber-200 dark:border-amber-800",
+    textColor: "text-amber-600 dark:text-amber-400",
+  },
+  trichogram: {
+    name: "Tricograma",
+    icon: TestTube,
+    color: "text-teal-500",
+    bgColor: "bg-teal-50 dark:bg-teal-950/30",
+    borderColor: "border-teal-200 dark:border-teal-800",
+    textColor: "text-teal-600 dark:text-teal-400",
+  },
+};
+
+const DEFAULT_CONFIG = {
+  name: "Examen",
+  icon: FlaskConical,
+  color: "text-slate-500",
+  bgColor: "bg-slate-50 dark:bg-slate-950/30",
+  borderColor: "border-slate-200 dark:border-slate-800",
+  textColor: "text-slate-600 dark:text-slate-400",
+};
+
+const getExamConfig = (examType?: string) => {
+  return EXAM_TYPE_CONFIG[examType || "hematology"] || DEFAULT_CONFIG;
+};
+
+// =============================================
+// COMPONENTE PRINCIPAL
+// =============================================
 export default function LabExamListView() {
   const navigate = useNavigate();
-  const [generatingPdfId, setGeneratingPdfId] = useState<string | null>(null);
 
-  // Hook de PDF
-  const {
-    vetProfile,
-    clinic,
-    signatureBase64,
-    clinicLogoBase64,
-    getVetCredentials,
-    getVetName,
-    extractSocialUsername,
-    isReady: isPDFReady,
-  } = usePDFGenerator();
+  // ✅ Estado para modal de detalle
+  const [examToView, setExamToView] = useState<LabExam | null>(null);
+
+  // Estados para modales de PDF
+  const [selectedExam, setSelectedExam] = useState<LabExam | null>(null);
+  const [showHematologyModal, setShowHematologyModal] = useState(false);
+  const [showCytologyModal, setShowCytologyModal] = useState(false);
+  const [showUrinalysisModal, setShowUrinalysisModal] = useState(false);
+  const [showQuickTestModal, setShowQuickTestModal] = useState(false);
+  const [showSkinScrapingModal, setShowSkinScrapingModal] = useState(false);
+  const [showTrichogramModal, setShowTrichogramModal] = useState(false);
 
   const {
     searchTerm,
     setSearchTerm,
     speciesFilter,
     setSpeciesFilter,
+    examTypeFilter,
+    setExamTypeFilter,
     currentPage,
     setCurrentPage,
     isDeleteModalOpen,
@@ -68,387 +171,60 @@ export default function LabExamListView() {
   } = useLabExamList();
 
   // ══════════════════════════════════════════
-  // GENERAR PDF DE EXAMEN
+  // VER DETALLE
   // ══════════════════════════════════════════
-  const handleDownloadPDF = (exam: LabExam) => {
-    if (!isPDFReady) {
-      toast.error("Error", "Cargando datos necesarios...");
-      return;
-    }
+  const handleViewExam = (exam: LabExam) => {
+    setExamToView(exam);
+  };
 
-    setGeneratingPdfId(exam._id || null);
+  const handleCloseDetail = () => {
+    setExamToView(null);
+  };
 
-    try {
-      const doc: any = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      const marginLeft = 15;
-      const marginRight = 15;
-      const contentWidth = pageWidth - marginLeft - marginRight;
-      let y = 12;
+  // ══════════════════════════════════════════
+  // ABRIR MODAL DE PDF SEGÚN TIPO
+  // ══════════════════════════════════════════
+  const handlePrintExam = (exam: LabExam) => {
+    setSelectedExam(exam);
+    const examType = exam.examType || "hematology";
 
-      // === COLORES ===
-      const primary = { r: 10, g: 126, b: 164 };
-      const dark = { r: 30, g: 41, b: 59 };
-      const gray = { r: 100, g: 116, b: 139 };
-      const lightBg = { r: 224, g: 244, b: 248 };
-      const white = { r: 255, g: 255, b: 255 };
-      const tableBorder = { r: 226, g: 232, b: 240 };
-      const labelBg = { r: 248, g: 250, b: 252 };
-
-      // === MARCA DE AGUA ===
-      if (clinicLogoBase64 && clinicLogoBase64.startsWith("data:image")) {
-        try {
-          const gState = doc.GState({ opacity: 0.06 });
-          doc.setGState(gState);
-          const watermarkSize = 120;
-          doc.addImage(
-            clinicLogoBase64,
-            "PNG",
-            (pageWidth - watermarkSize) / 2,
-            (pageHeight - watermarkSize) / 2,
-            watermarkSize,
-            watermarkSize
-          );
-          doc.setGState(doc.GState({ opacity: 1 }));
-        } catch (e) {
-          console.warn("No se pudo agregar marca de agua", e);
-        }
-      }
-
-      // === HEADER CON LOGO ===
-      if (clinicLogoBase64 && clinicLogoBase64.startsWith("data:image")) {
-        try {
-          doc.addImage(clinicLogoBase64, "PNG", marginLeft, y, 25, 25);
-          const headerStartX = marginLeft + 30;
-
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(14);
-          doc.setTextColor(primary.r, primary.g, primary.b);
-          doc.text(clinic?.name || "Clínica Veterinaria", headerStartX, y + 7);
-
-          doc.setFont("helvetica", "normal");
-          doc.setFontSize(8);
-          doc.setTextColor(gray.r, gray.g, gray.b);
-
-          let infoY = y + 13;
-          if (clinic?.phone || clinic?.whatsapp) {
-            doc.text(
-              `Tel: ${clinic?.phone || ""} ${clinic?.whatsapp ? `| WhatsApp: ${clinic.whatsapp}` : ""}`,
-              headerStartX,
-              infoY
-            );
-            infoY += 4;
-          }
-          if (clinic?.email) {
-            doc.text(clinic.email, headerStartX, infoY);
-            infoY += 4;
-          }
-          if (clinic?.address) {
-            const addressLines = doc.splitTextToSize(clinic.address, pageWidth - headerStartX - marginRight);
-            doc.text(addressLines[0], headerStartX, infoY);
-          }
-          y += 30;
-        } catch (e) {
-          console.warn("No se pudo agregar logo", e);
-          if (clinic?.name) {
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(14);
-            doc.setTextColor(primary.r, primary.g, primary.b);
-            doc.text(clinic.name, pageWidth / 2, y + 5, { align: "center" });
-            y += 15;
-          }
-        }
-      } else if (clinic?.name) {
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(14);
-        doc.setTextColor(primary.r, primary.g, primary.b);
-        doc.text(clinic.name, pageWidth / 2, y + 5, { align: "center" });
-        y += 10;
-      }
-
-      // === TÍTULO ===
-      doc.setFontSize(18);
-      doc.setTextColor(primary.r, primary.g, primary.b);
-      doc.setFont("helvetica", "bold");
-      doc.text("RESULTADOS DE HEMATOLOGÍA", pageWidth / 2, y, { align: "center" });
-      y += 6;
-
-      doc.setFontSize(10);
-      doc.setTextColor(gray.r, gray.g, gray.b);
-      doc.setFont("helvetica", "normal");
-      doc.text("ANÁLISIS HEMATOLÓGICO COMPLETO", pageWidth / 2, y, { align: "center" });
-      y += 10;
-
-      // === INFO PACIENTE ===
-      const infoHeight = 22;
-      doc.setFillColor(lightBg.r, lightBg.g, lightBg.b);
-      doc.rect(marginLeft, y, contentWidth, infoHeight, "F");
-
-      doc.setFontSize(9);
-      doc.setTextColor(dark.r, dark.g, dark.b);
-
-      const col1 = marginLeft + 5;
-      const col2 = marginLeft + contentWidth / 3 + 5;
-      const col3 = marginLeft + (contentWidth / 3) * 2 + 5;
-      const row1 = y + 7;
-      const row2 = y + 15;
-
-      doc.setFont("helvetica", "bold");
-      doc.text("Fecha: ", col1, row1);
-      doc.setFont("helvetica", "normal");
-      doc.text(new Date(exam.date).toLocaleDateString("es-ES"), col1 + 14, row1);
-
-      doc.setFont("helvetica", "bold");
-      doc.text("Paciente: ", col2, row1);
-      doc.setFont("helvetica", "normal");
-      doc.text(exam.patientName || "—", col2 + 20, row1);
-
-      doc.setFont("helvetica", "bold");
-      doc.text("Especie: ", col3, row1);
-      doc.setFont("helvetica", "normal");
-      doc.text(exam.species || "—", col3 + 18, row1);
-
-      doc.setFont("helvetica", "bold");
-      doc.text("Raza: ", col1, row2);
-      doc.setFont("helvetica", "normal");
-      doc.text(exam.breed || "—", col1 + 13, row2);
-
-      doc.setFont("helvetica", "bold");
-      doc.text("Propietario: ", col2, row2);
-      doc.setFont("helvetica", "normal");
-      doc.text(exam.ownerName || "—", col2 + 25, row2);
-
-      doc.setFont("helvetica", "bold");
-      doc.text("Médico: ", col3, row2);
-      doc.setFont("helvetica", "normal");
-      doc.text(getVetName(), col3 + 16, row2);
-
-      y += infoHeight + 10;
-
-      // === FUNCIONES AUXILIARES ===
-      const formatNumber = (num: number) => num.toLocaleString("es-ES");
-      const calculatePercentage = (count: number) =>
-        exam.totalCells > 0 ? ((count / exam.totalCells) * 100).toFixed(1) : "0.0";
-      const calculateAbsolute = (percentage: string) =>
-        ((parseFloat(percentage) / 100) * exam.whiteBloodCells).toFixed(0);
-
-      const drawTableHeader = (title: string, startY: number): number => {
-        doc.setFillColor(primary.r, primary.g, primary.b);
-        doc.rect(marginLeft, startY, contentWidth, 8, "F");
-        doc.setFontSize(10);
-        doc.setTextColor(white.r, white.g, white.b);
-        doc.setFont("helvetica", "bold");
-        doc.text(title, pageWidth / 2, startY + 5.5, { align: "center" });
-        return startY + 8;
-      };
-
-      const drawRow = (
-        cols: { text: string; x: number; width: number; align?: "left" | "center" | "right"; bold?: boolean }[],
-        rowY: number,
-        rowHeight: number,
-        isHeader: boolean,
-        isLabel?: boolean
-      ) => {
-        if (isHeader) {
-          doc.setFillColor(primary.r, primary.g, primary.b);
-        } else if (isLabel) {
-          doc.setFillColor(labelBg.r, labelBg.g, labelBg.b);
-        } else {
-          doc.setFillColor(white.r, white.g, white.b);
-        }
-
-        let xPos = marginLeft;
-        cols.forEach((col) => {
-          doc.rect(xPos, rowY, col.width, rowHeight, "FD");
-          xPos += col.width;
-        });
-
-        doc.setDrawColor(tableBorder.r, tableBorder.g, tableBorder.b);
-        xPos = marginLeft;
-        cols.forEach((col) => {
-          doc.rect(xPos, rowY, col.width, rowHeight, "S");
-          xPos += col.width;
-        });
-
-        doc.setFontSize(isHeader ? 8 : 9);
-        if (isHeader) {
-          doc.setTextColor(white.r, white.g, white.b);
-          doc.setFont("helvetica", "bold");
-        } else {
-          doc.setTextColor(dark.r, dark.g, dark.b);
-        }
-
-        cols.forEach((col) => {
-          if (!isHeader) {
-            doc.setFont("helvetica", col.bold ? "bold" : "normal");
-          }
-          const textX =
-            col.align === "center"
-              ? col.x + col.width / 2
-              : col.align === "right"
-              ? col.x + col.width - 3
-              : col.x + 3;
-          doc.text(col.text, textX, rowY + rowHeight / 2 + 1, { align: col.align || "left" });
-        });
-      };
-
-      // === TABLA HEMOGRAMA ===
-      y = drawTableHeader("VALORES DEL HEMOGRAMA", y);
-
-      const colWidths1 = [
-        contentWidth * 0.28,
-        contentWidth * 0.18,
-        contentWidth * 0.18,
-        contentWidth * 0.18,
-        contentWidth * 0.18,
-      ];
-      const rowH = 8;
-
-      const headerCols1 = [
-        { text: "PARÁMETRO", x: marginLeft, width: colWidths1[0], align: "center" as const },
-        { text: "RESULTADO", x: marginLeft + colWidths1[0], width: colWidths1[1], align: "center" as const },
-        { text: "UNIDAD", x: marginLeft + colWidths1[0] + colWidths1[1], width: colWidths1[2], align: "center" as const },
-        { text: "REF. CANINO", x: marginLeft + colWidths1[0] + colWidths1[1] + colWidths1[2], width: colWidths1[3], align: "center" as const },
-        { text: "REF. FELINO", x: marginLeft + colWidths1[0] + colWidths1[1] + colWidths1[2] + colWidths1[3], width: colWidths1[4], align: "center" as const },
-      ];
-      drawRow(headerCols1, y, rowH, true);
-      y += rowH;
-
-      const hemogramaRows = [
-        { param: "Hematocrito", value: String(exam.hematocrit), unit: "%", refC: "37 - 55", refF: "30 - 45" },
-        { param: "Glóbulos Blancos", value: formatNumber(exam.whiteBloodCells), unit: "células/µL", refC: "6.000 - 17.000", refF: "5.000 - 19.500" },
-        { param: "Plaquetas", value: formatNumber(exam.platelets), unit: "células/µL", refC: "200.000 - 500.000", refF: "300.000 - 800.000" },
-        { param: "Proteínas Totales", value: String(exam.totalProtein), unit: "g/dL", refC: "5.4 - 7.8", refF: "5.7 - 8.9" },
-      ];
-
-      hemogramaRows.forEach((row) => {
-        let xPos = marginLeft;
-        const cols = [
-          { text: row.param, x: xPos, width: colWidths1[0], align: "left" as const, bold: true },
-          { text: row.value, x: (xPos += colWidths1[0]), width: colWidths1[1], align: "center" as const, bold: true },
-          { text: row.unit, x: (xPos += colWidths1[1]), width: colWidths1[2], align: "center" as const },
-          { text: row.refC, x: (xPos += colWidths1[2]), width: colWidths1[3], align: "center" as const },
-          { text: row.refF, x: (xPos += colWidths1[3]), width: colWidths1[4], align: "center" as const },
-        ];
-        drawRow(cols, y, rowH, false, true);
-        y += rowH;
-      });
-
-      y += 10;
-
-      // === TABLA FÓRMULA LEUCOCITARIA ===
-      y = drawTableHeader("FÓRMULA LEUCOCITARIA", y);
-
-      const headerCols2 = [
-        { text: "TIPO CELULAR", x: marginLeft, width: colWidths1[0], align: "center" as const },
-        { text: "%", x: marginLeft + colWidths1[0], width: colWidths1[1], align: "center" as const },
-        { text: "ABSOLUTO (CÉL/ML)", x: marginLeft + colWidths1[0] + colWidths1[1], width: colWidths1[2], align: "center" as const },
-        { text: "REF. CANINO (%)", x: marginLeft + colWidths1[0] + colWidths1[1] + colWidths1[2], width: colWidths1[3], align: "center" as const },
-        { text: "REF. FELINO (%)", x: marginLeft + colWidths1[0] + colWidths1[1] + colWidths1[2] + colWidths1[3], width: colWidths1[4], align: "center" as const },
-      ];
-      drawRow(headerCols2, y, rowH, true);
-      y += rowH;
-
-      const cells = exam.differentialCount;
-      const leucoRows = [
-        { label: "Neutrófilos Segmentados", val: cells.segmentedNeutrophils, refC: "60 - 77", refF: "35 - 75" },
-        { label: "Neutrófilos en Banda", val: cells.bandNeutrophils, refC: "0 - 3", refF: "0 - 3" },
-        { label: "Linfocitos", val: cells.lymphocytes, refC: "12 - 30", refF: "20 - 55" },
-        { label: "Monocitos", val: cells.monocytes, refC: "3 - 10", refF: "1 - 4" },
-        { label: "Eosinófilos", val: cells.eosinophils, refC: "2 - 10", refF: "2 - 12" },
-        { label: "Basófilos", val: cells.basophils, refC: "Raros", refF: "Raros" },
-      ];
-
-      leucoRows.forEach((row) => {
-        const per = calculatePercentage(row.val || 0);
-        const abs = calculateAbsolute(per);
-        let xPos = marginLeft;
-        const cols = [
-          { text: row.label, x: xPos, width: colWidths1[0], align: "left" as const, bold: true },
-          { text: `${per}%`, x: (xPos += colWidths1[0]), width: colWidths1[1], align: "center" as const, bold: true },
-          { text: abs, x: (xPos += colWidths1[1]), width: colWidths1[2], align: "center" as const },
-          { text: row.refC, x: (xPos += colWidths1[2]), width: colWidths1[3], align: "center" as const },
-          { text: row.refF, x: (xPos += colWidths1[3]), width: colWidths1[4], align: "center" as const },
-        ];
-        drawRow(cols, y, rowH, false, true);
-        y += rowH;
-      });
-
-      // === PIE DE PÁGINA ===
-      y += 20;
-
-      if (signatureBase64 && signatureBase64.startsWith("data:image")) {
-        try {
-          doc.addImage(signatureBase64, "PNG", pageWidth / 2 - 25, y, 50, 20);
-          y += 22;
-        } catch (e) {
-          console.warn("No se pudo agregar firma:", e);
-          y += 5;
-        }
-      } else {
-        y += 10;
-      }
-
-      doc.setDrawColor(tableBorder.r, tableBorder.g, tableBorder.b);
-      doc.line(pageWidth / 2 - 40, y, pageWidth / 2 + 40, y);
-      y += 6;
-
-      doc.setFontSize(12);
-      doc.setTextColor(primary.r, primary.g, primary.b);
-      doc.setFont("helvetica", "bold");
-      doc.text(getVetName(), pageWidth / 2, y, { align: "center" });
-      y += 5;
-
-      doc.setFontSize(9);
-      doc.setTextColor(gray.r, gray.g, gray.b);
-      doc.setFont("helvetica", "normal");
-      doc.text(`C.I: V-${vetProfile?.ci || "—"} | CMVZ: ${vetProfile?.cmv || "—"}`, pageWidth / 2, y, { align: "center" });
-      y += 5;
-
-      const credenciales = getVetCredentials();
-      if (credenciales.length > 0) {
-        doc.setFontSize(8);
-        doc.text(credenciales.join(" | "), pageWidth / 2, y, { align: "center" });
-        y += 5;
-      }
-
-      doc.setFontSize(8);
-      doc.text(`${vetProfile?.estado || "—"}, Venezuela`, pageWidth / 2, y, { align: "center" });
-      y += 4;
-      doc.text("Médico Veterinario", pageWidth / 2, y, { align: "center" });
-
-      // === FOOTER CON REDES ===
-      if (clinic?.whatsapp || clinic?.socialMedia?.length) {
-        y += 8;
-        doc.setFontSize(7);
-        doc.setTextColor(gray.r, gray.g, gray.b);
-
-        const socialText: string[] = [];
-        if (clinic?.whatsapp) socialText.push(`WhatsApp: ${clinic.whatsapp}`);
-        if (clinic?.socialMedia?.length) {
-          clinic.socialMedia.slice(0, 2).forEach((s) => {
-            const username = extractSocialUsername(s.url, s.platform);
-            socialText.push(`${s.platform}: ${username}`);
-          });
-        }
-        if (socialText.length > 0) {
-          doc.text(socialText.join(" | "), pageWidth / 2, y, { align: "center" });
-        }
-      }
-
-      // === GUARDAR ===
-      const dateStr = new Date(exam.date).toLocaleDateString("es-ES").replace(/\//g, "-");
-      doc.save(`Hematologia_${exam.patientName}_${dateStr}.pdf`);
-
-      toast.success("PDF Generado", "Resultados descargados exitosamente.");
-    } catch (error) {
-      console.error("Error generando PDF:", error);
-      toast.error("Error", "No se pudo generar el PDF.");
-    } finally {
-      setGeneratingPdfId(null);
+    switch (examType) {
+      case "hematology":
+        setShowHematologyModal(true);
+        break;
+      case "cytology":
+        setShowCytologyModal(true);
+        break;
+      case "urinalysis":
+        setShowUrinalysisModal(true);
+        break;
+      case "test":
+        setShowQuickTestModal(true);
+        break;
+      case "skin_scraping":
+        setShowSkinScrapingModal(true);
+        break;
+      case "trichogram":
+        setShowTrichogramModal(true);
+        break;
+      default:
+        toast.error("Error", "Tipo de examen no soportado");
     }
   };
+
+  // ══════════════════════════════════════════
+  // DATOS PARA PDF (pacientes externos)
+  // ══════════════════════════════════════════
+  const getPatientData = (exam: LabExam) => ({
+    name: exam.patientName || "",
+    species: exam.species || "",
+    breed: exam.breed || "",
+    owner: {
+      name: exam.ownerName || "Particular",
+      contact: exam.ownerPhone || "",
+    },
+    mainVet: exam.treatingVet || "Veterinario",
+  });
 
   // Loading
   if (isLoading) return <Spinner fullScreen size="xl" />;
@@ -476,6 +252,7 @@ export default function LabExamListView() {
   }
 
   const totalCountText = `${stats.total} examen${stats.total !== 1 ? "es" : ""} registrado${stats.total !== 1 ? "s" : ""}`;
+  const examType = examToView?.examType || "hematology";
 
   return (
     <div className="flex flex-col h-full bg-surface-100 dark:bg-dark-300">
@@ -486,16 +263,17 @@ export default function LabExamListView() {
         <LabExamListHeader
           totalCount={totalCountText}
           onBack={() => navigate(-1)}
-          onNew={() => navigate("/lab/create")}
         />
 
         <LabExamStats stats={stats} />
 
         <LabExamFilters
           searchTerm={searchTerm}
-          onSearchChange={(v) => setSearchTerm(v)}
+          onSearchChange={setSearchTerm}
           speciesFilter={speciesFilter}
-          onSpeciesChange={(v) => setSpeciesFilter(v)}
+          onSpeciesChange={setSpeciesFilter}
+          examTypeFilter={examTypeFilter}
+          onExamTypeChange={setExamTypeFilter}
           hasActiveFilters={hasActiveFilters}
           onClearFilters={handleClearFilters}
         />
@@ -504,19 +282,17 @@ export default function LabExamListView() {
       {/* ========================================
           CONTENIDO SCROLLEABLE
           ======================================== */}
-      <div className="flex-1 overflow-hidden px-4 sm:px-8 pb-4 sm:pb-8">
+      <div className="flex-1 overflow-hidden px-4 sm:px-8 pb-4 sm:pb-8 pt-2">
         <div className="bg-white dark:bg-dark-100 rounded-xl border border-surface-300 dark:border-slate-700 shadow-sm h-full flex flex-col overflow-hidden">
           {currentExams.length === 0 ? (
-            /* Empty */
+            /* Empty State */
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center">
                 <div className="w-14 h-14 mx-auto mb-3 bg-surface-100 dark:bg-dark-200 rounded-full flex items-center justify-center border border-surface-300 dark:border-slate-700">
-                  <FlaskConical className="w-7 h-7 text-surface-400 dark:text-slate-500" />
+                  <FileSearch className="w-7 h-7 text-surface-400 dark:text-slate-500" />
                 </div>
                 <p className="text-slate-700 dark:text-slate-200 font-semibold text-sm mb-1">
-                  {hasActiveFilters
-                    ? "Sin resultados"
-                    : "No hay exámenes registrados"}
+                  {hasActiveFilters ? "Sin resultados" : "No hay exámenes registrados"}
                 </p>
                 <p className="text-surface-500 dark:text-slate-400 text-xs mb-3">
                   {hasActiveFilters
@@ -544,34 +320,195 @@ export default function LabExamListView() {
             </div>
           ) : (
             <>
-              {/* Desktop */}
-              <LabExamTable
-                exams={currentExams}
-                onDelete={handleDeleteClick}
-                onDownload={handleDownloadPDF}
-                generatingPdfId={generatingPdfId}
-                isPDFReady={isPDFReady}
-              />
+              {/* ══════════════════════════════════════════
+                  TABLA DESKTOP
+                  ══════════════════════════════════════════ */}
+              <div className="hidden lg:block flex-1 overflow-auto custom-scrollbar">
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-surface-50 dark:bg-dark-200 border-b border-surface-300 dark:border-slate-700 z-10">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-[11px] font-semibold text-surface-500 dark:text-slate-400 uppercase tracking-wider">
+                        Tipo
+                      </th>
+                      <th className="px-4 py-3 text-left text-[11px] font-semibold text-surface-500 dark:text-slate-400 uppercase tracking-wider">
+                        Paciente
+                      </th>
+                      <th className="px-4 py-3 text-left text-[11px] font-semibold text-surface-500 dark:text-slate-400 uppercase tracking-wider hidden md:table-cell">
+                        Propietario
+                      </th>
+                      <th className="px-4 py-3 text-left text-[11px] font-semibold text-surface-500 dark:text-slate-400 uppercase tracking-wider hidden sm:table-cell">
+                        Fecha
+                      </th>
+                      <th className="px-4 py-3 text-center text-[11px] font-semibold text-surface-500 dark:text-slate-400 uppercase tracking-wider">
+                        Acciones
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-surface-200 dark:divide-slate-700/50">
+                    {currentExams.map((exam) => {
+                      const config = getExamConfig(exam.examType);
+                      const Icon = config.icon;
 
-              {/* Mobile */}
+                      return (
+                        <tr
+                          key={exam._id}
+                          className="hover:bg-surface-50 dark:hover:bg-dark-200/50 transition-colors"
+                        >
+                          {/* Tipo */}
+                          <td className="px-4 py-3">
+                            <div className={`inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg ${config.bgColor} border ${config.borderColor}`}>
+                              <Icon className={`w-4 h-4 ${config.color}`} />
+                              <span className={`text-xs font-semibold ${config.textColor}`}>
+                                {config.name}
+                              </span>
+                            </div>
+                          </td>
+
+                          {/* Paciente */}
+                          <td className="px-4 py-3">
+                            <div>
+                              <p className="font-semibold text-slate-800 dark:text-white">
+                                {exam.patientName || "—"}
+                              </p>
+                              <p className="text-xs text-slate-500 dark:text-slate-400">
+                                {exam.species} {exam.breed && `• ${exam.breed}`}
+                              </p>
+                            </div>
+                          </td>
+
+                          {/* Propietario */}
+                          <td className="px-4 py-3 hidden md:table-cell">
+                            <p className="text-slate-600 dark:text-slate-300">
+                              {exam.ownerName || "Particular"}
+                            </p>
+                            {exam.ownerPhone && (
+                              <p className="text-xs text-slate-400">{exam.ownerPhone}</p>
+                            )}
+                          </td>
+
+                          {/* Fecha */}
+                          <td className="px-4 py-3 hidden sm:table-cell">
+                            <span className="text-slate-600 dark:text-slate-300">
+                              {new Date(exam.date).toLocaleDateString("es-ES")}
+                            </span>
+                          </td>
+
+                          {/* Acciones */}
+                          <td className="px-4 py-3">
+                            <div className="flex items-center justify-center gap-1">
+                              {/* ✅ NUEVO: Botón Ver Detalle */}
+                              <button
+                                onClick={() => handleViewExam(exam)}
+                                className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                                title="Ver detalle"
+                              >
+                                <Eye size={18} />
+                              </button>
+                              <button
+                                onClick={() => handlePrintExam(exam)}
+                                className="p-2 text-slate-400 hover:text-biovet-500 hover:bg-biovet-50 dark:hover:bg-biovet-950/30 rounded-lg transition-colors"
+                                title="Generar PDF"
+                              >
+                                <Printer size={18} />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (exam._id) {
+                                    handleDeleteClick({ _id: exam._id, patientName: exam.patientName });
+                                  }
+                                }}
+                                className="p-2 text-slate-400 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-950/30 rounded-lg transition-colors"
+                                title="Eliminar"
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* ══════════════════════════════════════════
+                  CARDS MOBILE
+                  ══════════════════════════════════════════ */}
               <div className="lg:hidden flex-1 overflow-auto custom-scrollbar divide-y divide-surface-200 dark:divide-slate-700/50">
-                {currentExams.map((exam) => (
-                  <LabExamMobileCard
-                    key={exam._id}
-                    exam={exam}
-                    onDelete={() => {
-                      if (exam._id) {
-                        handleDeleteClick({
-                          _id: exam._id,
-                          patientName: exam.patientName,
-                        });
-                      }
-                    }}
-                    onDownload={() => handleDownloadPDF(exam)}
-                    isGeneratingPdf={generatingPdfId === exam._id}
-                    isPDFReady={isPDFReady}
-                  />
-                ))}
+                {currentExams.map((exam) => {
+                  const config = getExamConfig(exam.examType);
+                  const Icon = config.icon;
+
+                  return (
+                    <div key={exam._id} className="p-4 space-y-3">
+                      {/* Header */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-lg ${config.bgColor} border ${config.borderColor}`}>
+                            <Icon className={`w-5 h-5 ${config.color}`} />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-slate-800 dark:text-white">
+                              {exam.patientName || "Sin nombre"}
+                            </h4>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                              {config.name} • {exam.species || "—"}
+                            </p>
+                          </div>
+                        </div>
+                        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${config.bgColor} ${config.textColor}`}>
+                          {new Date(exam.date).toLocaleDateString("es-ES")}
+                        </span>
+                      </div>
+
+                      {/* Info */}
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <span className="text-xs text-slate-500 dark:text-slate-400">Propietario</span>
+                          <p className="text-slate-700 dark:text-slate-200 truncate">
+                            {exam.ownerName || "Particular"}
+                          </p>
+                        </div>
+                        <div>
+                          <span className="text-xs text-slate-500 dark:text-slate-400">Veterinario</span>
+                          <p className="text-slate-700 dark:text-slate-200 truncate">
+                            {exam.treatingVet || "—"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Acciones */}
+                      <div className="flex items-center justify-end gap-2 pt-2 border-t border-surface-200 dark:border-slate-700/50">
+                        {/* ✅ NUEVO: Botón Ver */}
+                        <button
+                          onClick={() => handleViewExam(exam)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          Ver
+                        </button>
+                        <button
+                          onClick={() => handlePrintExam(exam)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-biovet-600 dark:text-biovet-400 hover:bg-biovet-50 dark:hover:bg-biovet-950/30 rounded-lg transition-colors"
+                        >
+                          <Printer className="w-3.5 h-3.5" />
+                          PDF
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (exam._id) {
+                              handleDeleteClick({ _id: exam._id, patientName: exam.patientName });
+                            }
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-950/30 rounded-lg transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          Eliminar
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </>
           )}
@@ -589,6 +526,141 @@ export default function LabExamListView() {
       </div>
 
       {/* ========================================
+          MODALES DE DETALLE POR TIPO
+          ======================================== */}
+
+      {/* Hematología */}
+      {examToView && examType === "hematology" && (
+        <LabExamDetailModal
+          isOpen={!!examToView}
+          onClose={handleCloseDetail}
+          exam={examToView}
+          triggerRect={null}
+        />
+      )}
+
+      {/* Citología */}
+      {examToView && examType === "cytology" && (
+        <CytologyDetailModal
+          exam={examToView}
+          onClose={handleCloseDetail}
+          onPrint={handlePrintExam}
+        />
+      )}
+
+      {/* Uroanálisis */}
+      {examToView && examType === "urinalysis" && (
+        <UrinalysisDetailModal
+          exam={examToView}
+          onClose={handleCloseDetail}
+          onPrint={handlePrintExam}
+        />
+      )}
+
+      {/* Test Rápido */}
+      {examToView && examType === "test" && (
+        <QuickTestDetailModal
+          exam={examToView}
+          onClose={handleCloseDetail}
+          onPrint={handlePrintExam}
+        />
+      )}
+
+      {/* Raspado Cutáneo */}
+      {examToView && examType === "skin_scraping" && (
+        <SkinScrapingDetailModal
+          exam={examToView}
+          onClose={handleCloseDetail}
+          onPrint={handlePrintExam}
+        />
+      )}
+
+      {/* Tricograma */}
+      {examToView && examType === "trichogram" && (
+        <TrichogramDetailModal
+          exam={examToView}
+          onClose={handleCloseDetail}
+          onPrint={handlePrintExam}
+        />
+      )}
+
+      {/* ========================================
+          MODALES DE PDF POR TIPO
+          ======================================== */}
+
+      {showHematologyModal && selectedExam && (
+        <ShareResultsModal
+          isOpen={showHematologyModal}
+          onClose={() => {
+            setShowHematologyModal(false);
+            setSelectedExam(null);
+          }}
+          examData={selectedExam}
+          patientData={getPatientData(selectedExam)}
+        />
+      )}
+
+      {showCytologyModal && selectedExam && (
+        <ShareCytologyResultsModal
+          isOpen={showCytologyModal}
+          onClose={() => {
+            setShowCytologyModal(false);
+            setSelectedExam(null);
+          }}
+          examData={selectedExam}
+          patientData={getPatientData(selectedExam)}
+        />
+      )}
+
+      {showUrinalysisModal && selectedExam && (
+        <ShareUrinalysisResultsModal
+          isOpen={showUrinalysisModal}
+          onClose={() => {
+            setShowUrinalysisModal(false);
+            setSelectedExam(null);
+          }}
+          examData={selectedExam}
+          patientData={getPatientData(selectedExam)}
+        />
+      )}
+
+      {showQuickTestModal && selectedExam && (
+        <ShareQuickTestResultsModal
+          isOpen={showQuickTestModal}
+          onClose={() => {
+            setShowQuickTestModal(false);
+            setSelectedExam(null);
+          }}
+          examData={selectedExam}
+          patientData={getPatientData(selectedExam)}
+        />
+      )}
+
+      {showSkinScrapingModal && selectedExam && (
+        <ShareSkinScrapingResultsModal
+          isOpen={showSkinScrapingModal}
+          onClose={() => {
+            setShowSkinScrapingModal(false);
+            setSelectedExam(null);
+          }}
+          examData={selectedExam}
+          patientData={getPatientData(selectedExam)}
+        />
+      )}
+
+      {showTrichogramModal && selectedExam && (
+        <ShareTrichogramResultsModal
+          isOpen={showTrichogramModal}
+          onClose={() => {
+            setShowTrichogramModal(false);
+            setSelectedExam(null);
+          }}
+          examData={selectedExam}
+          patientData={getPatientData(selectedExam)}
+        />
+      )}
+
+      {/* ========================================
           DELETE MODAL
           ======================================== */}
       <ConfirmationModal
@@ -599,10 +671,8 @@ export default function LabExamListView() {
         message={
           <p className="text-slate-700 dark:text-slate-200">
             ¿Estás seguro de que deseas eliminar el examen de{" "}
-            <span className="font-bold text-danger-500">
-              {examToDelete?.name}
-            </span>
-            ? Esta acción no se puede deshacer.
+            <span className="font-bold text-danger-500">{examToDelete?.name}</span>?
+            Esta acción no se puede deshacer.
           </p>
         }
         variant="danger"

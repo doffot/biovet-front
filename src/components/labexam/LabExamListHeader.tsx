@@ -1,14 +1,77 @@
 // src/views/labExams/components/LabExamListHeader.tsx
 
-import { ArrowLeft, Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { 
+  ArrowLeft, 
+  Plus, 
+  FlaskConical, 
+  Microscope, 
+  Droplets, 
+  Beaker, 
+  Scissors, 
+  TestTube 
+} from "lucide-react";
+import { DropdownMenu } from "@/components/ui/DropdownMenu";
 
 interface LabExamListHeaderProps {
   totalCount: string;
   onBack: () => void;
-  onNew: () => void;
 }
 
-export function LabExamListHeader({ totalCount, onBack, onNew }: LabExamListHeaderProps) {
+export function LabExamListHeader({ totalCount, onBack }: LabExamListHeaderProps) {
+  const navigate = useNavigate();
+
+  const examTypeItems = [
+    {
+      id: "hematology",
+      label: "Hemograma",
+      description: "Análisis sanguíneo completo",
+      icon: FlaskConical,
+      color: "bg-emerald-500",
+      onClick: () => navigate("/lab/create?type=hematology"),
+    },
+    {
+      id: "cytology",
+      label: "Citología",
+      description: "Estudio celular de muestras",
+      icon: Microscope,
+      color: "bg-purple-500",
+      onClick: () => navigate("/lab/create?type=cytology"),
+    },
+    {
+      id: "urinalysis",
+      label: "Uroanálisis",
+      description: "Análisis completo de orina",
+      icon: Droplets,
+      color: "bg-blue-500",
+      onClick: () => navigate("/lab/create?type=urinalysis"),
+    },
+    {
+      id: "test",
+      label: "Test Rápido",
+      description: "Pruebas diagnósticas rápidas",
+      icon: Beaker,
+      color: "bg-cyan-500",
+      onClick: () => navigate("/lab/create?type=test"),
+    },
+    {
+      id: "skin_scraping",
+      label: "Raspado Cutáneo",
+      description: "Análisis dermatológico",
+      icon: Scissors,
+      color: "bg-amber-500",
+      onClick: () => navigate("/lab/create?type=skin_scraping"),
+    },
+    {
+      id: "trichogram",
+      label: "Tricograma",
+      description: "Estudio del pelo",
+      icon: TestTube,
+      color: "bg-teal-500",
+      onClick: () => navigate("/lab/create?type=trichogram"),
+    },
+  ];
+
   return (
     <>
       <div className="flex items-center justify-between">
@@ -29,15 +92,19 @@ export function LabExamListHeader({ totalCount, onBack, onNew }: LabExamListHead
           </div>
         </div>
 
-        <button
-          onClick={onNew}
-          className="flex items-center gap-2 px-4 sm:px-5 py-2.5 bg-biovet-500 hover:bg-biovet-600 text-white rounded-lg font-bold text-[13px] transition-all shadow-sm cursor-pointer active:scale-[0.98]"
-        >
-          <div className="p-0.5 border-2 border-white rounded-full">
-            <Plus size={12} strokeWidth={3} />
-          </div>
-          <span className="hidden sm:inline">Nuevo Examen</span>
-        </button>
+        <DropdownMenu
+          items={examTypeItems}
+          align="right"
+          side="bottom"
+          trigger={
+            <button className="flex items-center gap-2 px-4 sm:px-5 py-2.5 bg-biovet-500 hover:bg-biovet-600 text-white rounded-lg font-bold text-[13px] transition-all shadow-sm cursor-pointer active:scale-[0.98]">
+              <div className="p-0.5 border-2 border-white rounded-full">
+                <Plus size={12} strokeWidth={3} />
+              </div>
+              <span className="hidden sm:inline">Nuevo Examen</span>
+            </button>
+          }
+        />
       </div>
 
       <div className="border border-biovet-200/50 dark:border-biovet-800/30" />

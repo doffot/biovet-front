@@ -1,12 +1,14 @@
 // src/views/labExams/components/LabExamFilters.tsx
 
-import { Search, X, Filter, RefreshCw, Download } from "lucide-react";
+import { Search, X, Filter, RefreshCw, FlaskConical } from "lucide-react";
 
 interface LabExamFiltersProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
   speciesFilter: string;
   onSpeciesChange: (value: string) => void;
+  examTypeFilter: string;
+  onExamTypeChange: (value: string) => void;
   hasActiveFilters: boolean;
   onClearFilters: () => void;
 }
@@ -16,6 +18,8 @@ export function LabExamFilters({
   onSearchChange,
   speciesFilter,
   onSpeciesChange,
+  examTypeFilter,
+  onExamTypeChange,
   hasActiveFilters,
   onClearFilters,
 }: LabExamFiltersProps) {
@@ -62,6 +66,26 @@ export function LabExamFilters({
           </select>
         </div>
 
+        {/* Exam Type Filter */}
+        <div className="flex items-center bg-white dark:bg-dark-200 border border-surface-300 dark:border-slate-700 rounded-lg overflow-hidden shadow-sm">
+          <div className="pl-3 text-surface-400 dark:text-slate-500">
+            <FlaskConical size={16} />
+          </div>
+          <select
+            value={examTypeFilter}
+            onChange={(e) => onExamTypeChange(e.target.value)}
+            className="pl-2 pr-8 py-2.5 bg-transparent text-sm font-medium text-slate-600 dark:text-slate-300 outline-none appearance-none cursor-pointer"
+          >
+            <option value="all">Todos los tipos</option>
+            <option value="hematology">Hemograma</option>
+            <option value="cytology">Citología</option>
+            <option value="urinalysis">Uroanálisis</option>
+            <option value="test">Test Rápido</option>
+            <option value="skin_scraping">Raspado Cutáneo</option>
+            <option value="trichogram">Tricograma</option>
+          </select>
+        </div>
+
         {/* Clear */}
         {hasActiveFilters && (
           <button
@@ -72,12 +96,6 @@ export function LabExamFilters({
             <span className="hidden sm:inline">Limpiar</span>
           </button>
         )}
-
-        {/* Export */}
-        <button className="flex items-center gap-1.5 px-3 py-2.5 bg-white dark:bg-dark-200 border border-surface-300 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-surface-50 dark:hover:bg-dark-50 transition-all shadow-sm cursor-pointer">
-          <Download size={16} className="text-biovet-500" />
-          <span className="hidden sm:inline">Exportar</span>
-        </button>
       </div>
     </div>
   );

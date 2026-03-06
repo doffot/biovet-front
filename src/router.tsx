@@ -1,4 +1,10 @@
-import { BrowserRouter, Route, Routes, Navigate, Outlet } from "react-router-dom";
+import {
+  BrowserRouter,
+  Route,
+  Routes,
+  Navigate,
+  Outlet,
+} from "react-router-dom";
 
 // Layouts
 import { AppLayout } from "@/layouts/AppLayout";
@@ -6,7 +12,7 @@ import AuthLayout from "@/layouts/AuthLayout";
 import PatientLayout from "@/layouts/PatientLayout";
 
 // Vistas Públicas
-import LandingPage from "@/views/LandingPage"; 
+import LandingPage from "@/views/LandingPage";
 
 // Vistas Auth
 import LoginView from "@/views/auth/LoginView";
@@ -92,169 +98,307 @@ import CreateTrichogramView from "./views/labExams/CreateTrichogramView";
  * COMPONENTES DE PROTECCIÓN DE RUTA
  */
 const PrivateRoute = () => {
-    const token = localStorage.getItem("AUTH_TOKEN");
-    return token ? <Outlet /> : <Navigate to="/auth/login" replace />;
+  const token = localStorage.getItem("AUTH_TOKEN");
+  return token ? <Outlet /> : <Navigate to="/auth/login" replace />;
 };
 
 const PublicRoute = () => {
-    const token = localStorage.getItem("AUTH_TOKEN");
-    return !token ? <Outlet /> : <Navigate to="/dashboard" replace />;
+  const token = localStorage.getItem("AUTH_TOKEN");
+  return !token ? <Outlet /> : <Navigate to="/dashboard" replace />;
 };
 
 export default function Router() {
-    return (
-        <BrowserRouter>
-            <Routes>
-                
-                {/* GRUPO 1: RUTAS PÚBLICAS (Solo visibles sin Login) */}
-                <Route element={<PublicRoute />}>
-                    <Route path="/" element={<LandingPage />} />
-                    
-                    <Route element={<AuthLayout />}>
-                        <Route path="/auth/login" element={<LoginView />} />
-                        <Route path="/auth/register" element={<RegisterView />} />
-                        <Route path="/auth/confirm-account" element={<ConfirmAccountView />} />
-                        <Route path="/auth/forgot-password" element={<ForgotPasswordView />} />
-                        <Route path="/auth/new-password" element={<NewPasswordView />} />
-                        <Route path="/auth/request-new-token" element={<RequestNewToken />} />
-                    </Route>
-                </Route>
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* GRUPO 1: RUTAS PÚBLICAS (Solo visibles sin Login) */}
+        <Route element={<PublicRoute />}>
+          <Route path="/" element={<LandingPage />} />
 
-                {/* GRUPO 2: RUTAS PRIVADAS (Requieren AUTH_TOKEN) */}
-                <Route element={<PrivateRoute />}>
-                    <Route element={<AppLayout />}>
-                        
-                        <Route path="/dashboard" element={<Dashboard />} />
-                        <Route path="/admin" element={<Navigate to="/dashboard" replace />} />
+          <Route element={<AuthLayout />}>
+            <Route path="/auth/login" element={<LoginView />} />
+            <Route path="/auth/register" element={<RegisterView />} />
+            <Route
+              path="/auth/confirm-account"
+              element={<ConfirmAccountView />}
+            />
+            <Route
+              path="/auth/forgot-password"
+              element={<ForgotPasswordView />}
+            />
+            <Route path="/auth/new-password" element={<NewPasswordView />} />
+            <Route
+              path="/auth/request-new-token"
+              element={<RequestNewToken />}
+            />
+          </Route>
+        </Route>
 
-                        {/* Dueños y Pacientes */}
-                        <Route path="/owners">
-                            <Route index element={<OwnersView />} />
-                            <Route path="create" element={<CreateOwnerView />} />
-                            <Route path=":ownerId" element={<OwnerDetailView />} />
-                            <Route path=":ownerId/patients/new" element={<CreatePatientView />} />
-                        </Route>
+        {/* GRUPO 2: RUTAS PRIVADAS (Requieren AUTH_TOKEN) */}
+        <Route element={<PrivateRoute />}>
+          <Route element={<AppLayout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route
+              path="/admin"
+              element={<Navigate to="/dashboard" replace />}
+            />
 
-                        <Route path="/patients">
-                            <Route index element={<PatientsListView />} />
-                            {/* Layout de Perfil de Mascota */}
-                            <Route path=":patientId" element={<PatientLayout />}>
-                                <Route index element={<DetailPatientView />} />
-                                <Route path="appointments" element={<AppointmentView />} />
-                                <Route path="appointments/new" element={<CreateAppointmentView />} />
-                                <Route path="appointments/:appointmentId" element={<AppointmentDetailView />} />
-                                <Route path="appointments/:appointmentId/edit" element={<EditAppointmentView />} />
-                                <Route path="services" element={<VeterinaryServiceListView />} />
-                                <Route path="services/create" element={<CreateVeterinaryServiceView />} />
-                                <Route path="studies" element={<MedicalStudyListView />} />
-                                <Route path="studies/create" element={<CreateMedicalStudyView />} />
-                                
-                                <Route path="prescriptions" element={<RecipeListView />} />
-                                <Route path="prescriptions/create" element={<CreateRecipeView />} />
-                                <Route path="prescriptions/:recipeId" element={<RecipeDetailView />} />
-                                <Route path="medical-orders" element={<MedicalOrderListView />} />
-                                <Route path="medical-orders/create" element={<CreateMedicalOrderView />} />
-                                <Route path="medical-orders/:orderId" element={<MedicalOrderDetailView />} />
-                                <Route path="vaccines" element={<VaccinationView />} />
-                                <Route path="deworming" element={<DewormingView />} />
-                                
-                                {/* EXÁMENES DE LABORATORIO (Paciente) */}
-                                <Route path="exams" element={<PatientLabExamListView />} />
-                                <Route path="exams/create" element={<CreateLabExamView />} />
-                                <Route path="exams/create/hematology" element={<CreateHematologyView />} />
-                                <Route path="exams/create/cytology" element={<CreateCytologyView />} />
-                                <Route path="exams/create/urinalysis" element={<CreateUrinalysisView />} />
-                                <Route path="exams/create/test" element={<CreateQuickTestView />} />
-                                <Route path="exams/create/skinScraping" element={<CreateSkinScrapingView />} />
-                                <Route path="exams/create/trichogram" element={<CreateTrichogramView />} />
-                                
-                                <Route path="consultations" element={<ConsultationView />} />
-                                <Route path="consultations/new" element={<CreateConsultationView />} />
-                                <Route path="consultations/:consultationId" element={<ConsultationDetailView />} />
-                                <Route path="consultations/:consultationId/edit" element={<EditConsultationView />} />
-                                <Route path="grooming" element={<GroomingServiceListView />} />
-                                <Route path="grooming/create" element={<CreateGroomingServiceView />} />
-                                <Route path="grooming/:serviceId" element={<GroomingServiceDetailView />} />
-                                <Route path="treatments" element={<TreatmentListView />} />
-                                <Route path="treatments/create" element={<CreateTreatmentView />} />
-                            </Route>
-                        </Route>
+            {/* Dueños y Pacientes */}
+            <Route path="/owners">
+              <Route index element={<OwnersView />} />
+              <Route path="create" element={<CreateOwnerView />} />
+              <Route path=":ownerId" element={<OwnerDetailView />} />
+              <Route
+                path=":ownerId/patients/new"
+                element={<CreatePatientView />}
+              />
+            </Route>
 
-                        {/* Ventas y POS */}
-                        <Route path="/sales">
-                            <Route index element={<Navigate to="/sales/new" replace />} />
-                            <Route path="new" element={<CreateSaleView />} />
-                            <Route path="history" element={<SalesHistoryView />} />
-                        </Route>
+            <Route path="/patients">
+              <Route index element={<PatientsListView />} />
+              {/* Layout de Perfil de Mascota */}
+              <Route path=":patientId" element={<PatientLayout />}>
+                <Route index element={<DetailPatientView />} />
+                <Route path="appointments" element={<AppointmentView />} />
+                <Route
+                  path="appointments/new"
+                  element={<CreateAppointmentView />}
+                />
+                <Route
+                  path="appointments/:appointmentId"
+                  element={<AppointmentDetailView />}
+                />
+                <Route
+                  path="appointments/:appointmentId/edit"
+                  element={<EditAppointmentView />}
+                />
+                <Route
+                  path="services"
+                  element={<VeterinaryServiceListView />}
+                />
+                <Route
+                  path="services/create"
+                  element={<CreateVeterinaryServiceView />}
+                />
+                <Route path="studies" element={<MedicalStudyListView />} />
+                <Route
+                  path="studies/create"
+                  element={<CreateMedicalStudyView />}
+                />
 
-                        {/* Agenda y Operativos */}
-                        <Route path="/appointments">
-                            <Route index element={<AppointmentsAgendaView />} />
-                            <Route path="select-patient" element={<SelectPatientForAppointment />} />
-                            <Route path="create/:patientId" element={<CreateAppointmentView />} />
-                        </Route>
+                <Route path="prescriptions" element={<RecipeListView />} />
+                <Route
+                  path="prescriptions/create"
+                  element={<CreateRecipeView />}
+                />
+                <Route
+                  path="prescriptions/:recipeId"
+                  element={<RecipeDetailView />}
+                />
+                <Route
+                  path="medical-orders"
+                  element={<MedicalOrderListView />}
+                />
+                <Route
+                  path="medical-orders/create"
+                  element={<CreateMedicalOrderView />}
+                />
+                <Route
+                  path="medical-orders/:orderId"
+                  element={<MedicalOrderDetailView />}
+                />
+                <Route path="vaccines" element={<VaccinationView />} />
+                <Route path="deworming" element={<DewormingView />} />
 
-                        <Route path="/grooming" element={<GroomingServicesView />} />
+                {/* EXÁMENES DE LABORATORIO (Paciente) */}
+                <Route path="exams" element={<PatientLabExamListView />} />
+                <Route path="exams/create" element={<CreateLabExamView />} />
+                <Route
+                  path="exams/create/hematology"
+                  element={<CreateHematologyView />}
+                />
+                <Route
+                  path="exams/create/cytology"
+                  element={<CreateCytologyView />}
+                />
+                <Route
+                  path="exams/create/urinalysis"
+                  element={<CreateUrinalysisView />}
+                />
+                <Route
+                  path="exams/create/test"
+                  element={<CreateQuickTestView />}
+                />
+                <Route
+                  path="exams/create/skinScraping"
+                  element={<CreateSkinScrapingView />}
+                />
+                <Route
+                  path="exams/create/trichogram"
+                  element={<CreateTrichogramView />}
+                />
 
-                        {/* LABORATORIO (Principal) */}
-                        <Route path="/lab">
-                            <Route index element={<LabExamListView />} />
-                            <Route path="create" element={<CreateLabExamView />} />
-                            <Route path="create/hematology" element={<CreateHematologyView />} />
-                            <Route path="create/hematology/:patientId" element={<CreateHematologyView />} />
-                            <Route path="create/cytology" element={<CreateCytologyView />} />
-                            <Route path="create/cytology/:patientId" element={<CreateCytologyView />} />
-                            <Route path="create/urinalysis" element={<CreateUrinalysisView />} />
-                            <Route path="create/urinalysis/:patientId" element={<CreateUrinalysisView />} />
-                            <Route path="create/test" element={<CreateQuickTestView />} />
-                            <Route path="create/test/:patientId" element={<CreateQuickTestView />} />
-                            <Route path="create/skinScraping" element={<CreateSkinScrapingView />} />
-                            <Route path="create/skinScraping/:patientId" element={<CreateSkinScrapingView />} />
-                            <Route path=":id/edit" element={<EditLabExamView />} />
-                        </Route>
-                        <Route path="create/trichogram" element={<CreateTrichogramView />} />
-<Route path="create/trichogram/:patientId" element={<CreateTrichogramView />} />
+                <Route path="consultations" element={<ConsultationView />} />
+                <Route
+                  path="consultations/new"
+                  element={<CreateConsultationView />}
+                />
+                <Route
+                  path="consultations/:consultationId"
+                  element={<ConsultationDetailView />}
+                />
+                <Route
+                  path="consultations/:consultationId/edit"
+                  element={<EditConsultationView />}
+                />
+                <Route path="grooming" element={<GroomingServiceListView />} />
+                <Route
+                  path="grooming/create"
+                  element={<CreateGroomingServiceView />}
+                />
+                <Route
+                  path="grooming/:serviceId"
+                  element={<GroomingServiceDetailView />}
+                />
+                <Route path="treatments" element={<TreatmentListView />} />
+                <Route
+                  path="treatments/create"
+                  element={<CreateTreatmentView />}
+                />
+              </Route>
+            </Route>
 
-                        {/* Inventario */}
-                        <Route path="/inventory">
-                            <Route index element={<Navigate to="/inventory/products" replace />} />
-                            <Route path="products" element={<ProductListView />} />
-                            <Route path="products/create" element={<CreateProductView />} />
-                            <Route path="products/edit/:productId" element={<EditProductView />} />
-                            <Route path="stock" element={<StockView />} />
-                            <Route path="movements" element={<MovementsView />} />
-                            <Route path="low-stock" element={<LowStockView />} />
-                        </Route>
+            {/* Ventas y POS */}
+            <Route path="/sales">
+              <Route index element={<Navigate to="/sales/new" replace />} />
+              <Route path="new" element={<CreateSaleView />} />
+              <Route path="history" element={<SalesHistoryView />} />
+            </Route>
 
-                        <Route path="/purchases">
-                            <Route index element={<Navigate to="/purchases/history" replace />} />
-                            <Route path="new" element={<CreatePurchaseView />} />
-                            <Route path="history" element={<PurchaseListView />} />
-                        </Route>
+            {/* Agenda y Operativos */}
+            <Route path="/appointments">
+              <Route index element={<AppointmentsAgendaView />} />
+              <Route
+                path="select-patient"
+                element={<SelectPatientForAppointment />}
+              />
+              <Route
+                path="create/:patientId"
+                element={<CreateAppointmentView />}
+              />
+            </Route>
 
-                        {/* Reportes y Config */}
-                        <Route path="/reports">
-                            <Route index element={<Navigate to="/reports/grooming" replace />} />
-                            <Route path="grooming" element={<GroomingReportView />} />
-                            <Route path="invoices" element={<InvoiceReportView />} />
-                        </Route>
+            <Route path="/grooming" element={<GroomingServicesView />} />
 
-                        <Route path="/invoices/:id" element={<InvoiceDetailView />} />
+            {/* LABORATORIO (Principal) */}
+            <Route path="/lab">
+              <Route index element={<LabExamListView />} />
+              <Route path="create" element={<CreateLabExamView />} />
+              <Route
+                path="create/hematology"
+                element={<CreateHematologyView />}
+              />
+              <Route
+                path="create/hematology/:patientId"
+                element={<CreateHematologyView />}
+              />
+              <Route path="create/cytology" element={<CreateCytologyView />} />
+              <Route
+                path="create/cytology/:patientId"
+                element={<CreateCytologyView />}
+              />
+              <Route
+                path="create/urinalysis"
+                element={<CreateUrinalysisView />}
+              />
+              <Route
+                path="create/urinalysis/:patientId"
+                element={<CreateUrinalysisView />}
+              />
+              <Route path="create/test" element={<CreateQuickTestView />} />
+              <Route
+                path="create/test/:patientId"
+                element={<CreateQuickTestView />}
+              />
+              <Route
+                path="create/skinScraping"
+                element={<CreateSkinScrapingView />}
+              />
+              <Route
+                path="create/skinScraping/:patientId"
+                element={<CreateSkinScrapingView />}
+              />
+              <Route path=":id/edit" element={<EditLabExamView />} />
+            </Route>
+            <Route
+              path="create/trichogram"
+              element={<CreateTrichogramView />}
+            />
+            <Route
+              path="create/trichogram/:patientId"
+              element={<CreateTrichogramView />}
+            />
 
-                        <Route path="/settings">
-                            <Route index element={<Navigate to="/settings/clinic" replace />} />
-                            <Route path="clinic" element={<ClinicSettingsView />} />
-                            <Route path="staff" element={<StaffListView />} />
-                            <Route path="payment-methods" element={<PaymentMethodsListView />} />
-                            <Route path="payment-methods/create" element={<CreatePaymentMethodView />} />
-                        </Route>
+            {/* Inventario */}
+            <Route path="/inventory">
+              <Route
+                index
+                element={<Navigate to="/inventory/products" replace />}
+              />
+              <Route path="products" element={<ProductListView />} />
+              <Route path="products/create" element={<CreateProductView />} />
+              <Route
+                path="products/edit/:productId"
+                element={<EditProductView />}
+              />
+              <Route path="stock" element={<StockView />} />
+              <Route path="movements" element={<MovementsView />} />
+              <Route path="low-stock" element={<LowStockView />} />
+            </Route>
 
-                    </Route>
-                </Route>
+            <Route path="/purchases">
+              <Route
+                index
+                element={<Navigate to="/purchases/history" replace />}
+              />
+              <Route path="new" element={<CreatePurchaseView />} />
+              <Route path="history" element={<PurchaseListView />} />
+            </Route>
 
-                {/* FALLBACK GENERAL */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-        </BrowserRouter>
-    );
+            {/* Reportes y Config */}
+            <Route path="/reports">
+              <Route
+                index
+                element={<Navigate to="/reports/grooming" replace />}
+              />
+              <Route path="grooming" element={<GroomingReportView />} />
+              <Route path="invoices" element={<InvoiceReportView />} />
+            </Route>
+
+            <Route path="/invoices/:id" element={<InvoiceDetailView />} />
+
+            <Route path="/settings">
+              <Route
+                index
+                element={<Navigate to="/settings/clinic" replace />}
+              />
+              <Route path="clinic" element={<ClinicSettingsView />} />
+              <Route path="staff" element={<StaffListView />} />
+              <Route
+                path="payment-methods"
+                element={<PaymentMethodsListView />}
+              />
+              <Route
+                path="payment-methods/create"
+                element={<CreatePaymentMethodView />}
+              />
+            </Route>
+          </Route>
+        </Route>
+
+        {/* FALLBACK GENERAL */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
