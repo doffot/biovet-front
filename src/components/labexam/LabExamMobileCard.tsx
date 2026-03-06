@@ -19,7 +19,11 @@ export function LabExamMobileCard({
   isGeneratingPdf,
   isPDFReady,
 }: LabExamMobileCardProps) {
-  const hematocritStatus = getHematocritStatus(exam.hematocrit, exam.species);
+  // ✅ Valores con fallback
+  const hematocrit = exam.hematocrit ?? 0;
+  const whiteBloodCells = exam.whiteBloodCells ?? 0;
+
+  const hematocritStatus = getHematocritStatus(hematocrit, exam.species);
   const isAltered = hematocritStatus !== "normal";
 
   return (
@@ -53,7 +57,7 @@ export function LabExamMobileCard({
                 : "text-biovet-500 dark:text-biovet-400"
             }`}
           >
-            {exam.hematocrit}%
+            {hematocrit}%
           </p>
           {isAltered && (
             <p className="text-[10px] text-danger-500 dark:text-danger-400 font-medium">
@@ -71,7 +75,7 @@ export function LabExamMobileCard({
             {formatExamDate(exam.date)}
           </span>
           <span>
-            WBC: {exam.whiteBloodCells}{" "}
+            WBC: {whiteBloodCells}{" "}
             <span className="text-[10px]">x10³/μL</span>
           </span>
         </div>
