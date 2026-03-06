@@ -31,6 +31,13 @@ export default function LabExamDetailModal({
 }: LabExamDetailModalProps) {
   if (!exam) return null;
 
+  // ✅ Valores con fallback
+  const hematocrit = exam.hematocrit ?? 0;
+  const whiteBloodCells = exam.whiteBloodCells ?? 0;
+  const totalProtein = exam.totalProtein ?? 0;
+  const platelets = exam.platelets ?? 0;
+  const totalCells = exam.totalCells ?? 0;
+
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString("es-ES", {
       weekday: "long",
@@ -56,7 +63,7 @@ export default function LabExamDetailModal({
   const activeDifferentials = differentialFields.filter(
     (field) => exam.differentialCount?.[field.key] !== undefined && 
                exam.differentialCount?.[field.key] !== null &&
-               exam.differentialCount?.[field.key]! > 0
+               (exam.differentialCount?.[field.key] ?? 0) > 0
   );
 
   return (
@@ -122,7 +129,7 @@ export default function LabExamDetailModal({
               </span>
             </div>
             <p className="text-lg font-black text-slate-800 dark:text-white">
-              {exam.hematocrit}<span className="text-sm font-medium text-slate-400 ml-1">%</span>
+              {hematocrit}<span className="text-sm font-medium text-slate-400 ml-1">%</span>
             </p>
           </div>
 
@@ -135,7 +142,7 @@ export default function LabExamDetailModal({
               </span>
             </div>
             <p className="text-lg font-black text-slate-800 dark:text-white">
-              {exam.whiteBloodCells.toLocaleString()}
+              {whiteBloodCells.toLocaleString()}
             </p>
           </div>
 
@@ -148,7 +155,7 @@ export default function LabExamDetailModal({
               </span>
             </div>
             <p className="text-lg font-black text-slate-800 dark:text-white">
-              {exam.totalProtein}<span className="text-sm font-medium text-slate-400 ml-1">g/dL</span>
+              {totalProtein}<span className="text-sm font-medium text-slate-400 ml-1">g/dL</span>
             </p>
           </div>
 
@@ -161,7 +168,7 @@ export default function LabExamDetailModal({
               </span>
             </div>
             <p className="text-lg font-black text-slate-800 dark:text-white">
-              {exam.platelets.toLocaleString()}
+              {platelets.toLocaleString()}
             </p>
           </div>
         </div>
@@ -172,9 +179,9 @@ export default function LabExamDetailModal({
         <div>
           <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2 border-b border-surface-200 dark:border-dark-50 pb-2">
             <Microscope size={12} className="text-emerald-500" /> Conteo Diferencial
-            {exam.totalCells > 0 && (
+            {totalCells > 0 && (
               <span className="ml-auto text-emerald-600 dark:text-emerald-400 font-bold">
-                Total: {exam.totalCells}%
+                Total: {totalCells}%
               </span>
             )}
           </h3>
@@ -188,7 +195,7 @@ export default function LabExamDetailModal({
                   {field.abbr}
                 </p>
                 <p className="text-sm font-black text-slate-800 dark:text-white">
-                  {exam.differentialCount?.[field.key]}%
+                  {exam.differentialCount?.[field.key] ?? 0}%
                 </p>
               </div>
             ))}

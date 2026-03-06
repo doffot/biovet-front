@@ -19,7 +19,11 @@ export function LabExamRow({
   isGeneratingPdf,
   isPDFReady,
 }: LabExamRowProps) {
-  const hematocritStatus = getHematocritStatus(exam.hematocrit, exam.species);
+  // ✅ Manejar undefined con valor por defecto
+  const hematocrit = exam.hematocrit ?? 0;
+  const whiteBloodCells = exam.whiteBloodCells ?? 0;
+  
+  const hematocritStatus = getHematocritStatus(hematocrit, exam.species);
   const isAltered = hematocritStatus !== "normal";
 
   return (
@@ -68,7 +72,7 @@ export function LabExamRow({
                 : "text-biovet-500 dark:text-biovet-400"
             }`}
           >
-            {exam.hematocrit}%
+            {hematocrit}%
           </span>
           {isAltered && (
             <span className="text-[10px] text-danger-500 dark:text-danger-400 font-medium">
@@ -81,7 +85,7 @@ export function LabExamRow({
       {/* Leucocitos */}
       <td className="px-4 py-3 text-center hidden lg:table-cell">
         <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-          {exam.whiteBloodCells}
+          {whiteBloodCells}
           <span className="text-surface-500 dark:text-slate-400 text-xs ml-1">
             x10³/μL
           </span>

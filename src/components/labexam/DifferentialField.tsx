@@ -1,5 +1,5 @@
 // src/components/labexam/DifferentialField.tsx
-import type { DifferentialField, LabExamFormData } from "@/types/labExam";
+import type { DifferentialField, DifferentialCount } from "@/types/labExam";
 
 interface DifferentialFieldProps {
   field: DifferentialField;
@@ -10,17 +10,20 @@ interface DifferentialFieldProps {
   species: "canino" | "felino";
   totalCells: number;
   onIncrement: (
-    field: keyof LabExamFormData["differentialCount"],
+    field: keyof DifferentialCount,
     sound: HTMLAudioElement
   ) => void;
   isOutOfRange: (
     value: number | string | undefined,
-    rangeKey: keyof LabExamFormData["differentialCount"]
+    rangeKey: keyof DifferentialCount
   ) => boolean;
   isMobile?: boolean;
 }
 
-const normalValues = {
+// ✅ Definir el tipo explícitamente
+type DifferentialKey = keyof DifferentialCount;
+
+const normalValues: Record<"canino" | "felino", Record<DifferentialKey, [number, number]>> = {
   canino: {
     segmentedNeutrophils: [3.3, 11.4],
     bandNeutrophils: [0, 0.3],
@@ -43,7 +46,7 @@ const normalValues = {
   },
 };
 
-const cellNames: Record<keyof LabExamFormData["differentialCount"], string> = {
+const cellNames: Record<DifferentialKey, string> = {
   segmentedNeutrophils: "SEG",
   bandNeutrophils: "BAND",
   lymphocytes: "LYM",
@@ -67,13 +70,16 @@ export function DifferentialFieldComponent({
   isMobile = false,
 }: DifferentialFieldProps) {
   
+  // ✅ Obtener el rango de forma segura
+  const range = normalValues[species][field.key];
+  const cellName = cellNames[field.key];
+
   if (isMobile) {
     return (
       <button
         type="button"
         onClick={() => onIncrement(field.key, field.sound)}
         disabled={totalCells >= 100}
-        // Clases para móvil: Botón grande, touch friendly, usando tu paleta
         className="relative w-full h-full min-h-30 bg-surface-50 dark:bg-dark-100 active:scale-95 transition-all duration-100 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden group rounded-xl border border-surface-200 dark:border-dark-50 shadow-sm"
       >
         <div className="absolute inset-1 rounded-lg overflow-hidden border-2 border-biovet-400/30 dark:border-biovet-500/30 group-active:border-biovet-500 transition-colors duration-100">
@@ -85,24 +91,21 @@ export function DifferentialFieldComponent({
               e.currentTarget.style.display = "none";
             }}
           />
-          {/* Gradiente para mejorar lectura de textos sobre la imagen */}
           <div className="absolute inset-0 bg-linear-to-b from-black/60 via-transparent to-black/70" />
         </div>
 
         <div className="absolute inset-0 flex flex-col justify-between p-2">
-          {/* Nombre Célula (Arriba Izquierda) */}
           <div className="self-start text-[10px] font-bold text-white bg-biovet-600/90 dark:bg-biovet-700/90 rounded-md px-1.5 py-0.5 backdrop-blur-xs shadow-md border border-white/10">
-            {cellNames[field.key]}
+            {cellName}
           </div>
 
-          {/* Contador y Porcentaje (Abajo Derecha) */}
           <div className="self-end flex flex-col items-end">
             <div className="bg-biovet-600 dark:bg-biovet-700 rounded-lg px-2 py-1 text-white shadow-lg border border-white/10 mb-0.5">
               <div className="text-xl font-bold leading-none text-center min-w-5">
                 {count}
               </div>
             </div>
-             <div className="text-[10px] font-medium text-white/90 bg-black/40 px-1.5 rounded-sm backdrop-blur-xs">
+            <div className="text-[10px] font-medium text-white/90 bg-black/40 px-1.5 rounded-sm backdrop-blur-xs">
               {percentage}%
             </div>
           </div>
@@ -111,7 +114,7 @@ export function DifferentialFieldComponent({
     );
   }
 
-  // Versión Desktop (Tu código original con nuevos colores)
+  // Versión Desktop
   return (
     <div className="text-center h-full">
       <label className="block text-slate-700 dark:text-slate-200 text-xs font-medium mb-1 leading-tight truncate">
@@ -136,7 +139,7 @@ export function DifferentialFieldComponent({
         </div>
         <div className="absolute inset-0 flex flex-col justify-between p-1">
           <div className="self-start text-[8px] font-bold text-white bg-biovet-600 dark:bg-biovet-700 rounded-md px-1.5 py-0.5 shadow-lg">
-            {cellNames[field.key]}
+            {cellName}
           </div>
           <div className="self-end bg-biovet-600 dark:bg-biovet-700 rounded-md px-1.5 py-0.5 text-white shadow-lg border border-biovet-500/20">
             <div className="text-sm font-bold leading-none">{count}</div>
@@ -158,8 +161,7 @@ export function DifferentialFieldComponent({
           <span className="text-slate-400 dark:text-slate-500"> x10³/μL</span>
         </p>
         <p className="text-[10px] text-slate-400 dark:text-slate-500 leading-tight">
-          Normal: {normalValues[species][field.key][0]} -{" "}
-          {normalValues[species][field.key][1]}
+          Normal: {range[0]} - {range[1]}
         </p>
       </div>
     </div>

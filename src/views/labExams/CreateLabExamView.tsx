@@ -1,6 +1,6 @@
 // src/views/labExams/CreateLabExamView.tsx
-import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useNavigate, useParams, useLocation, useSearchParams } from "react-router-dom";
+import { useEffect, useState } from "react";
 import {
   FlaskConical,
   Microscope,
@@ -30,7 +30,7 @@ const EXAM_TYPES = [
     available: true,
   },
   {
-    id: "skinScraping",
+    id: "skin_scraping", // ✅ Corregido para coincidir con el tipo del backend
     name: "Raspado Cutáneo",
     description: "Superficial o profundo",
     icon: Scissors,
@@ -67,10 +67,29 @@ export default function CreateLabExamView() {
   const navigate = useNavigate();
   const { patientId } = useParams<{ patientId: string }>();
   const location = useLocation();
+  const [searchParams] = useSearchParams(); // ✅ NUEVO: Leer query params
   const [isClosing, setIsClosing] = useState(false);
 
   // Detectar si viene desde paciente o desde lab principal
   const isFromPatient = location.pathname.includes("/patients/");
+  
+  // ✅ NUEVO: Obtener el tipo de examen de la URL (?type=hematology)
+  const typeFromUrl = searchParams.get("type");
+
+  // ✅ NUEVO: Si viene con tipo, redirigir directamente al formulario
+  useEffect(() => {
+    if (typeFromUrl) {
+      const validType = EXAM_TYPES.find(e => e.id === typeFromUrl && e.available);
+      if (validType) {
+        // Redirigir inmediatamente sin mostrar la pantalla de selección
+        if (isFromPatient && patientId) {
+          navigate(`/patients/${patientId}/exams/create/${typeFromUrl}`, { replace: true });
+        } else {
+          navigate(`/lab/create/${typeFromUrl}`, { replace: true });
+        }
+      }
+    }
+  }, [typeFromUrl, isFromPatient, patientId, navigate]);
 
   const handleClose = () => {
     setIsClosing(true);
@@ -79,13 +98,16 @@ export default function CreateLabExamView() {
 
   const handleSelectExam = (examId: string) => {
     if (isFromPatient && patientId) {
-      // Desde paciente: /patients/:patientId/exams/create/hematology
       navigate(`/patients/${patientId}/exams/create/${examId}`);
     } else {
-      // Desde lab principal: /lab/create/hematology
       navigate(`/lab/create/${examId}`);
     }
   };
+
+  // ✅ NUEVO: Si viene con tipo válido, no mostrar nada (se redirige)
+  if (typeFromUrl && EXAM_TYPES.find(e => e.id === typeFromUrl && e.available)) {
+    return null; // O un spinner si quieres
+  }
 
   return (
     <>
