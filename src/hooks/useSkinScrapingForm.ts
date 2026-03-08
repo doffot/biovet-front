@@ -43,7 +43,7 @@ export function useSkinScrapingForm() {
     },
   });
 
-  const { watch, setValue, getValues } = form;
+  const { watch, setValue, getValues, control } = form;
 
   const patientName = watch("patientName");
   const isPatientSelected = Boolean(patientName && patientName.trim() !== "");
@@ -167,6 +167,7 @@ export function useSkinScrapingForm() {
 
   return {
     form,
+    control,
     activeTab,
     isClosing,
     showPaymentModal,

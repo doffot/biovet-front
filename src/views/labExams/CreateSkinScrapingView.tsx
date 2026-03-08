@@ -13,6 +13,7 @@ import { useSkinScrapingForm } from "@/hooks/useSkinScrapingForm";
 export default function CreateSkinScrapingView() {
   const {
     form,
+    control,
     activeTab,
     isClosing,
     showPaymentModal,
@@ -92,7 +93,7 @@ export default function CreateSkinScrapingView() {
                   <SkinScrapingExamTab
                     register={register}
                     watch={watch}
-                    setValue={setValue}
+                    control={control}
                     errors={errors}
                     cost={cost}
                     discount={discount}
@@ -124,7 +125,7 @@ export default function CreateSkinScrapingView() {
         />
       </div>
 
-      {/* Modal de Pago (para pacientes externos) */}
+      {/* Modal de Pago */}
       {showPaymentModal && (
         <PaymentModal
           isOpen={showPaymentModal}
