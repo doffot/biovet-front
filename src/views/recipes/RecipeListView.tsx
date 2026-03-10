@@ -21,6 +21,7 @@ import type { Patient } from "@/types/patient";
 import EditRecipeModal from "@/components/recipes/EditRecipeModal";
 import { usePDFGenerator } from "@/hooks/usePDFGenerator";
 import TimelineLayout from "@/components/ui/TimeLineLayout";
+import { renderRecipePDFContent } from "@/utils/recipePdfHelper";
 
 export default function RecipeListView() {
   const contextData = useOutletContext<any>();
@@ -30,7 +31,7 @@ export default function RecipeListView() {
 
   // Estados
   const [recipeToDelete, setRecipeToDelete] = useState<{ id: string } | null>(
-    null,
+    null
   );
   const [recipeToEdit, setRecipeToEdit] = useState<Recipe | null>(null);
   const [recipeToView, setRecipeToView] = useState<Recipe | null>(null);
@@ -52,7 +53,7 @@ export default function RecipeListView() {
     onSuccess: () => {
       toast.success(
         "Receta Eliminada",
-        "El registro ha sido removido correctamente.",
+        "El registro ha sido removido correctamente."
       );
       queryClient.invalidateQueries({ queryKey: ["recipes", patient._id] });
       setRecipeToDelete(null);
@@ -68,10 +69,12 @@ export default function RecipeListView() {
     }).format(new Date(date));
 
   const sortedRecipes = [...recipes].sort(
-    (a, b) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime(),
+    (a, b) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime()
   );
 
-  // Handler para PDF desde la lista
+  // ══════════════════════════════════════════
+  // HANDLER PDF - USANDO HELPER
+  // ══════════════════════════════════════════
   const handleDownloadPDF = (recipe: Recipe) => {
     if (!patient || !isPDFReady) {
       toast.error("Error", "No se encontraron los datos necesarios.");
@@ -98,58 +101,8 @@ export default function RecipeListView() {
       { name: patient.name, ownerName, fullSpecies },
       dateStr,
       (doc, y, width, margin, colors, addPage) => {
-        doc.setFont("times", "bold");
-        doc.setFontSize(16);
-        doc.setTextColor(colors.black.r, colors.black.g, colors.black.b);
-        doc.text("Rx.", margin, y);
-        y += 8;
-
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(10);
-
-        recipe.medications.forEach((med, index) => {
-          if (y > 175) y = addPage();
-
-          doc.setFont("helvetica", "bold");
-          doc.setTextColor(colors.black.r, colors.black.g, colors.black.b);
-          doc.text(
-            `${index + 1}. ${med.name} (${med.presentation})`,
-            margin + 5,
-            y,
-          );
-          y += 5;
-
-          if (med.quantity) {
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(9);
-            doc.text(`Cantidad: ${med.quantity}`, margin + 5, y);
-            y += 5;
-          }
-
-          doc.setFont("helvetica", "italic");
-          doc.setFontSize(10);
-          const instructions = doc.splitTextToSize(
-            `Indicaciones: ${med.instructions}`,
-            width - margin * 2 - 10,
-          );
-          doc.text(instructions, margin + 5, y);
-          y += instructions.length * 4 + 4;
-        });
-
-        if (recipe.notes) {
-          if (y > 170) y = addPage();
-          y += 5;
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(9);
-          doc.text("Observaciones:", margin, y);
-          y += 4;
-          doc.setFont("helvetica", "normal");
-          const notes = doc.splitTextToSize(recipe.notes, width - margin * 2);
-          doc.text(notes, margin, y);
-        }
-
-        return y;
-      },
+        return renderRecipePDFContent(doc, recipe, y, width, margin, colors, addPage);
+      }
     );
 
     setGeneratingPdfId(null);
@@ -158,7 +111,7 @@ export default function RecipeListView() {
   // Handler para abrir detalle con posición
   const handleOpenDetail = (
     recipe: Recipe,
-    e: React.MouseEvent<HTMLButtonElement>,
+    e: React.MouseEvent<HTMLButtonElement>
   ) => {
     const rect = e.currentTarget.getBoundingClientRect();
     setTriggerRect(rect);
@@ -228,6 +181,7 @@ export default function RecipeListView() {
                     onClick={() => handleDownloadPDF(recipe)}
                     disabled={generatingPdfId === recipe._id || !isPDFReady}
                     className="p-2 text-slate-400 hover:text-rose-500 transition-colors disabled:opacity-50"
+                    title="Descargar PDF"
                   >
                     {generatingPdfId === recipe._id ? (
                       <Loader2 size={18} className="animate-spin" />
@@ -238,12 +192,14 @@ export default function RecipeListView() {
                   <button
                     onClick={() => setRecipeToEdit(recipe)}
                     className="p-2 text-slate-400 hover:text-rose-500 transition-colors"
+                    title="Editar"
                   >
                     <Pencil size={18} />
                   </button>
                   <button
                     onClick={() => setRecipeToDelete({ id: recipe._id })}
                     className="p-2 text-slate-400 hover:text-danger-500 transition-colors"
+                    title="Eliminar"
                   >
                     <Trash2 size={18} />
                   </button>
@@ -260,8 +216,14 @@ export default function RecipeListView() {
                     <span className="font-bold text-slate-700 dark:text-slate-300 truncate max-w-[60%]">
                       {med.name}
                     </span>
-                    <span className="text-slate-500 truncate">
-                      {med.instructions.substring(0, 30)}...
+                    <span
+                      className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${
+                        med.source === "veterinario"
+                          ? "bg-biovet-100 text-biovet-700 dark:bg-biovet-900/30 dark:text-biovet-400"
+                          : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                      }`}
+                    >
+                      {med.source === "veterinario" ? "Vet" : "Farm"}
                     </span>
                   </div>
                 ))}
@@ -272,7 +234,7 @@ export default function RecipeListView() {
                 )}
               </div>
 
-              {/* Botón Ver Receta - Captura posición */}
+              {/* Botón Ver Receta */}
               <div className="mt-3 flex justify-end">
                 <button
                   onClick={(e) => handleOpenDetail(recipe, e)}

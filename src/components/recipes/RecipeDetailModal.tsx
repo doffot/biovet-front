@@ -14,6 +14,7 @@ import DetailModal from "@/components/ui/DetailModal";
 import { usePDFGenerator } from "@/hooks/usePDFGenerator";
 import { usePatientData } from "@/hooks/usePatientData";
 import { toast } from "@/components/Toast";
+import { renderRecipePDFContent } from "@/utils/recipePdfHelper"; // ✅ IMPORTAR HELPER
 import type { Recipe } from "@/types/recipe";
 
 interface RecipeDetailModalProps {
@@ -54,7 +55,7 @@ export default function RecipeDetailModal({
   };
 
   // ══════════════════════════════════════════
-  // GENERAR PDF
+  // GENERAR PDF - USANDO HELPER
   // ══════════════════════════════════════════
   const handlePrintPDF = () => {
     if (!recipe || !patient || !isPDFReady) {
@@ -79,55 +80,8 @@ export default function RecipeDetailModal({
       },
       dateStr,
       (doc, y, width, margin, colors, addPage) => {
-        // Rx.
-        doc.setFont("times", "bold");
-        doc.setFontSize(16);
-        doc.setTextColor(colors.black.r, colors.black.g, colors.black.b);
-        doc.text("Rx.", margin, y);
-        y += 8;
-
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(10);
-
-        recipe.medications.forEach((med, index) => {
-          if (y > 175) y = addPage();
-
-          doc.setFont("helvetica", "bold");
-          doc.setTextColor(colors.black.r, colors.black.g, colors.black.b);
-          doc.text(`${index + 1}. ${med.name} (${med.presentation})`, margin + 5, y);
-          y += 5;
-
-          if (med.quantity) {
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(9);
-            doc.text(`Cantidad: ${med.quantity}`, margin + 5, y);
-            y += 5;
-          }
-
-          doc.setFont("helvetica", "italic");
-          doc.setFontSize(10);
-          const instructions = doc.splitTextToSize(
-            `Indicaciones: ${med.instructions}`,
-            width - margin * 2 - 10
-          );
-          doc.text(instructions, margin + 5, y);
-          y += instructions.length * 4 + 4;
-        });
-
-        // Notas
-        if (recipe.notes) {
-          if (y > 170) y = addPage();
-          y += 5;
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(9);
-          doc.text("Observaciones:", margin, y);
-          y += 4;
-          doc.setFont("helvetica", "normal");
-          const notes = doc.splitTextToSize(recipe.notes, width - margin * 2);
-          doc.text(notes, margin, y);
-        }
-
-        return y;
+        // ✅ USAR HELPER REUTILIZABLE
+        return renderRecipePDFContent(doc, recipe, y, width, margin, colors, addPage);
       }
     );
 

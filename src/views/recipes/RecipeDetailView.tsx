@@ -15,13 +15,13 @@ import {
 import { getRecipeById } from "@/api/recipeAPI";
 import { usePatientData } from "@/hooks/usePatientData";
 import { usePDFGenerator } from "@/hooks/usePDFGenerator";
+import { renderRecipePDFContent } from "@/utils/recipePdfHelper";
 
 export default function RecipeDetailView() {
   const { recipeId } = useParams<{ recipeId: string }>();
   const navigate = useNavigate();
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Hook de PDF
   const { generatePDF, isReady: isPDFReady } = usePDFGenerator();
 
   // Obtener Receta
@@ -59,7 +59,7 @@ export default function RecipeDetailView() {
     generatePDF(
       {
         title: "RECETA MÉDICA VETERINARIA",
-        primaryColor: { r: 10, g: 126, b: 164 }, // Azul biovet
+        primaryColor: { r: 10, g: 126, b: 164 },
         filename: `Receta_${patient.name}_${dateStr.replace(/\//g, "-")}.pdf`,
       },
       {
@@ -69,63 +69,7 @@ export default function RecipeDetailView() {
       },
       dateStr,
       (doc, y, width, margin, colors, addPage) => {
-        // --- CUERPO (Rx) ---
-        doc.setFont("times", "bold");
-        doc.setFontSize(16);
-        doc.setTextColor(colors.black.r, colors.black.g, colors.black.b);
-        doc.text("Rx.", margin, y);
-        y += 8;
-
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(10);
-
-        recipe.medications.forEach((med, index) => {
-          if (y > 175) {
-            y = addPage();
-          }
-
-          doc.setFont("helvetica", "bold");
-          doc.setTextColor(colors.black.r, colors.black.g, colors.black.b);
-          const title = `${index + 1}. ${med.name} (${med.presentation})`;
-          doc.text(title, margin + 5, y);
-          y += 5;
-
-          if (med.quantity) {
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(9);
-            doc.text(`Cantidad: ${med.quantity}`, margin + 5, y);
-            y += 5;
-          }
-
-          doc.setFont("helvetica", "italic");
-          doc.setFontSize(10);
-          const instructions = doc.splitTextToSize(
-            `Indicaciones: ${med.instructions}`,
-            width - margin * 2 - 10
-          );
-          doc.text(instructions, margin + 5, y);
-          y += instructions.length * 4 + 4;
-        });
-
-        // --- NOTAS ---
-        if (recipe.notes) {
-          if (y > 170) {
-            y = addPage();
-          }
-
-          y += 5;
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(9);
-          doc.setTextColor(colors.black.r, colors.black.g, colors.black.b);
-          doc.text("Observaciones:", margin, y);
-          y += 4;
-          doc.setFont("helvetica", "normal");
-          const notes = doc.splitTextToSize(recipe.notes, width - margin * 2);
-          doc.text(notes, margin, y);
-          y += notes.length * 4 + 10;
-        }
-
-        return y;
+        return renderRecipePDFContent(doc, recipe, y, width, margin, colors, addPage);
       }
     );
 
