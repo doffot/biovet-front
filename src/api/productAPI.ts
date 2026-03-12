@@ -20,7 +20,6 @@ type GetProductsWithInventoryResponse = { products: ProductWithInventory[] };
 
 export async function createProduct(data: ProductFormData): Promise<Product> {
   try {
-    console.log('entro a create');
     const { data: response } = await api.post<CreateProductResponse>("/products", data);
     
     const parsed = productSchema.safeParse(response.product);
@@ -98,14 +97,25 @@ export async function updateProduct(id: string, data: Partial<ProductFormData>):
       `/products/${id}`,
       data
     );
-    const parsed = productSchema.safeParse(response.product);
-    if (!parsed.success) throw new Error("Datos del producto inválidos");
+    
+  
+    const productData = response.product || response;
+    
+    console.log("Product data to validate:", productData);
+    
+    const parsed = productSchema.safeParse(productData);
+    if (!parsed.success) {
+      console.error("Zod validation error (update):", parsed.error.format());
+      console.error("Received data:", JSON.stringify(productData, null, 2));
+      throw new Error("Datos del producto inválidos");
+    }
     return parsed.data;
   } catch (error) {
     if (error instanceof AxiosError && error.response) {
+      console.error("API Error:", error.response.data);
       throw new Error(error.response.data.msg || "Error al actualizar producto");
     }
-    throw new Error("Error de red");
+    throw error;
   }
 }
 

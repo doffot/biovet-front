@@ -17,16 +17,8 @@ import {
 import { getProductById, updateProduct } from "@/api/productAPI";
 import { toast } from "@/components/Toast";
 import Spinner from "@/components/Spinner";
+import { PRODUCT_CATEGORIES } from "@/constants/product";
 import type { Product, ProductFormData } from "@/types/product";
-
-const categoryOptions = [
-  { value: "vacuna", label: "Vacuna" },
-  { value: "desparasitante", label: "Desparasitante" },
-  { value: "medicamento", label: "Medicamento" },
-  { value: "alimento", label: "Alimento" },
-  { value: "accesorio", label: "Accesorio" },
-  { value: "otro", label: "Otro" },
-];
 
 export default function EditProductView() {
   const { productId } = useParams<{ productId: string }>();
@@ -57,25 +49,25 @@ export default function EditProductView() {
   });
 
   useEffect(() => {
-    if (product) {
-      setFormData({
-        name: product.name,
-        description: product.description || "",
-        category: product.category,
-        salePrice: product.salePrice,
-        salePricePerDose: product.salePricePerDose,
-        costPrice: product.costPrice,
-        unit: product.unit,
-        doseUnit: product.doseUnit,
-        dosesPerUnit: product.dosesPerUnit,
-        divisible: product.divisible ?? false,
-        stockUnits: product.stockUnits,
-        stockDoses: product.stockDoses,
-        minStock: product.minStock,
-        active: product.active ?? true,
-      });
-    }
-  }, [product]);
+  if (product) {
+    setFormData({
+      name: product.name,
+      description: product.description || "",
+      category: product.category,
+      salePrice: product.salePrice,
+      salePricePerDose: product.salePricePerDose ?? undefined,
+      costPrice: product.costPrice ?? undefined,
+      unit: product.unit,
+      doseUnit: product.doseUnit || "dosis",
+      dosesPerUnit: product.dosesPerUnit ?? 1,
+      divisible: product.divisible ?? false,
+      stockUnits: product.stockUnits ?? undefined,
+      stockDoses: product.stockDoses ?? undefined,
+      minStock: product.minStock ?? undefined,
+      active: product.active ?? true,
+    });
+  }
+}, [product]);
 
   const { mutate, isPending } = useMutation({
     mutationFn: (data: ProductFormData) => updateProduct(productId!, data),
@@ -248,7 +240,7 @@ export default function EditProductView() {
               />
             </div>
 
-            {/* Categoría */}
+            {/* Categoría - Usando constantes */}
             <div>
               <label className="label">Categoría</label>
               <select
@@ -257,7 +249,7 @@ export default function EditProductView() {
                 onChange={handleChange}
                 className="input"
               >
-                {categoryOptions.map((opt) => (
+                {PRODUCT_CATEGORIES.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
