@@ -5,6 +5,7 @@ import { recipeSchema, recipesListSchema, type Recipe, type RecipeFormData } fro
 // Crear receta
 export async function createRecipe(patientId: string, formData: RecipeFormData): Promise<Recipe> {
   try {
+    console.log('enviando datos');
     const { data } = await api.post(`/recipes/${patientId}`, formData);
     const response = recipeSchema.safeParse(data.recipe);
     if (response.success) {
