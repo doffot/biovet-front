@@ -65,6 +65,8 @@ export default function ShareResultsModal({
   const platelets = examData.platelets ?? 0;
   const totalProtein = examData.totalProtein ?? 0;
   const cells = examData.differentialCount ?? DEFAULT_DIFFERENTIAL;
+  const hemotropico = examData.hemotropico ?? "";
+  const observacion = examData.observacion ?? "";
 
   const calculatePercentage = (count: number) =>
     totalCells > 0 ? ((count / totalCells) * 100).toFixed(1) : "0.0";
@@ -135,6 +137,11 @@ export default function ShareResultsModal({
 
       // === TABLA FÓRMULA LEUCOCITARIA ===
       y = drawLeucocitariaTable(doc, y, marginLeft, contentWidth, pageWidth, colors);
+
+      y += 8;
+
+      // === HEMOTROPICOS Y OBSERVACIONES ===
+      y = drawHemotropicosAndObservaciones(doc, y, marginLeft, contentWidth, pageWidth, colors);
 
       // === FIRMA ===
       y = drawSignatureFooter(doc, vetProfile, signatureBase64, colors, pageWidth, y);
@@ -263,6 +270,92 @@ export default function ShareResultsModal({
     });
 
     return y;
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // HEMOTROPICOS Y OBSERVACIONES
+  // ═══════════════════════════════════════════════════════════
+  function drawHemotropicosAndObservaciones(
+    doc: jsPDF,
+    startY: number,
+    marginLeft: number,
+    contentWidth: number,
+    pageWidth: number,
+    colors: typeof LAB_PDF_COLORS
+  ): number {
+    let y = startY;
+
+    // Solo dibujar si hay datos
+    if (!hemotropico && !observacion) {
+      return y;
+    }
+
+    // Header de sección
+    doc.setFillColor(colors.primary.r, colors.primary.g, colors.primary.b);
+    doc.rect(marginLeft, y, contentWidth, 8, "F");
+    doc.setFontSize(10);
+    doc.setTextColor(colors.white.r, colors.white.g, colors.white.b);
+    doc.setFont("helvetica", "bold");
+    doc.text("HALLAZGOS ADICIONALES", pageWidth / 2, y + 5.5, { align: "center" });
+    y += 8;
+
+    // === HEMOTROPICOS ===
+    if (hemotropico) {
+      // Etiqueta
+      doc.setFillColor(colors.labelBg.r, colors.labelBg.g, colors.labelBg.b);
+      doc.rect(marginLeft, y, contentWidth, 8, "F");
+      doc.setDrawColor(colors.tableBorder.r, colors.tableBorder.g, colors.tableBorder.b);
+      doc.rect(marginLeft, y, contentWidth, 8, "S");
+
+      doc.setFontSize(9);
+      doc.setTextColor(colors.primary.r, colors.primary.g, colors.primary.b);
+      doc.setFont("helvetica", "bold");
+      doc.text("HEMOTROPICOS:", marginLeft + 3, y + 5.5);
+
+      // Valor - determinar color según resultado
+      const hemotropicoUpper = hemotropico.toUpperCase();
+      if (hemotropicoUpper === "POSITIVO" || hemotropicoUpper.includes("POSITIVO")) {
+        doc.setTextColor(220, 38, 38); // Rojo para positivo
+      } else if (hemotropicoUpper === "NEGATIVO" || hemotropicoUpper.includes("NEGATIVO")) {
+        doc.setTextColor(22, 163, 74); // Verde para negativo
+      } else {
+        doc.setTextColor(colors.dark.r, colors.dark.g, colors.dark.b);
+      }
+      doc.setFont("helvetica", "bold");
+      doc.text(hemotropico, marginLeft + 45, y + 5.5);
+      y += 8;
+    }
+
+    // === OBSERVACIONES ===
+    if (observacion) {
+      // Etiqueta
+      doc.setFillColor(colors.labelBg.r, colors.labelBg.g, colors.labelBg.b);
+      doc.setDrawColor(colors.tableBorder.r, colors.tableBorder.g, colors.tableBorder.b);
+
+      doc.setFontSize(9);
+      doc.setTextColor(colors.primary.r, colors.primary.g, colors.primary.b);
+      doc.setFont("helvetica", "bold");
+
+      // Calcular altura necesaria para el texto
+      const maxWidth = contentWidth - 6;
+      const splitText = (doc as any).splitTextToSize(observacion, maxWidth);
+      const textHeight = splitText.length * 5;
+      const boxHeight = Math.max(12, textHeight + 8);
+
+      doc.rect(marginLeft, y, contentWidth, boxHeight, "F");
+      doc.rect(marginLeft, y, contentWidth, boxHeight, "S");
+
+      doc.text("OBSERVACIONES:", marginLeft + 3, y + 5);
+
+      // Texto de observación
+      doc.setTextColor(colors.dark.r, colors.dark.g, colors.dark.b);
+      doc.setFont("helvetica", "normal");
+      doc.text(splitText, marginLeft + 3, y + 10);
+
+      y += boxHeight;
+    }
+
+    return y + 5;
   }
 
   // ═══════════════════════════════════════════════════════════
