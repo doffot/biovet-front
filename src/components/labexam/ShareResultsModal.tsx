@@ -65,6 +65,8 @@ export default function ShareResultsModal({
   const platelets = examData.platelets ?? 0;
   const totalProtein = examData.totalProtein ?? 0;
   const cells = examData.differentialCount ?? DEFAULT_DIFFERENTIAL;
+  
+  // ✅ CAMPOS NUEVOS
   const hemotropico = examData.hemotropico ?? "";
   const observacion = examData.observacion ?? "";
 
@@ -140,7 +142,7 @@ export default function ShareResultsModal({
 
       y += 8;
 
-      // === HEMOTROPICOS Y OBSERVACIONES ===
+      // === ✅ HEMOTROPICOS Y OBSERVACIONES ===
       y = drawHemotropicosAndObservaciones(doc, y, marginLeft, contentWidth, pageWidth, colors);
 
       // === FIRMA ===
@@ -272,9 +274,7 @@ export default function ShareResultsModal({
     return y;
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // HEMOTROPICOS Y OBSERVACIONES
-  // ═══════════════════════════════════════════════════════════
+
   function drawHemotropicosAndObservaciones(
     doc: jsPDF,
     startY: number,
@@ -301,7 +301,6 @@ export default function ShareResultsModal({
 
     // === HEMOTROPICOS ===
     if (hemotropico) {
-      // Etiqueta
       doc.setFillColor(colors.labelBg.r, colors.labelBg.g, colors.labelBg.b);
       doc.rect(marginLeft, y, contentWidth, 8, "F");
       doc.setDrawColor(colors.tableBorder.r, colors.tableBorder.g, colors.tableBorder.b);
@@ -312,12 +311,12 @@ export default function ShareResultsModal({
       doc.setFont("helvetica", "bold");
       doc.text("HEMOTROPICOS:", marginLeft + 3, y + 5.5);
 
-      // Valor - determinar color según resultado
+      // Color según resultado
       const hemotropicoUpper = hemotropico.toUpperCase();
       if (hemotropicoUpper === "POSITIVO" || hemotropicoUpper.includes("POSITIVO")) {
-        doc.setTextColor(220, 38, 38); // Rojo para positivo
+        doc.setTextColor(220, 38, 38); // Rojo
       } else if (hemotropicoUpper === "NEGATIVO" || hemotropicoUpper.includes("NEGATIVO")) {
-        doc.setTextColor(22, 163, 74); // Verde para negativo
+        doc.setTextColor(22, 163, 74); // Verde
       } else {
         doc.setTextColor(colors.dark.r, colors.dark.g, colors.dark.b);
       }
@@ -328,7 +327,6 @@ export default function ShareResultsModal({
 
     // === OBSERVACIONES ===
     if (observacion) {
-      // Etiqueta
       doc.setFillColor(colors.labelBg.r, colors.labelBg.g, colors.labelBg.b);
       doc.setDrawColor(colors.tableBorder.r, colors.tableBorder.g, colors.tableBorder.b);
 
@@ -336,21 +334,43 @@ export default function ShareResultsModal({
       doc.setTextColor(colors.primary.r, colors.primary.g, colors.primary.b);
       doc.setFont("helvetica", "bold");
 
-      // Calcular altura necesaria para el texto
-      const maxWidth = contentWidth - 6;
-      const splitText = (doc as any).splitTextToSize(observacion, maxWidth);
-      const textHeight = splitText.length * 5;
-      const boxHeight = Math.max(12, textHeight + 8);
+      // Calcular altura necesaria sin splitTextToSize
+      const maxLineWidth = contentWidth - 6;
+      const fontSize = 9;
+      const charWidth = fontSize * 0.5; // Ancho aproximado por carácter
+      const maxCharsPerLine = Math.floor(maxLineWidth / charWidth);
+      
+      // Dividir texto manualmente
+      const words = observacion.split(" ");
+      const lines: string[] = [];
+      let currentLine = "";
+
+      words.forEach((word) => {
+        if ((currentLine + " " + word).trim().length <= maxCharsPerLine) {
+          currentLine = (currentLine + " " + word).trim();
+        } else {
+          if (currentLine) lines.push(currentLine);
+          currentLine = word;
+        }
+      });
+      if (currentLine) lines.push(currentLine);
+
+      const lineHeight = 5;
+      const padding = 4;
+      const boxHeight = Math.max(12, lines.length * lineHeight + padding * 2);
 
       doc.rect(marginLeft, y, contentWidth, boxHeight, "F");
       doc.rect(marginLeft, y, contentWidth, boxHeight, "S");
 
       doc.text("OBSERVACIONES:", marginLeft + 3, y + 5);
 
-      // Texto de observación
+      // Texto de observación línea por línea
       doc.setTextColor(colors.dark.r, colors.dark.g, colors.dark.b);
       doc.setFont("helvetica", "normal");
-      doc.text(splitText, marginLeft + 3, y + 10);
+      
+      lines.forEach((line, index) => {
+        doc.text(line, marginLeft + 3, y + 10 + (index * lineHeight));
+      });
 
       y += boxHeight;
     }

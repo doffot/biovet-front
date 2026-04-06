@@ -23,10 +23,8 @@ import { GeneralTab } from "../../components/labexam/GeneralTab";
 import { DifferentialTab } from "../../components/labexam/DifferentialTab";
 import { ObservationsTab } from "../../components/labexam/ObservationsTab";
 import ShareResultsModal from "@/components/labexam/ShareResultsModal";
-import type { DifferentialField, LabExam, LabExamFormData } from "@/types/labExam";
-
-// Importación necesaria para el pago
 import { PaymentModal } from "../../components/payment/PaymentModal";
+import type { DifferentialField, LabExam, LabExamFormData } from "@/types/labExam";
 
 // Sonidos
 import segmentedSound from "/sounds/segmented.mp3";
@@ -95,7 +93,7 @@ export default function CreateLabExamView() {
   const [activeTab, setActiveTab] = useState<TabId>("patient");
   const [isClosing, setIsClosing] = useState(false);
 
-  // --- ESTADOS PARA LÓGICA DE PAGO ---
+  // Estados para lógica de pago
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [examCostUSD, setExamCostUSD] = useState(0);
 
@@ -159,7 +157,6 @@ export default function CreateLabExamView() {
   const patientName = watch("patientName");
   const isPatientSelected = Boolean(patientName && patientName.trim() !== "");
 
-  // 👇 ARREGLADO: Agregar verificación de undefined
   const calculatedValues = useMemo(() => {
     const calculated = {} as Record<
       keyof NonNullable<LabExamFormData["differentialCount"]>,
@@ -209,7 +206,9 @@ export default function CreateLabExamView() {
     onError: (error: Error) => toast.error(error.message),
   });
 
-  // --- LÓGICA DE CONFIRMACIÓN DE PAGO ---
+  // ═══════════════════════════════════════════════════════════
+  // CONFIRMACIÓN DE PAGO
+  // ═══════════════════════════════════════════════════════════
   const handlePaymentConfirm = (paymentData: {
     paymentMethodId?: string;
     reference?: string;
@@ -223,13 +222,19 @@ export default function CreateLabExamView() {
     const amountPaid = isPayingInBs ? paymentData.addAmountPaidBs : paymentData.addAmountPaidUSD;
     const currency = isPayingInBs ? "Bs" : "USD";
 
+    // ✅ CORRECCIÓN: Obtener valores explícitamente
+    const currentValues = getValues();
+
     const finalData: LabExamFormData = {
-      ...getValues(),
+      ...currentValues,
       differentialCount,
       totalCells,
-      ownerName: getValues("ownerName")?.trim() || undefined,
-      ownerPhone: getValues("ownerPhone")?.trim() || undefined,
-      // Datos del pago para el API
+      // ✅ CAMPOS EXPLÍCITOS PARA MÓVIL
+      hemotropico: currentValues.hemotropico?.trim() || undefined,
+      observacion: currentValues.observacion?.trim() || undefined,
+      ownerName: currentValues.ownerName?.trim() || undefined,
+      ownerPhone: currentValues.ownerPhone?.trim() || undefined,
+      // Datos del pago
       paymentMethodId: paymentData.paymentMethodId,
       paymentReference: paymentData.reference,
       exchangeRate: paymentData.exchangeRate,
@@ -243,7 +248,6 @@ export default function CreateLabExamView() {
     setShowPaymentModal(false);
   };
 
-  // 👇 ARREGLADO: Agregar verificación de prev
   const handleIncrement = (
     field: keyof NonNullable<LabExamFormData["differentialCount"]>,
     sound: HTMLAudioElement
@@ -265,7 +269,6 @@ export default function CreateLabExamView() {
     sound.play().catch(() => {});
   };
 
-  // 👇 ARREGLADO: Usar optional chaining
   const handleUndo = () => {
     if (!lastAction || totalCells === 0) {
       toast.error("No hay acciones para deshacer");
@@ -339,6 +342,9 @@ export default function CreateLabExamView() {
     return numValue < range[0] || numValue > range[1];
   };
 
+  // ═══════════════════════════════════════════════════════════
+  // SUBMIT
+  // ═══════════════════════════════════════════════════════════
   const onSubmit = (data: LabExamFormData) => {
     if (!isPatientSelected) {
       toast.error("Debes seleccionar un paciente primero");
@@ -346,10 +352,17 @@ export default function CreateLabExamView() {
       return;
     }
 
+    // ✅ CORRECCIÓN: Obtener valores actualizados explícitamente
+    const currentHemotropico = getValues("hemotropico");
+    const currentObservacion = getValues("observacion");
+
     const finalData: LabExamFormData = {
       ...data,
       differentialCount,
       totalCells,
+      // ✅ CAMPOS EXPLÍCITOS PARA MÓVIL
+      hemotropico: currentHemotropico?.trim() || data.hemotropico?.trim() || undefined,
+      observacion: currentObservacion?.trim() || data.observacion?.trim() || undefined,
       ownerName: data.ownerName?.trim() || undefined,
       ownerPhone: data.ownerPhone?.trim() || undefined,
     };
@@ -366,12 +379,11 @@ export default function CreateLabExamView() {
 
     setExamCostUSD(totalCost);
 
-    // LÓGICA DE INTERCEPCIÓN
     if (finalData.patientId) {
-      // Caso 1: Paciente de la clínica (interno) -> Se guarda directo
+      // Paciente interno
       mutate(finalData);
     } else if (finalData.ownerName) {
-      // Caso 2: Paciente referido/externo -> Se cobra primero
+      // Paciente externo - cobrar primero
       setShowPaymentModal(true);
     } else {
       toast.error("Debe ingresar los datos del dueño para pacientes externos");
@@ -673,7 +685,7 @@ export default function CreateLabExamView() {
         </footer>
       </div>
 
-      {/* ═══ MODAL PAGO (Intercepción) ═══ */}
+      {/* ═══ MODAL PAGO ═══ */}
       {showPaymentModal && (
         <PaymentModal
           isOpen={showPaymentModal}
