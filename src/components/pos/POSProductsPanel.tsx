@@ -25,7 +25,7 @@ export function POSProductsPanel({
 }: POSProductsPanelProps) {
   return (
     <div className="lg:col-span-2 bg-white dark:bg-dark-100 rounded-xl border border-surface-300 dark:border-slate-700 overflow-hidden shadow-sm flex flex-col h-[calc(100vh-180px)] lg:h-[calc(100vh-140px)]">
-      {/* Búsqueda - Fixed */}
+      {/* Búsqueda fija */}
       <div className="p-3 border-b border-surface-300 dark:border-slate-700 shrink-0">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-500 dark:text-slate-400" />
@@ -39,11 +39,11 @@ export function POSProductsPanel({
         </div>
       </div>
 
-      {/* Contenido con scroll */}
+      {/* Lista scrollable */}
       <div className="flex-1 overflow-auto custom-scrollbar">
         {products.length > 0 ? (
           <>
-            {/* Desktop Table */}
+            {/* Desktop: tabla */}
             <table className="hidden md:table w-full text-sm">
               <thead className="sticky top-0 bg-surface-100 dark:bg-dark-50 border-b border-surface-300 dark:border-slate-700 z-10">
                 <tr>
@@ -68,7 +68,6 @@ export function POSProductsPanel({
                 {products.map((product) => {
                   if (!product._id) return null;
                   const isFullUnitMode = productSaleMode[product._id] ?? true;
-
                   return (
                     <POSProductRow
                       key={product._id}
@@ -76,19 +75,20 @@ export function POSProductsPanel({
                       isFullUnitMode={isFullUnitMode}
                       inCart={isInCart(product._id)}
                       onAddToCart={() => onAddToCart(product)}
-                      onSetMode={(isFullUnit) => onSetMode(product._id!, isFullUnit)}
+                      onSetMode={(isFullUnit) =>
+                        onSetMode(product._id!, isFullUnit)
+                      }
                     />
                   );
                 })}
               </tbody>
             </table>
 
-            {/* Mobile Cards */}
+            {/* Mobile: cards */}
             <div className="md:hidden divide-y divide-surface-200 dark:divide-slate-700/50">
               {products.map((product) => {
                 if (!product._id) return null;
                 const isFullUnitMode = productSaleMode[product._id] ?? true;
-
                 return (
                   <POSProductCard
                     key={product._id}
@@ -96,10 +96,15 @@ export function POSProductsPanel({
                     isFullUnitMode={isFullUnitMode}
                     inCart={isInCart(product._id)}
                     onAddToCart={() => onAddToCart(product)}
-                    onSetMode={(isFullUnit) => onSetMode(product._id!, isFullUnit)}
+                    onSetMode={(isFullUnit) =>
+                      onSetMode(product._id!, isFullUnit)
+                    }
                   />
                 );
               })}
+
+              
+              <div className="h-20" aria-hidden="true" />
             </div>
           </>
         ) : (

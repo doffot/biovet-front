@@ -38,7 +38,14 @@ export function POSCart({
   onCheckout,
 }: POSCartProps) {
   return (
-    <div className="lg:col-span-1 bg-white dark:bg-dark-100 rounded-xl border border-surface-300 dark:border-slate-700 overflow-hidden shadow-sm flex flex-col h-[calc(100vh-180px)] lg:h-[calc(100vh-140px)]">
+    <div
+      className="
+        lg:col-span-1 bg-white dark:bg-dark-100 
+        rounded-xl border border-surface-300 dark:border-slate-700 
+        overflow-hidden shadow-sm flex flex-col
+        h-full
+      "
+    >
       {/* Header - Fixed */}
       <div className="p-3 border-b border-surface-300 dark:border-slate-700 shrink-0">
         <div className="flex items-center justify-between mb-2">
@@ -79,17 +86,22 @@ export function POSCart({
       </div>
 
       {/* Items - Scrollable */}
-      <div className="flex-1 overflow-auto p-2 space-y-1.5 custom-scrollbar">
+      <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-1.5 custom-scrollbar">
         {cart.length > 0 ? (
-          cart.map((item) => (
-            <POSCartItem
-              key={item.productId}
-              item={item}
-              onUpdateQuantity={(qty) => onUpdateQuantity(item.productId, qty)}
-              onToggleUnitMode={() => onToggleUnitMode(item.productId)}
-              onRemove={() => onRemoveFromCart(item.productId)}
-            />
-          ))
+          <>
+            {cart.map((item) => (
+              <POSCartItem
+                key={item.productId}
+                item={item}
+                onUpdateQuantity={(qty) => onUpdateQuantity(item.productId, qty)}
+                onToggleUnitMode={() => onToggleUnitMode(item.productId)}
+                onRemove={() => onRemoveFromCart(item.productId)}
+              />
+            ))}
+
+          
+            <div className="h-2 lg:hidden" aria-hidden="true" />
+          </>
         ) : (
           <div className="flex items-center justify-center h-full">
             <div className="text-center py-8">
@@ -164,6 +176,9 @@ export function POSCart({
             Selecciona cliente
           </p>
         )}
+
+        
+        <div className="h-16 lg:hidden" aria-hidden="true" />
       </div>
     </div>
   );
