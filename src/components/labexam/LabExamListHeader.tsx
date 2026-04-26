@@ -1,15 +1,16 @@
 // src/views/labExams/components/LabExamListHeader.tsx
 
 import { useNavigate } from "react-router-dom";
-import { 
-  ArrowLeft, 
-  Plus, 
-  FlaskConical, 
-  Microscope, 
-  Droplets, 
-  Beaker, 
-  Scissors, 
-  TestTube 
+import {
+  ArrowLeft,
+  Plus,
+  FlaskConical,
+  Microscope,
+  Droplets,
+  Beaker,
+  Scissors,
+  TestTube,
+  Layers3,
 } from "lucide-react";
 import { DropdownMenu } from "@/components/ui/DropdownMenu";
 
@@ -29,6 +30,14 @@ export function LabExamListHeader({ totalCount, onBack }: LabExamListHeaderProps
       icon: FlaskConical,
       color: "bg-emerald-500",
       onClick: () => navigate("/lab/create?type=hematology"),
+    },
+    {
+      id: "hematology-batch",
+      label: "Lote de hemogramas",
+      description: "Procesar varios pacientes en lote",
+      icon: Layers3,
+      color: "bg-rose-500",
+      onClick: () => navigate("/lab/batch"),
     },
     {
       id: "cytology",

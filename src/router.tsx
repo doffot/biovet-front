@@ -93,6 +93,7 @@ import ClinicSettingsView from "./views/settings/ClinicSettingsView";
 import InvoiceDetailView from "./views/invoices/InvoiceDetailView";
 import EditProductView from "./views/inventory/EditProductView";
 import CreateTrichogramView from "./views/labExams/CreateTrichogramView";
+import BatchLabExamView from "./views/labExams/BatchLabExamView";
 
 /**
  * COMPONENTES DE PROTECCIÓN DE RUTA
@@ -294,6 +295,7 @@ export default function Router() {
             <Route path="/lab">
               <Route index element={<LabExamListView />} />
               <Route path="create" element={<CreateLabExamView />} />
+               <Route path="batch" element={<BatchLabExamView />} />
               <Route
                 path="create/hematology"
                 element={<CreateHematologyView />}

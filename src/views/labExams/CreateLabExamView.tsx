@@ -73,10 +73,8 @@ export default function CreateLabExamView() {
   // Detectar si viene desde paciente o desde lab principal
   const isFromPatient = location.pathname.includes("/patients/");
   
-  // ✅ NUEVO: Obtener el tipo de examen de la URL (?type=hematology)
   const typeFromUrl = searchParams.get("type");
 
-  // ✅ NUEVO: Si viene con tipo, redirigir directamente al formulario
   useEffect(() => {
     if (typeFromUrl) {
       const validType = EXAM_TYPES.find(e => e.id === typeFromUrl && e.available);
@@ -104,7 +102,7 @@ export default function CreateLabExamView() {
     }
   };
 
-  // ✅ NUEVO: Si viene con tipo válido, no mostrar nada (se redirige)
+  //  Si viene con tipo válido, no mostrar nada (se redirige)
   if (typeFromUrl && EXAM_TYPES.find(e => e.id === typeFromUrl && e.available)) {
     return null; // O un spinner si quieres
   }

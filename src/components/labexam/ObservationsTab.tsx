@@ -1,11 +1,6 @@
 // src/components/labexam/ObservationsTab.tsx
 import type { LabExamFormData } from "@/types/labExam";
-import {
-  FileText,
-  Microscope,
-  AlertCircle,
-  Sparkles,
-} from "lucide-react";
+import { FileText, Microscope, AlertCircle, Sparkles } from "lucide-react";
 import type { FieldErrors, UseFormRegister } from "react-hook-form";
 
 interface ObservationsTabProps {
@@ -15,16 +10,13 @@ interface ObservationsTabProps {
   onSubmit: () => void;
 }
 
-export function ObservationsTab({
-  register,
-  errors,
-}: ObservationsTabProps) {
+export function ObservationsTab({ register, errors }: ObservationsTabProps) {
   return (
     <div className="space-y-4">
       {/* Header minimalista */}
       <div className="flex items-center justify-between pb-3 border-b border-surface-200 dark:border-dark-100">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-biovet-500 to-biovet-600 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-linear-to-br from-biovet-500 to-biovet-600 flex items-center justify-center">
             <FileText className="w-4 h-4 text-white" />
           </div>
           <div>
