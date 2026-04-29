@@ -18,7 +18,7 @@ interface MedicalOrderFormProps {
   control: Control<MedicalOrderFormData>;
 }
 
-export default function MedicalOrderForm({ register, watch, setValue, errors, control }: MedicalOrderFormProps) {
+export default function MedicalOrderForm({ register, watch, setValue, control }: MedicalOrderFormProps) {
   
   // useWatch se suscribe a TODOS los cambios del form y causa re-render
   const formValues = useWatch({ control });
