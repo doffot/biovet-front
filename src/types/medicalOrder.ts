@@ -1,32 +1,25 @@
-// src/types/medicalOrder.ts
 import { z } from "zod";
 
-// Tipos de estudio
-export const StudyTypeSchema = z.enum([
-  "ecografia",
-  "radiografia",
-  "laboratorio",
-  "tomografia",
-  "electrocardiograma",
-  "endoscopia",
-  "citologia",
-  "biopsia",
-  "otro",
-]);
+// 1. Definimos las opciones constantes para los Checkboxes (basado en la imagen)
+export const MEDICAL_ORDER_OPTIONS = {
+  hematology: ['Hematología Completa', 'Despistaje Hemoparásitos', 'Contaje Plaquetario', 'PT', 'PTT'],
+  coprology: ['Evaluación Fresca', 'Flotación', 'Sangre Oculta en Heces', 'Determ. Polisacáridos en Heces', 'Heces Coloreadas'],
+  urinalysis: ['Tira Reactiva', 'Sedimento Fresco', 'Sedimento Coloreado'],
+  cytology: [
+    'Masas Cutáneas y Subcutáneas', 'Masas en Cavidades', 'Nódulos Linfáticos', 
+    'Eval. Efusiones en Cavid.', 'Eval. Líquido Cefalorraquídeo', 'Médula Osea'
+  ],
+  hormonal: ['Cortisol', 'T3', 'T4'],
+  skin: ['Raspado Cutáneo', 'Tricograma', 'Cinta Adhesiva'],
+  chemistry: [
+    'Alanino Aminotrasferasa (ALT)', 'Aspartato Aminotrasferasa (AST)', 'Fosfatasa Alcalina (FA)', 
+    'Bilirrubina Total', 'Proteínas totales', 'Albúmina', 'Globulina', 'BUN / Urea', 'Creatinina', 'Glucosa'
+  ],
+  cultures: ['Bacteriológico', 'Micológico', 'Urocultivo', 'Coprocultivo', 'Hemocultivo'],
+  antigenicTests: ['Parvovirus Canino', 'Dirofilaria Inmitis', 'Distemper Canino', 'Giardia sp', 'Coronavirus Felino']
+} as const;
 
-export const StudyPrioritySchema = z.enum(["normal", "urgente"]);
-
-// Schema para cada estudio
-export const studySchema = z.object({
-  type: StudyTypeSchema,
-  name: z.string().min(1, "El nombre es obligatorio").max(150, "Máximo 150 caracteres"),
-  region: z.string().max(100, "Máximo 100 caracteres").optional(),
-  reason: z.string().min(1, "El motivo es obligatorio").max(300, "Máximo 300 caracteres"),
-  priority: StudyPrioritySchema.default("normal"),
-  instructions: z.string().max(300, "Máximo 300 caracteres").optional(),
-});
-
-// Schema para paciente populado
+// 2. Schema para el paciente populado (lo mantenemos igual)
 const populatedPatientSchema = z.object({
   _id: z.string(),
   name: z.string(),
@@ -35,76 +28,76 @@ const populatedPatientSchema = z.object({
   owner: z.string().optional(),
 }).nullable().optional();
 
-// Schema para consulta populada
-const populatedConsultationSchema = z.object({
-  _id: z.string(),
-  consultationDate: z.string().optional(),
-  reasonForVisit: z.string().optional(),
-}).nullable().optional();
-
-// Schema principal de orden médica
+// 3. Schema Principal (Base de datos)
 export const medicalOrderSchema = z.object({
   _id: z.string().optional(),
   patientId: z.union([z.string(), populatedPatientSchema]),
   veterinarianId: z.string(),
-  consultationId: z.union([z.string(), populatedConsultationSchema]).optional(),
+  status: z.enum(['pending', 'completed', 'cancelled']).default('pending'),
   issueDate: z.string(),
-  studies: z.array(studySchema).min(1, "Debe incluir al menos un estudio"),
-  clinicalHistory: z.string().max(1000, "Máximo 1000 caracteres").optional(),
+  
+  // Categorías como arrays de strings
+  hematology: z.array(z.string()).default([]),
+  coprology: z.array(z.string()).default([]),
+  urinalysis: z.array(z.string()).default([]),
+  cytology: z.array(z.string()).default([]),
+  hormonal: z.array(z.string()).default([]),
+  skin: z.array(z.string()).default([]),
+  chemistry: z.array(z.string()).default([]),
+  cultures: z.array(z.string()).default([]),
+  antigenicTests: z.array(z.string()).default([]),
+  
+  specialExams: z.string().optional(),
+  observations: z.string().max(500, "Máximo 500 caracteres").optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
 
-// Schema para formulario (sin campos auto-generados)
+// 4. Schema para el Formulario (React Hook Form)
+// Quitamos 'studies' y usamos las categorías individuales
 export const medicalOrderFormSchema = z.object({
   issueDate: z.string().min(1, "La fecha es obligatoria"),
-  consultationId: z.string().optional(),
-  studies: z.array(studySchema).min(1, "Debe incluir al menos un estudio"),
-  clinicalHistory: z.string().max(1000, "Máximo 1000 caracteres").optional(),
+  hematology: z.array(z.string()).default([]),
+  coprology: z.array(z.string()).default([]),
+  urinalysis: z.array(z.string()).default([]),
+  cytology: z.array(z.string()).default([]),
+  hormonal: z.array(z.string()).default([]),
+  skin: z.array(z.string()).default([]),
+  chemistry: z.array(z.string()).default([]),
+  cultures: z.array(z.string()).default([]),
+  antigenicTests: z.array(z.string()).default([]),
+  specialExams: z.string().optional(),
+  observations: z.string().optional(),
+}).refine((data) => {
+  // Validación: Al menos un examen seleccionado o algo escrito en especiales
+  const hasExams = Object.values(data).some(val => Array.isArray(val) && val.length > 0);
+  return hasExams || (data.specialExams && data.specialExams.length > 0);
+}, {
+  message: "Debe seleccionar al menos un estudio o especificar uno especial",
+  path: ["specialExams"] // El error se mostrará aquí si todo está vacío
 });
 
-// Lista de órdenes
-export const medicalOrdersListSchema = z.array(medicalOrderSchema);
-
 // Tipos exportados
-export type StudyType = z.infer<typeof StudyTypeSchema>;
-export type StudyPriority = z.infer<typeof StudyPrioritySchema>;
-export type Study = z.infer<typeof studySchema>;
 export type MedicalOrder = z.infer<typeof medicalOrderSchema>;
 export type MedicalOrderFormData = z.infer<typeof medicalOrderFormSchema>;
+export const medicalOrdersListSchema = z.array(medicalOrderSchema);
 
-// Labels para los tipos de estudio
-export const STUDY_TYPE_LABELS: Record<StudyType, string> = {
-  ecografia: "Ecografía",
-  radiografia: "Radiografía",
-  laboratorio: "Laboratorio",
-  tomografia: "Tomografía",
-  electrocardiograma: "Electrocardiograma",
-  endoscopia: "Endoscopía",
-  citologia: "Citología",
-  biopsia: "Biopsia",
-  otro: "Otro",
+// Labels para los títulos de las secciones
+export const ORDER_CATEGORY_LABELS: Record<string, string> = {
+  hematology: "Hematología",
+  coprology: "Coprología",
+  urinalysis: "Uroanálisis",
+  cytology: "Citología",
+  hormonal: "Hormonal",
+  skin: "Piel",
+  chemistry: "Química Sanguínea",
+  cultures: "Cultivos",
+  antigenicTests: "Pruebas Antigénicas"
 };
 
-// Labels para prioridad
-export const PRIORITY_LABELS: Record<StudyPriority, string> = {
-  normal: "Normal",
-  urgente: "Urgente",
-};
-
-// Helper para obtener el ID del paciente
-export function getPatientId(order: MedicalOrder): string | undefined {
-  if (!order.patientId) return undefined;
-  if (typeof order.patientId === "string") return order.patientId;
-  return order.patientId._id;
-}
-
-// Helper para obtener el nombre del paciente
+// Mantenemos tus helpers de utilidad
 export function getPatientName(order: MedicalOrder): string {
   if (!order.patientId) return "Sin paciente";
   if (typeof order.patientId === "string") return "Paciente";
-  if (typeof order.patientId === "object" && order.patientId !== null) {
-    return order.patientId.name || "Sin nombre";
-  }
-  return "Sin paciente";
+  return order.patientId.name || "Sin nombre";
 }

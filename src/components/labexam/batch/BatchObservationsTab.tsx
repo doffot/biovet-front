@@ -221,7 +221,7 @@ export const BatchObservationsTab = ({
         </span>
       </div>
 
-      {/* ✅ CAMBIO 3: key={selectedExam.tempId} fuerza remontaje completo */}
+      {/*  key={selectedExam.tempId} fuerza remontaje completo */}
       {selectedExam.status === "saved" ? (
         <div className="py-8 text-center">
           <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-3" />

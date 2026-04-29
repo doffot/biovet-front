@@ -21,6 +21,7 @@ import {
   Weight,
   Edit3,
   Camera,
+  ClipboardList,
 } from "lucide-react";
 import { useState } from "react";
 import { PatientBottomTabs } from "./PatientBottomTabs";
@@ -74,19 +75,20 @@ export default function PatientLayout() {
     return years === 0 ? `${months} meses` : `${years} años`;
   };
 
-  const navItems = [
-    { to: ".", label: "Resumen", icon: Info, end: true },
-    { to: "consultations", label: "Consultas", icon: Stethoscope },
-    { to: "treatments", label: "Tratamientos", icon: Bandage },
-    { to: "services", label: "Servicios", icon: BriefcaseMedical },
-    { to: "prescriptions", label: "Recetas", icon: FileText },
-    { to: "vaccines", label: "Vacunas", icon: Syringe },
-    { to: "deworming", label: "Antiparasit.", icon: ShieldCheck },
-    { to: "exams", label: "Exámenes", icon: Microscope },
-    { to: "studies", label: "Estudios", icon: ScanLine },
-    { to: "grooming", label: "Estética", icon: Scissors },
-    { to: "appointments", label: "Citas", icon: CalendarClock },
-  ];
+const navItems = [
+  { to: ".", label: "Resumen", icon: Info, end: true },
+  { to: "consultations", label: "Consultas", icon: Stethoscope },
+  { to: "treatments", label: "Tratamientos", icon: Bandage },
+  { to: "services", label: "Servicios", icon: BriefcaseMedical },
+  { to: "prescriptions", label: "Recetas", icon: FileText },
+  { to: "vaccines", label: "Vacunas", icon: Syringe },
+  { to: "deworming", label: "Antiparasit.", icon: ShieldCheck },
+  { to: "exams", label: "Exámenes", icon: Microscope },
+  { to: "studies", label: "Estudios", icon: ScanLine },
+  { to: "medical-orders", label: "Órdenes", icon: ClipboardList }, 
+  { to: "grooming", label: "Estética", icon: Scissors },
+  { to: "appointments", label: "Citas", icon: CalendarClock },
+];
 
   return (
     <div className="flex flex-col h-full bg-surface-100 dark:bg-dark-300">

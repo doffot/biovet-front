@@ -1,4 +1,3 @@
-// src/api/medicalOrderAPI.ts
 import { AxiosError } from "axios";
 import api from "../lib/axios";
 import {
@@ -8,7 +7,7 @@ import {
   type MedicalOrderFormData,
 } from "@/types/medicalOrder";
 
-// Tipos de respuesta
+// Tipos de respuesta (Se mantienen igual, pero ahora MedicalOrder tiene la nueva estructura)
 type CreateResponse = {
   msg: string;
   medicalOrder: MedicalOrder;
@@ -44,10 +43,11 @@ export async function createMedicalOrder(
       formData
     );
 
+    // Zod validará que vengan los arrays de hematology, chemistry, etc.
     const parsed = medicalOrderSchema.safeParse(data.medicalOrder);
     if (!parsed.success) {
-      console.error("Error parsing medical order:", parsed.error);
-      throw new Error("Datos de orden médica inválidos");
+      console.error("Error parsing medical order:", parsed.error.format());
+      throw new Error("Datos de respuesta del servidor incompatibles con el nuevo modelo");
     }
 
     return parsed.data;
@@ -72,8 +72,8 @@ export async function getMedicalOrdersByPatient(
 
     const parsed = medicalOrdersListSchema.safeParse(data.medicalOrders);
     if (!parsed.success) {
-      console.error("Error parsing medical orders:", parsed.error);
-      throw new Error("Datos de órdenes médicas inválidos");
+      console.error("Error parsing list:", parsed.error.format());
+      throw new Error("La lista de órdenes no coincide con el nuevo formato");
     }
 
     return parsed.data;
@@ -94,8 +94,8 @@ export async function getAllMedicalOrders(): Promise<MedicalOrder[]> {
 
     const parsed = medicalOrdersListSchema.safeParse(data.medicalOrders);
     if (!parsed.success) {
-      console.error("Error parsing medical orders:", parsed.error);
-      throw new Error("Datos de órdenes médicas inválidos");
+      console.error("Error parsing all orders:", parsed.error.format());
+      throw new Error("Error de sincronización de datos con el nuevo modelo");
     }
 
     return parsed.data;
@@ -116,8 +116,7 @@ export async function getMedicalOrderById(id: string): Promise<MedicalOrder> {
 
     const parsed = medicalOrderSchema.safeParse(data.medicalOrder);
     if (!parsed.success) {
-      console.error("Error parsing medical order:", parsed.error);
-      throw new Error("Datos de orden médica inválidos");
+      throw new Error("La orden solicitada tiene un formato antiguo o inválido");
     }
 
     return parsed.data;
@@ -144,8 +143,7 @@ export async function updateMedicalOrder({
 
     const parsed = medicalOrderSchema.safeParse(data.medicalOrder);
     if (!parsed.success) {
-      console.error("Error parsing medical order:", parsed.error);
-      throw new Error("Datos de orden médica inválidos");
+      throw new Error("Error al validar la orden actualizada");
     }
 
     return parsed.data;
